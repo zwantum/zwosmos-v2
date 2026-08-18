@@ -12,7 +12,7 @@ Welcome to Zwosmos V2! This is a Daily Space Fact web application built with Rea
 - React
 - React Three Fiber / Drei
 - GSAP for smooth animations
-- Vite for lightning fast builds
+- Vite for lightning fast builds 
 
 ## Setup
 
