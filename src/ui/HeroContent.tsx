@@ -21,16 +21,8 @@ const HeroContent: React.FC = () => {
       padding: isMobile ? '0 15px' : '0 20px',
       boxSizing: 'border-box'
     }}>
-      <div style={{ 
-        pointerEvents: 'auto', 
-        maxWidth: isMobile ? '100%' : '750px',
-        background: 'linear-gradient(135deg, rgba(12, 74, 110, 0.4) 0%, rgba(0, 0, 0, 0.6) 100%)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(56, 189, 248, 0.3)',
-        borderRadius: '16px',
-        padding: isMobile ? '25px 20px' : '40px',
-        boxShadow: '0 0 40px rgba(12, 74, 110, 0.5), inset 0 0 20px rgba(56, 189, 248, 0.1)'
-      }}>
+      <div
+      >
         <h3 style={{
           fontFamily: "'Orbitron', sans-serif",
           color: '#38bdf8',
