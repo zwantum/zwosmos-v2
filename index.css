@@ -78,97 +78,69 @@ body,
   flex-direction: column;
 }
 
-.orbit-system {
+.galaxy-loader {
   position: relative;
-  width: 150px;
-  height: 150px;
+  width: 100px;
+  height: 100px;
   margin-bottom: 30px;
   z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.orbit-ring {
+.galaxy-loader .ring {
   position: absolute;
+  border-radius: 50%;
+  border: 2px solid transparent;
+}
+
+.galaxy-loader .ring-1 {
   width: 100%;
   height: 100%;
-  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-top-color: #38bdf8;
+  border-bottom-color: #0c4a6e;
+  animation: spin 2s linear infinite;
+}
+
+.galaxy-loader .ring-2 {
+  width: 70%;
+  height: 70%;
+  border-left-color: #38bdf8;
+  border-right-color: #1e40af;
+  animation: spin-reverse 1.5s linear infinite;
+}
+
+.galaxy-loader .ring-3 {
+  width: 40%;
+  height: 40%;
+  border-top-color: #fff;
+  border-bottom-color: rgba(255,255,255,0.2);
+  animation: spin 1s linear infinite;
+}
+
+.galaxy-loader .core {
+  width: 10%;
+  height: 10%;
+  background-color: #fff;
   border-radius: 50%;
-  animation: rotate 8s linear infinite;
+  box-shadow: 0 0 15px #38bdf8, 0 0 30px #38bdf8;
+  animation: pulse 1.5s ease-in-out infinite;
 }
 
-.planet-container {
-  position: absolute;
-  width: 50px;
-  height: 50px;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-.planet {
-  position: absolute;
-  width: 50px;
-  height: 50px;
-  background: radial-gradient(circle at 30% 30%,
-      #38bdf8 0%,
-      #1e40af 50%,
-      #0c4a6e 100%);
-  border-radius: 50%;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+@keyframes spin-reverse {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-360deg); }
 }
 
-.earth-svg {
-  width: 100%;
-  height: 100%;
-  animation: rotate 20s linear infinite;
-  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.5));
-}
-
-.fil1 {
-  fill: #81c784;
-}
-
-.fil3 {
-  fill: #74b377;
-}
-
-.moon {
-  position: absolute;
-  width: 15px;
-  height: 15px;
-  background: radial-gradient(circle at 65% 35%,
-      #f1f5f9 30%,
-      #94a3b8 60%,
-      #64748b 100%);
-  border-radius: 50%;
-  top: 0;
-  left: 70%;
-  transform: translateX(-50%);
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-}
-
-.moon::before {
-  content: '';
-  position: absolute;
-  width: 4px;
-  height: 4px;
-  background: rgba(100, 116, 139, 0.4);
-  border-radius: 50%;
-  top: 30%;
-  left: 20%;
-}
-
-.moon::after {
-  content: '';
-  position: absolute;
-  width: 3px;
-  height: 3px;
-  background: rgba(100, 116, 139, 0.4);
-  border-radius: 50%;
-  top: 60%;
-  left: 50%;
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.5); opacity: 1; }
 }
 
 .loading-title {

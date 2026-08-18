@@ -11,6 +11,7 @@ import { useBloomComposer } from '../../hooks/usePostProcessing'
 import { setupZoomCamera } from '../../utils/setupZoomCamera'
 import { useMobile } from '../../contexts/MobileContext'
 import { Color, Group, MathUtils, Mesh, MeshBasicMaterial, PerspectiveCamera, PointsMaterial, TextureLoader, Vector3 } from 'three'
+import HubbleModel from './HubbleModel'
 
 export function Galaxy() {
   const { camera } = useThree() as { camera: PerspectiveCamera };
@@ -166,43 +167,40 @@ export function Galaxy() {
     };
   }
 
-  useNavigation({
-    sceneKey: sceneKey,
-    zoomFunction: zoomInGalaxyFunction,
-    isVisible: sceneVisible,
-    zoomDirection: zoomDirection,
-    getZoomOutCameraData: getZoomOutCameraData
-  });
+  // navigation removed
 
   return (
-    <group dispose={null} ref={galaxyRef}>
-      <light
-        position={[0, 0, 0]}
-        intensity={0.5}
-      />
-      <ambientLight intensity={0.5} />
-
-      <Points scale={0.05} positions={positions} colors={colors}>
-        <pointsMaterial
-          map={starTexture}
-          transparent
-          depthWrite={false}
-          vertexColors
-          opacity={1}
-          depthTest
-          size={0.01}
+    <>
+      <HubbleModel />
+      <group dispose={null} ref={galaxyRef}>
+        <light
+          position={[0, 0, 0]}
+          intensity={0.5}
         />
-      </Points>
+        <ambientLight intensity={0.5} />
 
-      <group name="SolarSystemStar">
-        <mesh
-          ref={solarSystemStarRef}
-          position={GALAXY.SOLAR_SYSTEM_STAR.INIT_POSITION}
-        >
-          <sphereGeometry args={GALAXY.SOLAR_SYSTEM_STAR.INIT_SIZE} />
-          <meshBasicMaterial map={starTexture} color={GALAXY.SOLAR_SYSTEM_STAR.COLOR} />
-        </mesh>
+        <Points scale={0.05} positions={positions} colors={colors}>
+          <pointsMaterial
+            map={starTexture}
+            transparent
+            depthWrite={false}
+            vertexColors
+            opacity={1}
+            depthTest
+            size={0.01}
+          />
+        </Points>
+
+        <group name="SolarSystemStar">
+          <mesh
+            ref={solarSystemStarRef}
+            position={GALAXY.SOLAR_SYSTEM_STAR.INIT_POSITION}
+          >
+            <sphereGeometry args={GALAXY.SOLAR_SYSTEM_STAR.INIT_SIZE} />
+            <meshBasicMaterial map={starTexture} color={GALAXY.SOLAR_SYSTEM_STAR.COLOR} />
+          </mesh>
+        </group>
       </group>
-    </group>
+    </>
   );
 }

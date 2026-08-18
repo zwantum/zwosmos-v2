@@ -1,31 +1,21 @@
 import { Canvas } from '@react-three/fiber';
 import { Preload } from '@react-three/drei';
 import { Suspense } from 'react';
-import SceneTextComponent from './ui/SceneText';
 import { MobileProvider, useMobile } from './contexts/MobileContext';
-import { useSceneStore } from './core/SceneManager';
+
 import { AssetManager } from './core/AssetManager';
-import ZoomProgressIndicator from './ui/ZoomProgressIndicator';
 import { GLOBAL } from './config/config';
-import NavigationHint from './ui/NavigationHint';
-import LoadingScreen from './ui/LoadingScreen';
-import GitHubLink from './ui/GithubLink';
+
 import WebGLWarning from './ui/WebGLWarning';
+import HeroContent from './ui/HeroContent';
+import CountdownTimer from './ui/CountdownTimer';
 import { useWebGL2Enabled } from './hooks/useWebGL2Support';
 import { NoToneMapping } from 'three';
-import { Analytics } from "@vercel/analytics/react"
-
-// scenes
+import { Analytics } from "@vercel/analytics/react";
 import GalaxyScene from './scenes/Galaxy/GalaxyScene';
-import SolarSystemScene from './scenes/SolarSystem/SolarSystemScene';
-import ContinentScene from './scenes/Continent/ContinentScene';
-import CityScene from './scenes/City/CityScene';
-import DistrictScene from './scenes/District/DistrictScene';
-import RoomScene from './scenes/Room/RoomScene';
 import ErrorBoundary from './ui/ErrorBoundary';
 
 function AppContent() {
-  const { currentScene, loadingProgress } = useSceneStore();
 
   const { isMobile } = useMobile();
   const isWebGL2Enabled = useWebGL2Enabled();
@@ -53,35 +43,20 @@ function AppContent() {
         {/* assets preloader & scene precompiler */}
         <AssetManager />
 
-        {/* loading screen */}
-        {loadingProgress != null && loadingProgress < 100 && (<LoadingScreen />)}
-
         {/* scenes */}
-        <Suspense fallback={<LoadingScreen />}>
-          <>
-            {currentScene === 'galaxy' && <GalaxyScene />}
-            {['solarSystemApproach', 'solarSystemRotation', 'earthApproach', 'earth'].includes(currentScene) && <SolarSystemScene />}
-            {currentScene === 'continent' && <ContinentScene />}
-            {currentScene === 'city' && <CityScene />}
-            {currentScene === 'district' && <DistrictScene />}
-            {currentScene === 'room' && <RoomScene />}
-          </>
+        <Suspense fallback={null}>
+          <GalaxyScene />
         </Suspense>
 
         <Preload all />
       </Canvas>
 
-      {/* UI */}
-      {loadingProgress >= 100 && (
         <>
           {/* yeah, it was supposed to be horizontal on mobile, but I changed my mind */}
           {/* <MobileOrientationWarning /> */}
-          <NavigationHint />
-          <ZoomProgressIndicator />
-          <SceneTextComponent />
-          <GitHubLink />
+          <HeroContent />
+          <CountdownTimer />
         </>
-      )}
     </>
   );
 }

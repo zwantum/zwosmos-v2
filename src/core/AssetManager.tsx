@@ -9,11 +9,6 @@ import { ScenePrecompiler } from './ScenePrecompiler';
 
 // scenes
 import GalaxyScene from '../scenes/Galaxy/GalaxyScene';
-import SolarSystemScene from '../scenes/SolarSystem/SolarSystemScene';
-import ContinentScene from '../scenes/Continent/ContinentScene';
-import CityScene from '../scenes/City/CityScene';
-import DistrictScene from '../scenes/District/DistrictScene';
-import RoomScene from '../scenes/Room/RoomScene';
 
 export function AssetManager() {
   const { gl, camera } = useThree();
@@ -22,14 +17,7 @@ export function AssetManager() {
   const [loadedCount, setLoadedCount] = useState(0);
   const [assetsLoaded, setAssetsLoaded] = useState(false);
 
-  const precompileScenes = [
-    <GalaxyScene />,
-    <SolarSystemScene />,
-    <ContinentScene />,
-    <CityScene />,
-    <DistrictScene />,
-    <RoomScene />,
-  ];
+
 
   const totalAssets = useMemo(() => {
     let count = 0;
@@ -44,15 +32,12 @@ export function AssetManager() {
       count += Object.keys(textures).length;
     });
 
-    // count icons
-    Object.values(SCENE_MANAGER.SCENE_ASSETS.icons).forEach(icons => {
-      count += Object.keys(icons).length;
-    });
 
-    count += precompileScenes.length; // add precompile scenes to the count
+
+
 
     return count;
-  }, [SCENE_MANAGER.SCENE_ASSETS.models, SCENE_MANAGER.SCENE_ASSETS.textures, precompileScenes]);
+  }, [SCENE_MANAGER.SCENE_ASSETS.models, SCENE_MANAGER.SCENE_ASSETS.textures]);
 
   // update loaded count
   const updateProgress = useCallback(() => {
@@ -151,46 +136,8 @@ export function AssetManager() {
       }
     };
 
-    const preloadIcons = async () => {
-      const iconEntries: { path: string; name: string }[] = [];
-      Object.entries(SCENE_MANAGER.SCENE_ASSETS.icons.zoomProgressIndicator).forEach(([name, path]) => {
-        iconEntries.push({ path: path as string, name });
-      });
-
-      // create a promise for each icon, it resolves when the icon is loaded
-      const iconPromises = iconEntries.map(
-        ({ path }) =>
-          new Promise((resolve, reject) => {
-            setLoadingText(`Loading interface icons...`);
-
-            const img = new Image();
-
-            img.onload = () => {
-              console.debug(`Icon loaded: ${path}`);
-              updateProgress();
-              resolve(img);
-            };
-
-            img.onerror = (error) => {
-              console.error(`Error loading icon ${path}:`, error);
-              updateProgress();
-              reject(error);
-            };
-
-            img.src = path;
-          })
-      );
-
-      try {
-        await Promise.all(iconPromises);
-        console.debug('All icons loaded.');
-      } catch (error) {
-        console.error('Error preloading icons:', error);
-      }
-    };
-
     const loadAllAssets = async () => {
-      await Promise.all([preloadModels(), preloadTextures(), preloadIcons()]);
+      await Promise.all([preloadModels(), preloadTextures()]);
       console.debug('Assets preloading complete.');
 
       setAssetsLoaded(true);
@@ -210,12 +157,5 @@ export function AssetManager() {
     }
   }, [loadingProgress]);
 
-  // precompile all scenes after all assets loaded
-  return assetsLoaded ? (
-    precompileScenes.map((scene, index) => (
-      <React.Fragment key={`portal-${index}-${scene.key}`}>
-        <ScenePrecompiler scene={scene} updateProgress={updateProgress} />
-      </React.Fragment>
-    ))
-  ) : null;
+  return null;
 }
