@@ -1,32 +1,25 @@
 import { Points, useGLTF } from '@react-three/drei'
 import { GLTF } from 'three-stdlib'
-import { useFrame, useLoader, useThree } from '@react-three/fiber'
+import { useFrame, useLoader } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
-import { GALAXY, GLOBAL, SCENE_MANAGER } from '../../config/config'
+import { GALAXY, SCENE_MANAGER } from '../../config/config'
 import { useSceneStore } from '../../core/SceneManager'
-import { gsap } from 'gsap'
-import { createNavigationAnimation } from '../../utils/navigationAnimation';
-import { useNavigation } from '../../hooks/useNavigation'
+
+
 import { useBloomComposer } from '../../hooks/usePostProcessing'
-import { setupZoomCamera } from '../../utils/setupZoomCamera'
-import { useMobile } from '../../contexts/MobileContext'
-import { Color, Group, MathUtils, Mesh, MeshBasicMaterial, PerspectiveCamera, PointsMaterial, TextureLoader, Vector3 } from 'three'
+
+import { Color, Group, MathUtils, Mesh, PointsMaterial, TextureLoader, Vector3 } from 'three'
 import HubbleModel from './HubbleModel'
 
 export function Galaxy() {
-  const { camera } = useThree() as { camera: PerspectiveCamera };
 
-  const {
-    currentScene,
-    zoomDirection,
-    getZoomOutCameraData, setZoomOutCameraData,
-    endTransition
-  } = useSceneStore();
+
+  const { currentScene } = useSceneStore();
 
   const sceneKey = 'galaxy'
   const sceneVisible = currentScene === sceneKey;
 
-  const { isMobile } = useMobile();
+
 
   const galaxyRef = useRef<Group>(null!)
   const solarSystemStarRef = useRef<Mesh>(null!); // ref of the solar system star (star in the middle of the galaxy)
@@ -96,78 +89,7 @@ export function Galaxy() {
     }
   })
 
-  function zoomInGalaxyFunction(backwards: boolean = false) {
-    setupZoomCamera(camera, 'galaxy', backwards, {
-      getZoomOutCameraData,
-      setZoomOutCameraData,
-      endTransition
-    });
 
-    if (!solarSystemStarRef.current) return
-
-    const initial = isMobile ? GLOBAL.INITIAL_CAMERA_MOBILE_POS : GLOBAL.INITIAL_CAMERA_DESKTOP_POS;
-
-    const tweenObj = { progress: 0 };
-
-    const tl = gsap.timeline({
-      onUpdate: function () {
-        const solarSystemStarPosition = new Vector3();
-        solarSystemStarRef.current.getWorldPosition(solarSystemStarPosition);
-
-        const material = solarSystemStarRef.current.material as MeshBasicMaterial;
-
-        const distanceToSolarSystemStar = solarSystemStarPosition.distanceTo(camera.position);
-        if (distanceToSolarSystemStar < GALAXY.STAR_ZOOM_EFFECT_DISTANCE) { // zoomed in too close to the star - make zoom in effect
-          camera.position.copy(solarSystemStarPosition).add(GALAXY.SOLAR_SYSTEM_STAR.CAMERA_OFFSET.clone());
-
-          const minFov = GALAXY.SOLAR_SYSTEM_STAR.ZOOMED_IN_FOV;
-          const maxFov = camera.fov;
-          camera.fov = MathUtils.lerp(maxFov, minFov, .9);
-
-          material.color.set(0x000) // make the star black when zoomed in
-        } else {
-          const minFov = camera.fov;
-          const maxFov = isMobile ? GLOBAL.INITIAL_CAMERA_MOBILE_FOV : GLOBAL.INITIAL_CAMERA_DESKTOP_FOV;
-          camera.fov = MathUtils.lerp(maxFov, minFov, .1);
-
-          material.color.set(GALAXY.SOLAR_SYSTEM_STAR.COLOR) // reset the star color when zoomed out
-        }
-
-        camera.updateProjectionMatrix();
-      },
-    });
-
-    tl.to(tweenObj, {
-      progress: 1,
-      onUpdate: function () {
-        let dynamicTarget = (() => {
-          const pos = new Vector3();
-          solarSystemStarRef.current.getWorldPosition(pos);
-          pos.add(GALAXY.SOLAR_SYSTEM_STAR.CAMERA_OFFSET.clone());
-          return pos;
-        })();
-
-        const newPosition = initial.clone().lerp(dynamicTarget, tweenObj.progress);
-        camera.position.copy(newPosition);
-
-        camera.updateProjectionMatrix();
-      }
-    });
-
-    const animation = createNavigationAnimation({
-      sceneKey: sceneKey,
-      timeline: tl,
-      onComplete: endTransition,
-      backwards: backwards,
-      zoomDirections: { in: true, out: false },
-    });
-
-    return () => {
-      animation.cleanup();
-    };
-  }
-
-  // navigation removed
 
   return (
     <>

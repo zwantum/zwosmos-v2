@@ -1,4 +1,4 @@
-import { Color, Quaternion, Vector3 } from "three";
+import { Quaternion, Vector3 } from "three";
 
 // Global
 export const GLOBAL = {

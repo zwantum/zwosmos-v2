@@ -4,18 +4,13 @@ import { useSceneStore } from './SceneManager';
 import { useThree } from '@react-three/fiber';
 import { TextureLoader } from 'three';
 import { SCENE_MANAGER } from '../config/config';
-import React from 'react';
-import { ScenePrecompiler } from './ScenePrecompiler';
 
-// scenes
-import GalaxyScene from '../scenes/Galaxy/GalaxyScene';
 
 export function AssetManager() {
   const { gl, camera } = useThree();
   const { loadingProgress, setLoadingProgress, setLoadingText } = useSceneStore();
 
   const [loadedCount, setLoadedCount] = useState(0);
-  const [assetsLoaded, setAssetsLoaded] = useState(false);
 
 
 
@@ -140,7 +135,6 @@ export function AssetManager() {
       await Promise.all([preloadModels(), preloadTextures()]);
       console.debug('Assets preloading complete.');
 
-      setAssetsLoaded(true);
 
       setLoadingText(`Precompiling scenes...`);
     };
