@@ -9,6 +9,7 @@ import { GLOBAL } from './config/config';
 import WebGLWarning from './ui/WebGLWarning';
 import HeroContent from './ui/HeroContent';
 import CountdownTimer from './ui/CountdownTimer';
+import ContentSections from './ui/ContentSections';
 import { useWebGL2Enabled } from './hooks/useWebGL2Support';
 import { NoToneMapping } from 'three';
 import { Analytics } from "@vercel/analytics/react";
@@ -32,6 +33,7 @@ function AppContent() {
 
   return (
     <>
+      <div className="hero-section">
       <Canvas dpr={window.devicePixelRatio} camera={{ position: isMobile ? GLOBAL.INITIAL_CAMERA_MOBILE_POS : GLOBAL.INITIAL_CAMERA_DESKTOP_POS, fov: isMobile ? GLOBAL.INITIAL_CAMERA_MOBILE_FOV : GLOBAL.INITIAL_CAMERA_DESKTOP_FOV }} style={{ background: 'black' }} gl={{
         antialias: true,
         toneMapping: NoToneMapping,
@@ -50,12 +52,11 @@ function AppContent() {
         <Preload all />
       </Canvas>
 
-        <>
-          {/* yeah, it was supposed to be horizontal on mobile, but I changed my mind */}
-          {/* <MobileOrientationWarning /> */}
           <HeroContent />
           <CountdownTimer />
-        </>
+      </div>
+
+      <ContentSections />
     </>
   );
 }
