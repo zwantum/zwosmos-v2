@@ -4,7 +4,7 @@ Welcome to Zwosmos V2! This is a Daily Space Fact web application built with Rea
 
 ## Features
 - **Daily Space Facts:** Discover a new fascinating fact about the cosmos every day.
-- **Interactive 3D Hubble Telescope:** A high-quality, metallic Hubble model that smoothly tracks your mouse and floats in the foreground.
+- **Interactive 3D Hubble Telescope:** A high-quality, metallic Hubble model that smoothly tracks your mouse and floats in the foreground. 
 - **Cosmic Aesthetic:** Built with modern glassmorphism panels, glowing neon accents, and futuristic fonts (Orbitron, Rajdhani).
 - **Fully Responsive:** Looks stunning on both desktop and mobile devices.
 
