@@ -21,21 +21,21 @@ const ContentSections: React.FC = () => {
             {[
               { category: 'DEEP SPACE', title: 'The Nursery of New Stars', img: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1000&auto=format&fit=crop' },
               { category: 'TECHNOLOGY', title: 'Seeing Further Than Ever Before', img: 'https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?q=80&w=1000&auto=format&fit=crop' },
-              { category: 'SOLAR SYSTEM', title: 'When the Sun Disappears', img: 'https://images.unsplash.com/photo-1537429149819-74853018251f?q=80&w=1000&auto=format&fit=crop' }
+              { category: 'SOLAR SYSTEM', title: 'When the Sun Disappears', img: 'https://images.unsplash.com/photo-1541873676-a18131494184?q=80&w=418&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' }
             ].map((story, i) => (
               <div key={i} style={{ position: 'relative', cursor: 'pointer', marginLeft: '30px', marginBottom: '35px' }}
-                   onMouseOver={e => {
-                     const w = e.currentTarget.querySelector('.wireframe') as HTMLElement;
-                     const t = e.currentTarget.querySelector('.tabs') as HTMLElement;
-                     if(w) w.style.transform = 'translate(0, 0)';
-                     if(t) t.style.transform = 'translate(-50%, 0)';
-                   }}
-                   onMouseOut={e => {
-                     const w = e.currentTarget.querySelector('.wireframe') as HTMLElement;
-                     const t = e.currentTarget.querySelector('.tabs') as HTMLElement;
-                     if(w) w.style.transform = 'translate(-12px, 12px)';
-                     if(t) t.style.transform = 'translate(calc(-50% - 12px), 12px)';
-                   }}
+                onMouseOver={e => {
+                  const w = e.currentTarget.querySelector('.wireframe') as HTMLElement;
+                  const t = e.currentTarget.querySelector('.tabs') as HTMLElement;
+                  if (w) w.style.transform = 'translate(0, 0)';
+                  if (t) t.style.transform = 'translate(-50%, 0)';
+                }}
+                onMouseOut={e => {
+                  const w = e.currentTarget.querySelector('.wireframe') as HTMLElement;
+                  const t = e.currentTarget.querySelector('.tabs') as HTMLElement;
+                  if (w) w.style.transform = 'translate(-12px, 12px)';
+                  if (t) t.style.transform = 'translate(calc(-50% - 12px), 12px)';
+                }}
               >
                 <div className="wireframe" style={{
                   position: 'absolute',
@@ -81,7 +81,7 @@ const ContentSections: React.FC = () => {
                   }}>
                     {story.category}
                   </div>
-                  
+
                   <div style={{
                     width: '32px',
                     height: '32px',
@@ -116,7 +116,7 @@ const ContentSections: React.FC = () => {
                 <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', zIndex: 2, borderRadius: '10px', overflow: 'hidden', marginBottom: '20px' }}>
                   <img src={story.img} alt={story.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
-                
+
                 <h3 style={{ fontSize: '1.6rem', margin: '0', lineHeight: 1.2 }}>{story.title}</h3>
               </div>
             ))}
