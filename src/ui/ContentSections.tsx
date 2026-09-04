@@ -5,6 +5,7 @@ import { Suspense } from 'react';
 import { Stars } from '@react-three/drei';
 import Earth from '../components/space/Earth';
 import { PointerProvider } from '../components/space/PointerContext';
+import { Link } from 'react-router-dom';
 
 const ContentSections: React.FC = () => {
   const { isMobile } = useMobile();
@@ -16,9 +17,9 @@ const ContentSections: React.FC = () => {
         <div className="section-container">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '30px', flexWrap: 'wrap', gap: '15px' }}>
             <h2 className="section-title" style={{ marginBottom: 0 }}>Stories from the Cosmos</h2>
-            <a href="#" style={{ color: 'var(--brand-purple)', textDecoration: 'none', fontWeight: 600, letterSpacing: '2px', fontSize: '0.9rem' }}>
+            <Link to="/blog" style={{ color: 'var(--brand-purple)', textDecoration: 'none', fontWeight: 600, letterSpacing: '2px', fontSize: '0.9rem' }}>
               VIEW ALL STORIES &rarr;
-            </a>
+            </Link>
           </div>
 
           <div className="grid-3">
@@ -27,15 +28,101 @@ const ContentSections: React.FC = () => {
               { category: 'TECHNOLOGY', title: 'Seeing Further Than Ever Before', img: 'https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?q=80&w=1000&auto=format&fit=crop' },
               { category: 'SOLAR SYSTEM', title: 'When the Sun Disappears', img: 'https://images.unsplash.com/photo-1537429149819-74853018251f?q=80&w=1000&auto=format&fit=crop' }
             ].map((story, i) => (
-              <div key={i} style={{ cursor: 'pointer', transition: 'transform 0.3s' }} onMouseOver={e => e.currentTarget.style.transform = 'translateY(-5px)'} onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}>
-                <div style={{ width: '100%', aspectRatio: '4/3', overflow: 'hidden', borderRadius: '4px', marginBottom: '15px' }}>
+              <div key={i} style={{ position: 'relative', cursor: 'pointer', marginLeft: '30px', marginBottom: '35px' }}
+                   onMouseOver={e => {
+                     const w = e.currentTarget.querySelector('.wireframe') as HTMLElement;
+                     const t = e.currentTarget.querySelector('.tabs') as HTMLElement;
+                     if(w) w.style.transform = 'translate(0, 0)';
+                     if(t) t.style.transform = 'translate(-50%, 0)';
+                   }}
+                   onMouseOut={e => {
+                     const w = e.currentTarget.querySelector('.wireframe') as HTMLElement;
+                     const t = e.currentTarget.querySelector('.tabs') as HTMLElement;
+                     if(w) w.style.transform = 'translate(-12px, 12px)';
+                     if(t) t.style.transform = 'translate(calc(-50% - 12px), 12px)';
+                   }}
+              >
+                <div className="wireframe" style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  aspectRatio: '4/3',
+                  border: '1px solid var(--brand-purple)',
+                  borderRadius: '10px',
+                  zIndex: 3,
+                  pointerEvents: 'none',
+                  transform: 'translate(-12px, 12px)',
+                  transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                }}></div>
+
+                <div className="tabs" style={{
+                  position: 'absolute',
+                  top: '20px',
+                  left: 0,
+                  transform: 'translate(calc(-50% - 12px), 12px)',
+                  zIndex: 4,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '12px',
+                  transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                }}>
+                  <div style={{
+                    background: 'var(--bg-main)',
+                    border: '1px solid var(--brand-purple)',
+                    borderRadius: '20px',
+                    padding: '15px 5px',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    writingMode: 'vertical-rl',
+                    transform: 'rotate(180deg)',
+                    color: 'white',
+                    fontSize: '0.8rem',
+                    fontWeight: 'bold',
+                    letterSpacing: '1px',
+                    boxShadow: '0 4px 10px rgba(0,0,0,0.5)'
+                  }}>
+                    {story.category}
+                  </div>
+                  
+                  <div style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    background: 'var(--bg-main)',
+                    border: '1px solid var(--brand-purple)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    color: 'white',
+                    boxShadow: '0 4px 10px rgba(0,0,0,0.5)'
+                  }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                  </div>
+
+                  <div style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    background: 'var(--bg-main)',
+                    border: '1px solid var(--brand-purple)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    color: 'white',
+                    boxShadow: '0 4px 10px rgba(0,0,0,0.5)'
+                  }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg>
+                  </div>
+                </div>
+
+                <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', zIndex: 2, borderRadius: '10px', overflow: 'hidden', marginBottom: '20px' }}>
                   <img src={story.img} alt={story.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
-                <div style={{ color: 'var(--brand-purple)', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '1px', marginBottom: '10px' }}>{story.category}</div>
-                <h3 style={{ fontSize: '1.8rem', margin: '0 0 15px 0', lineHeight: 1.2 }}>{story.title}</h3>
-                <div style={{ color: 'var(--brand-purple)', fontSize: '0.9rem', fontWeight: 600, letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  &rarr; READ STORY
-                </div>
+                
+                <h3 style={{ fontSize: '1.6rem', margin: '0', lineHeight: 1.2 }}>{story.title}</h3>
               </div>
             ))}
           </div>
@@ -65,12 +152,12 @@ const ContentSections: React.FC = () => {
               { category: 'COSMOLOGY', title: 'Silent Stars', author: 'M. Ilya', desc: 'A meditation on time, light, and the vast quiet between.', img: 'linear-gradient(to bottom, #3b0764, #1a0b2e)' }
             ].map((book, i) => (
               <div key={i} style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
-                <div style={{ 
-                  width: '140px', 
+                <div style={{
+                  width: '140px',
                   flexShrink: 0,
-                  height: '210px', 
-                  background: book.img, 
-                  borderRadius: '2px 6px 6px 2px', 
+                  height: '210px',
+                  background: book.img,
+                  borderRadius: '2px 6px 6px 2px',
                   boxShadow: '10px 10px 20px rgba(0,0,0,0.5), inset -2px 0 5px rgba(255,255,255,0.1), inset 5px 0 10px rgba(0,0,0,0.5)',
                   display: 'flex',
                   flexDirection: 'column',
@@ -86,7 +173,7 @@ const ContentSections: React.FC = () => {
                     {book.author.toUpperCase()}
                   </div>
                 </div>
-                
+
                 <div>
                   <div style={{ color: 'var(--brand-purple)', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '1px', marginBottom: '8px' }}>{book.category}</div>
                   <h4 style={{ fontSize: '1.5rem', margin: '0 0 5px 0', lineHeight: 1.1 }}>{book.title}</h4>
@@ -115,7 +202,7 @@ const ContentSections: React.FC = () => {
       </section>
 
       {/* Newsletter Footer */}
-      <footer style={{ 
+      <footer style={{
         position: 'relative',
         width: '100%',
         minHeight: '600px',
@@ -136,10 +223,9 @@ const ContentSections: React.FC = () => {
           width: '100%',
           height: '100%',
           opacity: 0.8,
-          zIndex: 1,
-          maskImage: 'linear-gradient(to bottom, transparent 0%, black 50%)',
-          WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 50%)'
+          zIndex: 1
         }}>
+          {/* 
           <PointerProvider>
             <Canvas dpr={[1, 2]} camera={{ position: [0, 0, 5], fov: 45 }} gl={{ antialias: true, alpha: true }} style={{ position: 'relative', zIndex: 1 }}>
               <ambientLight intensity={0.2} color="#ffffff" />
@@ -149,12 +235,6 @@ const ContentSections: React.FC = () => {
               <pointLight position={[0, -2, -15]} intensity={500} color="#ffeedd" distance={50} decay={2} />
               <Stars radius={50} depth={50} count={3000} factor={4} saturation={0} fade speed={1} />
               <Suspense fallback={null}>
-                {/* 
-                  1. Shift Z by +2.5 to cancel Earth's local -2.5 offset so it centers at 0,0,0.
-                  2. Rotate -1.2 rad on X to bring India (equator) up to the visible horizon.
-                  3. Scale by 12 (radius = 26.4).
-                  4. Position at Y=-27, Z=-26 so the camera (Z=5) stays safely outside, and the top peeks at Y=-0.6.
-                */}
                 <group position={[0, -27.0, -26]} scale={12}>
                   <group rotation={[-1.2, 0, 0]}>
                     <group position={[0, 0, 2.5]}>
@@ -165,42 +245,59 @@ const ContentSections: React.FC = () => {
               </Suspense>
             </Canvas>
           </PointerProvider>
+          */}
+
+          <img
+            src="/assets/img/static_earth-1.png"
+            alt="Earth"
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: '50%',
+              top: '-5%',
+              transform: 'translateX(-50%)',
+              width: '100%',
+              objectFit: 'contain',
+              objectPosition: 'bottom',
+              zIndex: 1,
+              pointerEvents: 'none'
+            }}
+          />
         </div>
-        
+
         <div style={{ position: 'relative', zIndex: 2, width: '100%', maxWidth: '600px' }}>
-          <h2 style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: isMobile ? '3rem' : '4rem', margin: '0 0 20px 0' }}>Stay in the signal.</h2>
+          <h2 style={{ fontSize: isMobile ? '3rem' : '4rem', margin: '0 0 20px 0' }}>Stay in the signal.</h2>
           <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '1rem', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '10px' }}>
             STORIES, DISCOVERIES, WONDER.
           </p>
           <p style={{ color: 'var(--brand-purple)', fontSize: '1rem', letterSpacing: '2px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '40px' }}>
             DELIVERED TO YOUR INBOX.
           </p>
-          
+
           <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.3)', paddingBottom: '10px' }}>
-            <input 
-              type="email" 
-              placeholder="YOUR EMAIL ADDRESS" 
-              style={{ 
-                flex: 1, 
-                background: 'transparent', 
-                border: 'none', 
-                color: 'white', 
-                fontSize: '1rem', 
+            <input
+              type="email"
+              placeholder="YOUR EMAIL ADDRESS"
+              style={{
+                flex: 1,
+                background: 'transparent',
+                border: 'none',
+                color: 'white',
+                fontSize: '1rem',
                 letterSpacing: '2px',
-                outline: 'none',
-                fontFamily: "'Rajdhani', sans-serif"
-              }} 
+                outline: 'none'
+              }}
             />
-            <button style={{ 
-              background: 'transparent', 
-              border: 'none', 
-              color: 'var(--brand-purple)', 
+            <button style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--brand-purple)',
               fontSize: '1.5rem',
               cursor: 'pointer',
               transition: 'transform 0.2s'
             }}
-            onMouseOver={e => e.currentTarget.style.transform = 'translateX(5px)'}
-            onMouseOut={e => e.currentTarget.style.transform = 'translateX(0)'}
+              onMouseOver={e => e.currentTarget.style.transform = 'translateX(5px)'}
+              onMouseOut={e => e.currentTarget.style.transform = 'translateX(0)'}
             >
               &rarr;
             </button>

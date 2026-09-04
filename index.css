@@ -1,8 +1,9 @@
 :root {
   --brand-purple: #9333ea;
   --brand-purple-glow: rgba(147, 51, 234, 0.5);
-  --bg-dark-purple: #0f0518;
-  --bg-darker: #08020d;
+  --bg-dark-purple: #121212;
+  --bg-darker: #0a0a0a;
+  --bg-main: #121212;
 }
 
 html,
@@ -12,10 +13,14 @@ body,
   height: 100%;
   margin: 0;
   padding: 0;
-  background: black;
+  background: var(--bg-main);
   color: white;
   overflow-x: hidden;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: 'Lora', serif;
+}
+
+h1, h2, h3, h4, h5, h6, .section-title {
+  font-family: 'Playfair Display', serif;
 }
 
 #c {
@@ -52,7 +57,7 @@ body,
 }
 
 .section-title {
-  font-family: 'Orbitron', sans-serif;
+  font-family: 'Playfair Display', serif;
   font-size: 2.5rem;
   color: white;
   margin-bottom: 40px;
