@@ -1,10 +1,5 @@
 import React from 'react';
 import { useMobile } from '../contexts/MobileContext';
-import { Canvas } from '@react-three/fiber';
-import { Suspense } from 'react';
-import { Stars } from '@react-three/drei';
-import Earth from '../components/space/Earth';
-import { PointerProvider } from '../components/space/PointerContext';
 import { Link } from 'react-router-dom';
 
 const ContentSections: React.FC = () => {

@@ -1,4 +1,3 @@
-import React from 'react';
 import { useMobile } from '../contexts/MobileContext';
 
 const BlogPage = () => {
@@ -213,8 +212,7 @@ const BlogPage = () => {
                 { name: 'Twitter', icon: 'fa-x-twitter', bg: '#1f2022', color: 'white' },
                 { name: 'Facebook', icon: 'fa-facebook-f', bg: '#1877F2', color: 'white' },
                 { name: 'Instagram', icon: 'fa-instagram', bg: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)', color: 'white' },
-
-              ].map((social, idx) => (
+              ].map((social: { name: string; icon: string; bg: string; color: string; customStyle?: React.CSSProperties }, idx) => (
                 <button key={idx} style={{
                   width: '100%',
                   padding: '12px 20px',
