@@ -1,5 +1,5 @@
 import { useMobile } from '../contexts/MobileContext';
-import { Link } from 'react-router-dom';
+import { BlogCard } from './BlogCard';
 
 const BlogIndexPage = () => {
   const { isMobile } = useMobile();
@@ -94,122 +94,14 @@ const BlogIndexPage = () => {
         {/* Blog Grid */}
         <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '40px' }}>
           {blogPosts.map((post) => (
-            <div key={post.id} style={{ position: 'relative', marginLeft: '30px', marginBottom: '35px' }}>
-              <Link to={`/blog/${post.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block', height: '100%' }}>
-                <div style={{
-                  cursor: 'pointer',
-                  height: '100%',
-                  background: 'var(--bg-dark-purple)',
-                  borderRadius: '10px',
-                  padding: '25px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  boxSizing: 'border-box'
-                }}
-                  onMouseOver={e => {
-                    const w = e.currentTarget.querySelector('.wireframe') as HTMLElement;
-                    const t = e.currentTarget.querySelector('.tabs') as HTMLElement;
-                    if (w) w.style.transform = 'translate(0, 0)';
-                    if (t) t.style.transform = 'translate(-50%, 0)';
-                  }}
-                  onMouseOut={e => {
-                    const w = e.currentTarget.querySelector('.wireframe') as HTMLElement;
-                    const t = e.currentTarget.querySelector('.tabs') as HTMLElement;
-                    if (w) w.style.transform = 'translate(-12px, 12px)';
-                    if (t) t.style.transform = 'translate(calc(-50% - 12px), 12px)';
-                  }}
-                >
-                  <div style={{ position: 'relative', width: '100%', height: '240px', marginBottom: '25px', zIndex: 1 }}>
-                    <div className="wireframe" style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%',
-                      border: '1px solid var(--brand-purple)',
-                      borderRadius: '10px',
-                      zIndex: 3,
-                      pointerEvents: 'none',
-                      transform: 'translate(-12px, 12px)',
-                      transition: 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)'
-                    }}></div>
-
-                    <div className="tabs" style={{
-                      position: 'absolute',
-                      top: '20px',
-                      left: 0,
-                      width: '6px',
-                      height: '40px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      zIndex: 4,
-                      transform: 'translate(calc(-50% - 12px), 12px)',
-                      transition: 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)'
-                    }}>
-                      <div style={{ width: '100%', height: '40%', background: 'var(--brand-purple)', borderRadius: '3px' }}></div>
-                      <div style={{ width: '100%', height: '40%', background: 'var(--brand-purple)', borderRadius: '3px' }}></div>
-                    </div>
-
-                    <div style={{ position: 'relative', width: '100%', height: '100%', zIndex: 2, borderRadius: '10px', overflow: 'hidden' }}>
-                      <img src={post.img} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
-                    <div>
-                      <div style={{
-                        fontSize: '0.75rem',
-                        color: 'var(--brand-purple)',
-                        fontWeight: 'bold',
-                        letterSpacing: '1px',
-                        marginBottom: '15px'
-                      }}>
-                        {post.category}
-                      </div>
-
-                      <h3 style={{ fontSize: '1.6rem', margin: '0 0 15px 0', lineHeight: 1.2 }}>{post.title}</h3>
-
-                      <p style={{
-                        color: 'rgba(255,255,255,0.6)',
-                        fontSize: '0.95rem',
-                        lineHeight: 1.6,
-                        margin: '0 0 30px 0',
-                        fontFamily: "'Lora', serif"
-                      }}>
-                        {post.desc}
-                      </p>
-                    </div>
-
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
-                        <button style={{
-                          background: 'transparent',
-                          border: '1px solid rgba(255,255,255,0.2)',
-                          color: 'white',
-                          padding: '10px 20px',
-                          borderRadius: '30px',
-                          fontFamily: "'Playfair Display', serif",
-                          fontSize: '0.9rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          transition: 'background 0.2s, border-color 0.2s'
-                        }}
-                          onMouseOver={e => {
-                            e.currentTarget.style.background = 'var(--brand-purple)';
-                            e.currentTarget.style.borderColor = 'var(--brand-purple)';
-                          }}
-                          onMouseOut={e => {
-                            e.currentTarget.style.background = 'transparent';
-                            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
-                          }}
-                        >
-                          Read More
-                        </button>
-                      </div>
-                  </div>
-                </div>
-              </Link>
-            </div>
+            <BlogCard
+              key={post.id}
+              id={post.id}
+              category={post.category}
+              title={post.title}
+              desc={post.desc}
+              img={post.img}
+            />
           ))}
         </div>
 
