@@ -61,7 +61,8 @@ function AppContent() {
   );
 }
 
-import BlogPage from './ui/BlogPage';
+import BlogIndexPage from './ui/BlogIndexPage';
+import BlogPostPage from './ui/BlogPostPage';
 import { Routes, Route } from 'react-router-dom';
 
 function App() {
@@ -71,7 +72,8 @@ function App() {
         <MobileProvider>
           <Routes>
             <Route path="/" element={<AppContent />} />
-            <Route path="/blog" element={<BlogPage />} />
+            <Route path="/blog" element={<BlogIndexPage />} />
+            <Route path="/blog/:id" element={<BlogPostPage />} />
           </Routes>
         </MobileProvider>
       </ErrorBoundary>

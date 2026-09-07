@@ -1,13 +1,14 @@
 import { useMobile } from '../contexts/MobileContext';
 
-const BlogPage = () => {
+const BlogPostPage = () => {
   const { isMobile } = useMobile();
 
   return (
     <div style={{
       width: '100%',
       minHeight: '100vh',
-      background: 'var(--bg-main)',
+      background: 'radial-gradient(ellipse at top center, rgba(147, 51, 234, 0.25) 0%, var(--bg-main) 60%)',
+      backgroundColor: 'var(--bg-main)',
       color: 'white',
       padding: isMobile ? '100px 20px 40px' : '120px 5% 60px',
       boxSizing: 'border-box',
@@ -252,4 +253,4 @@ const BlogPage = () => {
   );
 };
 
-export default BlogPage;
+export default BlogPostPage;

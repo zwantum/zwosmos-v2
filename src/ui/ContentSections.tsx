@@ -19,105 +19,109 @@ const ContentSections: React.FC = () => {
 
           <div className="grid-3">
             {[
-              { category: 'DEEP SPACE', title: 'The Nursery of New Stars', img: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1000&auto=format&fit=crop' },
-              { category: 'TECHNOLOGY', title: 'Seeing Further Than Ever Before', img: 'https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?q=80&w=1000&auto=format&fit=crop' },
-              { category: 'SOLAR SYSTEM', title: 'When the Sun Disappears', img: 'https://images.unsplash.com/photo-1541873676-a18131494184?q=80&w=418&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' }
+              { id: 1, category: 'DEEP SPACE', title: 'The Nursery of New Stars', img: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1000&auto=format&fit=crop' },
+              { id: 2, category: 'TECHNOLOGY', title: 'Seeing Further Than Ever Before', img: 'https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?q=80&w=1000&auto=format&fit=crop' },
+              { id: 3, category: 'SOLAR SYSTEM', title: 'When the Sun Disappears', img: 'https://images.unsplash.com/photo-1541873676-a18131494184?q=80&w=418&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' }
             ].map((story, i) => (
-              <div key={i} style={{ position: 'relative', cursor: 'pointer', marginLeft: '30px', marginBottom: '35px' }}
-                onMouseOver={e => {
-                  const w = e.currentTarget.querySelector('.wireframe') as HTMLElement;
-                  const t = e.currentTarget.querySelector('.tabs') as HTMLElement;
-                  if (w) w.style.transform = 'translate(0, 0)';
-                  if (t) t.style.transform = 'translate(-50%, 0)';
-                }}
-                onMouseOut={e => {
-                  const w = e.currentTarget.querySelector('.wireframe') as HTMLElement;
-                  const t = e.currentTarget.querySelector('.tabs') as HTMLElement;
-                  if (w) w.style.transform = 'translate(-12px, 12px)';
-                  if (t) t.style.transform = 'translate(calc(-50% - 12px), 12px)';
-                }}
-              >
-                <div className="wireframe" style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  aspectRatio: '4/3',
-                  border: '1px solid var(--brand-purple)',
-                  borderRadius: '10px',
-                  zIndex: 3,
-                  pointerEvents: 'none',
-                  transform: 'translate(-12px, 12px)',
-                  transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-                }}></div>
+              <div key={i} style={{ position: 'relative', marginLeft: '30px', marginBottom: '35px' }}>
+                <Link to={`/blog/${story.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+                  <div style={{ position: 'relative', cursor: 'pointer' }}
+                    onMouseOver={e => {
+                      const w = e.currentTarget.querySelector('.wireframe') as HTMLElement;
+                      const t = e.currentTarget.querySelector('.tabs') as HTMLElement;
+                      if (w) w.style.transform = 'translate(0, 0)';
+                      if (t) t.style.transform = 'translate(-50%, 0)';
+                    }}
+                    onMouseOut={e => {
+                      const w = e.currentTarget.querySelector('.wireframe') as HTMLElement;
+                      const t = e.currentTarget.querySelector('.tabs') as HTMLElement;
+                      if (w) w.style.transform = 'translate(-12px, 12px)';
+                      if (t) t.style.transform = 'translate(calc(-50% - 12px), 12px)';
+                    }}
+                  >
+                    <div className="wireframe" style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      aspectRatio: '4/3',
+                      border: '1px solid var(--brand-purple)',
+                      borderRadius: '10px',
+                      zIndex: 3,
+                      pointerEvents: 'none',
+                      transform: 'translate(-12px, 12px)',
+                      transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                    }}></div>
 
-                <div className="tabs" style={{
-                  position: 'absolute',
-                  top: '20px',
-                  left: 0,
-                  transform: 'translate(calc(-50% - 12px), 12px)',
-                  zIndex: 4,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '12px',
-                  transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-                }}>
-                  <div style={{
-                    background: 'var(--bg-main)',
-                    border: '1px solid var(--brand-purple)',
-                    borderRadius: '20px',
-                    padding: '15px 5px',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    writingMode: 'vertical-rl',
-                    transform: 'rotate(180deg)',
-                    color: 'white',
-                    fontSize: '0.8rem',
-                    fontWeight: 'bold',
-                    letterSpacing: '1px',
-                    boxShadow: '0 4px 10px rgba(0,0,0,0.5)'
-                  }}>
-                    {story.category}
+                    <div className="tabs" style={{
+                      position: 'absolute',
+                      top: '20px',
+                      left: 0,
+                      transform: 'translate(calc(-50% - 12px), 12px)',
+                      zIndex: 4,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '12px',
+                      transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                    }}>
+                      <div style={{
+                        background: 'var(--bg-main)',
+                        border: '1px solid var(--brand-purple)',
+                        borderRadius: '20px',
+                        padding: '15px 5px',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        writingMode: 'vertical-rl',
+                        transform: 'rotate(180deg)',
+                        color: 'white',
+                        fontSize: '0.8rem',
+                        fontWeight: 'bold',
+                        letterSpacing: '1px',
+                        boxShadow: '0 4px 10px rgba(0,0,0,0.5)'
+                      }}>
+                        {story.category}
+                      </div>
+
+                      <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        background: 'var(--bg-main)',
+                        border: '1px solid var(--brand-purple)',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        color: 'white',
+                        boxShadow: '0 4px 10px rgba(0,0,0,0.5)'
+                      }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                      </div>
+
+                      <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        background: 'var(--bg-main)',
+                        border: '1px solid var(--brand-purple)',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        color: 'white',
+                        boxShadow: '0 4px 10px rgba(0,0,0,0.5)'
+                      }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg>
+                      </div>
+                    </div>
+
+                    <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', zIndex: 2, borderRadius: '10px', overflow: 'hidden', marginBottom: '20px' }}>
+                      <img src={story.img} alt={story.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+
+                    <h3 style={{ fontSize: '1.6rem', margin: '0', lineHeight: 1.2 }}>{story.title}</h3>
                   </div>
-
-                  <div style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '50%',
-                    background: 'var(--bg-main)',
-                    border: '1px solid var(--brand-purple)',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    color: 'white',
-                    boxShadow: '0 4px 10px rgba(0,0,0,0.5)'
-                  }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                  </div>
-
-                  <div style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '50%',
-                    background: 'var(--bg-main)',
-                    border: '1px solid var(--brand-purple)',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    color: 'white',
-                    boxShadow: '0 4px 10px rgba(0,0,0,0.5)'
-                  }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg>
-                  </div>
-                </div>
-
-                <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', zIndex: 2, borderRadius: '10px', overflow: 'hidden', marginBottom: '20px' }}>
-                  <img src={story.img} alt={story.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                </div>
-
-                <h3 style={{ fontSize: '1.6rem', margin: '0', lineHeight: 1.2 }}>{story.title}</h3>
+                </Link>
               </div>
             ))}
           </div>
