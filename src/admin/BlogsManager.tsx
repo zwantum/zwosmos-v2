@@ -11,9 +11,11 @@ export default function BlogsManager() {
   // Form State
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
+  const [slug, setSlug] = useState('');
   const [desc, setDesc] = useState('');
   const [img, setImg] = useState('');
   const [content, setContent] = useState('');
+  const [isArchived, setIsArchived] = useState(false);
 
   useEffect(() => {
     fetchBlogs();
@@ -34,7 +36,15 @@ export default function BlogsManager() {
   const handleSave = async () => {
     if (!supabase) return;
     
-    const newBlog = { title, category, desc, img, content };
+    const newBlog = { 
+      title, 
+      category, 
+      slug,
+      "desc": desc, 
+      img, 
+      content,
+      is_archived: isArchived 
+    };
 
     const { error } = await supabase.from('blogs').insert([newBlog]);
     if (!error) {
@@ -49,9 +59,11 @@ export default function BlogsManager() {
   const resetForm = () => {
     setTitle('');
     setCategory('');
+    setSlug('');
     setDesc('');
     setImg('');
     setContent('');
+    setIsArchived(false);
   };
 
   if (isEditing) {
@@ -63,19 +75,24 @@ export default function BlogsManager() {
         </div>
 
         <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} style={inputStyle} />
+        <input placeholder="Image URL (or implement uploader)" value={img} onChange={e => setImg(e.target.value)} style={inputStyle} />
+        <input placeholder="Slug (e.g. my-first-post)" value={slug} onChange={e => setSlug(e.target.value)} style={inputStyle} />
         <input placeholder="Category" value={category} onChange={e => setCategory(e.target.value)} style={inputStyle} />
         
         <div>
           <label style={{ display: 'block', marginBottom: '8px', color: 'rgba(255,255,255,0.8)' }}>Short Description (Appears on the blog card)</label>
-          <TiptapEditor value={desc} onChange={setDesc} />
+          <textarea placeholder="Write a short summary..." value={desc} onChange={e => setDesc(e.target.value)} style={{...inputStyle, height: '80px', fontFamily: 'inherit'}} />
         </div>
-
-        <input placeholder="Image URL (or implement uploader)" value={img} onChange={e => setImg(e.target.value)} style={inputStyle} />
         
         <div>
           <label style={{ display: 'block', marginBottom: '8px', color: 'rgba(255,255,255,0.8)' }}>Main Blog Content</label>
           <TiptapEditor value={content} onChange={setContent} />
         </div>
+
+        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'rgba(255,255,255,0.8)', cursor: 'pointer' }}>
+          <input type="checkbox" checked={isArchived} onChange={e => setIsArchived(e.target.checked)} style={{ width: '18px', height: '18px' }} />
+          Archive this post (hide from public view)
+        </label>
 
         <button onClick={handleSave} style={{ background: 'var(--brand-purple)', color: 'white', border: 'none', padding: '12px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>Save Blog</button>
       </div>
