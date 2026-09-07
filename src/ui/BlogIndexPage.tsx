@@ -96,7 +96,17 @@ const BlogIndexPage = () => {
           {blogPosts.map((post) => (
             <div key={post.id} style={{ position: 'relative', marginLeft: '30px', marginBottom: '35px' }}>
               <Link to={`/blog/${post.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block', height: '100%' }}>
-                <div style={{ position: 'relative', cursor: 'pointer', height: '100%' }}
+                <div style={{ 
+                  cursor: 'pointer', 
+                  height: '100%',
+                  background: 'var(--bg-dark-purple)',
+                  borderRadius: '10px',
+                  padding: '25px',
+                  border: '1px solid rgba(255,255,255,0.05)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  boxSizing: 'border-box'
+                }}
                   onMouseOver={e => {
                     const w = e.currentTarget.querySelector('.wireframe') as HTMLElement;
                     const t = e.currentTarget.querySelector('.tabs') as HTMLElement;
@@ -110,50 +120,44 @@ const BlogIndexPage = () => {
                     if (t) t.style.transform = 'translate(calc(-50% - 12px), 12px)';
                   }}
                 >
-                  <div className="wireframe" style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    border: '1px solid var(--brand-purple)',
-                    borderRadius: '10px',
-                    zIndex: 3,
-                    pointerEvents: 'none',
-                    transform: 'translate(-12px, 12px)',
-                    transition: 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)'
-                  }}></div>
+                  <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', marginBottom: '25px', zIndex: 1 }}>
+                    <div className="wireframe" style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      border: '1px solid var(--brand-purple)',
+                      borderRadius: '10px',
+                      zIndex: 3,
+                      pointerEvents: 'none',
+                      transform: 'translate(-12px, 12px)',
+                      transition: 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)'
+                    }}></div>
 
-                  <div className="tabs" style={{
-                    position: 'absolute',
-                    top: '20px',
-                    left: 0,
-                    width: '6px',
-                    height: '40px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    zIndex: 4,
-                    transform: 'translate(calc(-50% - 12px), 12px)',
-                    transition: 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)'
-                  }}>
-                    <div style={{ width: '100%', height: '40%', background: 'var(--brand-purple)', borderRadius: '3px' }}></div>
-                    <div style={{ width: '100%', height: '40%', background: 'var(--brand-purple)', borderRadius: '3px' }}></div>
+                    <div className="tabs" style={{
+                      position: 'absolute',
+                      top: '20px',
+                      left: 0,
+                      width: '6px',
+                      height: '40px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      zIndex: 4,
+                      transform: 'translate(calc(-50% - 12px), 12px)',
+                      transition: 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)'
+                    }}>
+                      <div style={{ width: '100%', height: '40%', background: 'var(--brand-purple)', borderRadius: '3px' }}></div>
+                      <div style={{ width: '100%', height: '40%', background: 'var(--brand-purple)', borderRadius: '3px' }}></div>
+                    </div>
+
+                    <div style={{ position: 'relative', width: '100%', height: '100%', zIndex: 2, borderRadius: '10px', overflow: 'hidden' }}>
+                      <img src={post.img} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
                   </div>
 
-                  <div style={{
-                    background: 'var(--bg-dark-purple)',
-                    borderRadius: '10px',
-                    padding: '25px',
-                    position: 'relative',
-                    zIndex: 2,
-                    border: '1px solid rgba(255,255,255,0.05)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    height: '100%',
-                    boxSizing: 'border-box'
-                  }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
                     <div>
                       <div style={{
                         fontSize: '0.75rem',
@@ -163,10 +167,6 @@ const BlogIndexPage = () => {
                         marginBottom: '15px'
                       }}>
                         {post.category}
-                      </div>
-
-                      <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', zIndex: 2, borderRadius: '10px', overflow: 'hidden', marginBottom: '25px' }}>
-                        <img src={post.img} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       </div>
 
                       <h3 style={{ fontSize: '1.6rem', margin: '0 0 15px 0', lineHeight: 1.2 }}>{post.title}</h3>
@@ -213,9 +213,9 @@ const BlogIndexPage = () => {
                       </div>
                     </div>
                   </div>
-                  </div>
-                </Link>
-              </div>
+                </div>
+              </Link>
+            </div>
             ))}
         </div>
 
