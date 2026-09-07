@@ -15,7 +15,7 @@ export const BlogCard = ({ id, category, title, desc, img }: BlogCardProps) => {
         <div style={{
           cursor: 'pointer',
           height: '100%',
-          background: 'var(--bg-dark-purple)',
+          background: 'transparent',
           borderRadius: '10px',
           padding: '25px',
           display: 'flex',
