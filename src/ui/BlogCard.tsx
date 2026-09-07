@@ -121,15 +121,16 @@ export const BlogCard = ({ id, category, title, desc, img }: BlogCardProps) => {
             <div>
               <h3 style={{ fontSize: '1.6rem', margin: '0 0 15px 0', lineHeight: 1.2 }}>{title}</h3>
               
-              <p style={{ 
-                color: 'rgba(255,255,255,0.6)', 
-                fontSize: '0.95rem', 
-                lineHeight: 1.6, 
-                margin: '0 0 30px 0',
-                fontFamily: "'Lora', serif" 
-              }}>
-                {desc}
-              </p>
+              <div 
+                style={{ 
+                  color: 'rgba(255,255,255,0.6)', 
+                  fontSize: '0.95rem', 
+                  lineHeight: 1.6, 
+                  margin: '0 0 30px 0',
+                  fontFamily: "'Lora', serif" 
+                }}
+                dangerouslySetInnerHTML={{ __html: desc }}
+              />
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>

@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
+import TiptapEditor from './TiptapEditor';
 
 export default function BlogsManager() {
   const [blogs, setBlogs] = useState<any[]>([]);
@@ -14,11 +13,7 @@ export default function BlogsManager() {
   const [category, setCategory] = useState('');
   const [desc, setDesc] = useState('');
   const [img, setImg] = useState('');
-
-  const editor = useEditor({
-    extensions: [StarterKit],
-    content: '',
-  });
+  const [content, setContent] = useState('');
 
   useEffect(() => {
     fetchBlogs();
@@ -39,7 +34,6 @@ export default function BlogsManager() {
   const handleSave = async () => {
     if (!supabase) return;
     
-    const content = editor?.getHTML();
     const newBlog = { title, category, desc, img, content };
 
     const { error } = await supabase.from('blogs').insert([newBlog]);
@@ -57,7 +51,7 @@ export default function BlogsManager() {
     setCategory('');
     setDesc('');
     setImg('');
-    editor?.commands.setContent('');
+    setContent('');
   };
 
   if (isEditing) {
@@ -70,11 +64,17 @@ export default function BlogsManager() {
 
         <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} style={inputStyle} />
         <input placeholder="Category" value={category} onChange={e => setCategory(e.target.value)} style={inputStyle} />
-        <textarea placeholder="Short Description" value={desc} onChange={e => setDesc(e.target.value)} style={{...inputStyle, height: '80px'}} />
+        
+        <div>
+          <label style={{ display: 'block', marginBottom: '8px', color: 'rgba(255,255,255,0.8)' }}>Short Description (Appears on the blog card)</label>
+          <TiptapEditor value={desc} onChange={setDesc} />
+        </div>
+
         <input placeholder="Image URL (or implement uploader)" value={img} onChange={e => setImg(e.target.value)} style={inputStyle} />
         
-        <div style={{ border: '1px solid rgba(255,255,255,0.2)', borderRadius: '5px', minHeight: '300px', padding: '10px', background: 'rgba(0,0,0,0.2)' }}>
-          <EditorContent editor={editor} style={{ outline: 'none', color: 'white' }} />
+        <div>
+          <label style={{ display: 'block', marginBottom: '8px', color: 'rgba(255,255,255,0.8)' }}>Main Blog Content</label>
+          <TiptapEditor value={content} onChange={setContent} />
         </div>
 
         <button onClick={handleSave} style={{ background: 'var(--brand-purple)', color: 'white', border: 'none', padding: '12px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>Save Blog</button>
