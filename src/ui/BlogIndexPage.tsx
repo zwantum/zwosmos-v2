@@ -36,7 +36,7 @@ const BlogIndexPage = () => {
       id: 4, 
       category: 'ASTROPHYSICS', 
       title: 'The Symphony of Black Holes', 
-      desc: 'Gravitational waves give us a new sense to observe the universe. What do colliding black holes sound like?',
+      desc: 'When two black holes collide, they send ripples through the very fabric of spacetime. Listen to their cosmic symphony.',
       authorName: 'Marie Curie',
       authorImg: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=100&auto=format&fit=crop',
       img: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1000&auto=format&fit=crop' 
@@ -45,18 +45,18 @@ const BlogIndexPage = () => {
       id: 5, 
       category: 'EXPLORATION', 
       title: 'Mapping the Unknown', 
-      desc: 'How autonomous probes are mapping the furthest reaches of our galaxy without human intervention.',
-      authorName: 'John Doe',
-      authorImg: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=100&auto=format&fit=crop',
+      desc: 'How the next generation of space probes will chart the uncharted territories of our outer solar system and beyond.',
+      authorName: 'Carl Sagan',
+      authorImg: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=100&auto=format&fit=crop',
       img: 'https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?q=80&w=1000&auto=format&fit=crop' 
     },
     { 
       id: 6, 
       category: 'THEORIES', 
       title: 'Echoes of the Big Bang', 
-      desc: 'Cosmic microwave background radiation still holds the blueprint of the early universe.',
-      authorName: 'Jane Smith',
-      authorImg: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=100&auto=format&fit=crop',
+      desc: 'The cosmic microwave background radiation still holds answers to the earliest moments of our universes expansion.',
+      authorName: 'Ada Lovelace',
+      authorImg: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=100&auto=format&fit=crop',
       img: 'https://images.unsplash.com/photo-1541873676-a18131494184?q=80&w=418&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' 
     }
   ];
@@ -155,6 +155,16 @@ const BlogIndexPage = () => {
                     boxSizing: 'border-box'
                   }}>
                     <div>
+                      <div style={{
+                        fontSize: '0.75rem',
+                        color: 'var(--brand-purple)',
+                        fontWeight: 'bold',
+                        letterSpacing: '1px',
+                        marginBottom: '15px'
+                      }}>
+                        {post.category}
+                      </div>
+
                       <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', zIndex: 2, borderRadius: '10px', overflow: 'hidden', marginBottom: '25px' }}>
                         <img src={post.img} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       </div>
@@ -203,10 +213,10 @@ const BlogIndexPage = () => {
                       </div>
                     </div>
                   </div>
-                </div>
-              </Link>
-            </div>
-          ))}
+                  </div>
+                </Link>
+              </div>
+            ))}
         </div>
 
       </div>
