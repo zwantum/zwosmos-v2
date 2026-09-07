@@ -1,0 +1,62 @@
+.tiptap-white-editor {
+  padding: 20px;
+  min-height: 300px;
+  outline: none;
+  font-family: inherit;
+}
+
+.tiptap-white-editor p {
+  margin: 0 0 1em 0;
+}
+
+.tiptap-white-editor h1,
+.tiptap-white-editor h2,
+.tiptap-white-editor h3 {
+  margin-top: 0;
+  margin-bottom: 0.5em;
+  font-weight: bold;
+}
+
+.tiptap-white-editor ul,
+.tiptap-white-editor ol {
+  padding-left: 20px;
+  margin-bottom: 1em;
+}
+
+.tiptap-white-editor a {
+  color: #3b82f6;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.tiptap-white-editor img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+.tiptap-white-editor blockquote {
+  border-left: 3px solid #e5e7eb;
+  padding-left: 1rem;
+  margin-left: 0;
+  margin-right: 0;
+  color: #4b5563;
+}
+
+.tiptap-white-editor hr {
+  border: none;
+  border-top: 2px solid #e5e7eb;
+  margin: 2rem 0;
+}
+
+.ProseMirror {
+  outline: none !important;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  color: #adb5bd;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
