@@ -18,7 +18,7 @@ Welcome to Zwosmos V2! This is a Daily Space Fact web application built with Rea
 
 1. Install dependencies
 ```bash
-npm install
+npm install 
 ```
 
 2. Run the development server
