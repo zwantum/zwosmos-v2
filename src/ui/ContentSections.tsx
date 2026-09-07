@@ -193,11 +193,6 @@ const ContentSections: React.FC = () => {
                         >
                           Read More
                         </button>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <img src={story.authorImg} alt={story.authorName} style={{ width: '35px', height: '35px', borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.2)' }} />
-                          <span style={{ fontFamily: "'Playfair Display', serif", fontSize: '0.95rem', fontWeight: 600 }}>{story.authorName}</span>
-                        </div>
                       </div>
                     </div>
                   </div>

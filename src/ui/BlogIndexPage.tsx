@@ -5,59 +5,59 @@ const BlogIndexPage = () => {
   const { isMobile } = useMobile();
 
   const blogPosts = [
-    { 
-      id: 1, 
-      category: 'DEEP SPACE', 
-      title: 'The Nursery of New Stars', 
+    {
+      id: 1,
+      category: 'DEEP SPACE',
+      title: 'The Nursery of New Stars',
       desc: 'Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts...',
       authorName: 'John Doe',
       authorImg: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=100&auto=format&fit=crop',
-      img: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1000&auto=format&fit=crop' 
+      img: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1000&auto=format&fit=crop'
     },
-    { 
-      id: 2, 
-      category: 'TECHNOLOGY', 
-      title: 'Seeing Further Than Ever Before', 
+    {
+      id: 2,
+      category: 'TECHNOLOGY',
+      title: 'Seeing Further Than Ever Before',
       desc: 'The latest telescopes are capturing light from the very dawn of the universe, revealing secrets long hidden in the dark.',
       authorName: 'Jane Smith',
       authorImg: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=100&auto=format&fit=crop',
-      img: 'https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?q=80&w=1000&auto=format&fit=crop' 
+      img: 'https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?q=80&w=1000&auto=format&fit=crop'
     },
-    { 
-      id: 3, 
-      category: 'SOLAR SYSTEM', 
-      title: 'When the Sun Disappears', 
+    {
+      id: 3,
+      category: 'SOLAR SYSTEM',
+      title: 'When the Sun Disappears',
       desc: 'A look into the mechanics of solar eclipses and how they have shaped human culture and scientific understanding.',
       authorName: 'Alan Turing',
       authorImg: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=100&auto=format&fit=crop',
-      img: 'https://images.unsplash.com/photo-1541873676-a18131494184?q=80&w=418&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' 
+      img: 'https://images.unsplash.com/photo-1541873676-a18131494184?q=80&w=418&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
     },
-    { 
-      id: 4, 
-      category: 'ASTROPHYSICS', 
-      title: 'The Symphony of Black Holes', 
+    {
+      id: 4,
+      category: 'ASTROPHYSICS',
+      title: 'The Symphony of Black Holes',
       desc: 'When two black holes collide, they send ripples through the very fabric of spacetime. Listen to their cosmic symphony.',
       authorName: 'Marie Curie',
       authorImg: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=100&auto=format&fit=crop',
-      img: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1000&auto=format&fit=crop' 
+      img: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1000&auto=format&fit=crop'
     },
-    { 
-      id: 5, 
-      category: 'EXPLORATION', 
-      title: 'Mapping the Unknown', 
+    {
+      id: 5,
+      category: 'EXPLORATION',
+      title: 'Mapping the Unknown',
       desc: 'How the next generation of space probes will chart the uncharted territories of our outer solar system and beyond.',
       authorName: 'Carl Sagan',
       authorImg: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=100&auto=format&fit=crop',
-      img: 'https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?q=80&w=1000&auto=format&fit=crop' 
+      img: 'https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?q=80&w=1000&auto=format&fit=crop'
     },
-    { 
-      id: 6, 
-      category: 'THEORIES', 
-      title: 'Echoes of the Big Bang', 
+    {
+      id: 6,
+      category: 'THEORIES',
+      title: 'Echoes of the Big Bang',
       desc: 'The cosmic microwave background radiation still holds answers to the earliest moments of our universes expansion.',
       authorName: 'Ada Lovelace',
       authorImg: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=100&auto=format&fit=crop',
-      img: 'https://images.unsplash.com/photo-1541873676-a18131494184?q=80&w=418&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' 
+      img: 'https://images.unsplash.com/photo-1541873676-a18131494184?q=80&w=418&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
     }
   ];
 
@@ -72,7 +72,7 @@ const BlogIndexPage = () => {
       boxSizing: 'border-box'
     }}>
       <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-        
+
         {/* Page Header */}
         <div style={{ textAlign: 'center', marginBottom: '60px' }}>
           <h1 style={{
@@ -169,53 +169,48 @@ const BlogIndexPage = () => {
                       </div>
 
                       <h3 style={{ fontSize: '1.6rem', margin: '0 0 15px 0', lineHeight: 1.2 }}>{post.title}</h3>
-                      
-                      <p style={{ 
-                        color: 'rgba(255,255,255,0.6)', 
-                        fontSize: '0.95rem', 
-                        lineHeight: 1.6, 
+
+                      <p style={{
+                        color: 'rgba(255,255,255,0.6)',
+                        fontSize: '0.95rem',
+                        lineHeight: 1.6,
                         margin: '0 0 30px 0',
-                        fontFamily: "'Lora', serif" 
+                        fontFamily: "'Lora', serif"
                       }}>
                         {post.desc}
                       </p>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
-                      <button style={{
-                        background: 'transparent',
-                        border: '1px solid rgba(255,255,255,0.2)',
-                        color: 'white',
-                        padding: '10px 20px',
-                        borderRadius: '30px',
-                        fontFamily: "'Playfair Display', serif",
-                        fontSize: '0.9rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        transition: 'background 0.2s, border-color 0.2s'
-                      }}
-                      onMouseOver={e => {
-                        e.currentTarget.style.background = 'var(--brand-purple)';
-                        e.currentTarget.style.borderColor = 'var(--brand-purple)';
-                      }}
-                      onMouseOut={e => {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
-                      }}
-                      >
-                        Read More
-                      </button>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <img src={post.authorImg} alt={post.authorName} style={{ width: '35px', height: '35px', borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.2)' }} />
-                        <span style={{ fontFamily: "'Playfair Display', serif", fontSize: '0.95rem', fontWeight: 600 }}>{post.authorName}</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
+                        <button style={{
+                          background: 'transparent',
+                          border: '1px solid rgba(255,255,255,0.2)',
+                          color: 'white',
+                          padding: '10px 20px',
+                          borderRadius: '30px',
+                          fontFamily: "'Playfair Display', serif",
+                          fontSize: '0.9rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'background 0.2s, border-color 0.2s'
+                        }}
+                          onMouseOver={e => {
+                            e.currentTarget.style.background = 'var(--brand-purple)';
+                            e.currentTarget.style.borderColor = 'var(--brand-purple)';
+                          }}
+                          onMouseOut={e => {
+                            e.currentTarget.style.background = 'transparent';
+                            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
+                          }}
+                        >
+                          Read More
+                        </button>
                       </div>
-                    </div>
                   </div>
                 </div>
               </Link>
             </div>
-            ))}
+          ))}
         </div>
 
       </div>
