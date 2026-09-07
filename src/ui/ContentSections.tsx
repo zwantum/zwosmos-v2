@@ -55,7 +55,6 @@ const ContentSections: React.FC = () => {
                     background: 'var(--bg-dark-purple)',
                     borderRadius: '10px',
                     padding: '25px',
-                    border: '1px solid rgba(255,255,255,0.05)',
                     display: 'flex',
                     flexDirection: 'column',
                     boxSizing: 'border-box'
@@ -73,7 +72,7 @@ const ContentSections: React.FC = () => {
                       if (t) t.style.transform = 'translate(calc(-50% - 12px), 12px)';
                     }}
                   >
-                    <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', marginBottom: '25px', zIndex: 1 }}>
+                    <div style={{ position: 'relative', width: '100%', height: '240px', marginBottom: '25px', zIndex: 1 }}>
                       <div className="wireframe" style={{
                         position: 'absolute',
                         top: 0,
