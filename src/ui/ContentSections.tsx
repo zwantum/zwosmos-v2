@@ -19,13 +19,37 @@ const ContentSections: React.FC = () => {
 
           <div className="grid-3">
             {[
-              { id: 1, category: 'DEEP SPACE', title: 'The Nursery of New Stars', img: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1000&auto=format&fit=crop' },
-              { id: 2, category: 'TECHNOLOGY', title: 'Seeing Further Than Ever Before', img: 'https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?q=80&w=1000&auto=format&fit=crop' },
-              { id: 3, category: 'SOLAR SYSTEM', title: 'When the Sun Disappears', img: 'https://images.unsplash.com/photo-1541873676-a18131494184?q=80&w=418&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' }
+              { 
+                id: 1, 
+                category: 'DEEP SPACE', 
+                title: 'The Nursery of New Stars', 
+                desc: 'Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts...',
+                authorName: 'John Doe',
+                authorImg: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=100&auto=format&fit=crop',
+                img: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1000&auto=format&fit=crop' 
+              },
+              { 
+                id: 2, 
+                category: 'TECHNOLOGY', 
+                title: 'Seeing Further Than Ever Before', 
+                desc: 'The latest telescopes are capturing light from the very dawn of the universe, revealing secrets long hidden in the dark.',
+                authorName: 'Jane Smith',
+                authorImg: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=100&auto=format&fit=crop',
+                img: 'https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?q=80&w=1000&auto=format&fit=crop' 
+              },
+              { 
+                id: 3, 
+                category: 'SOLAR SYSTEM', 
+                title: 'When the Sun Disappears', 
+                desc: 'A look into the mechanics of solar eclipses and how they have shaped human culture and scientific understanding.',
+                authorName: 'Alan Turing',
+                authorImg: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=100&auto=format&fit=crop',
+                img: 'https://images.unsplash.com/photo-1541873676-a18131494184?q=80&w=418&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' 
+              }
             ].map((story, i) => (
               <div key={i} style={{ position: 'relative', marginLeft: '30px', marginBottom: '35px' }}>
-                <Link to={`/blog/${story.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
-                  <div style={{ position: 'relative', cursor: 'pointer' }}
+                <Link to={`/blog/${story.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block', height: '100%' }}>
+                  <div style={{ position: 'relative', cursor: 'pointer', height: '100%' }}
                     onMouseOver={e => {
                       const w = e.currentTarget.querySelector('.wireframe') as HTMLElement;
                       const t = e.currentTarget.querySelector('.tabs') as HTMLElement;
@@ -44,7 +68,7 @@ const ContentSections: React.FC = () => {
                       top: 0,
                       left: 0,
                       width: '100%',
-                      aspectRatio: '4/3',
+                      height: '100%',
                       border: '1px solid var(--brand-purple)',
                       borderRadius: '10px',
                       zIndex: 3,
@@ -115,11 +139,68 @@ const ContentSections: React.FC = () => {
                       </div>
                     </div>
 
-                    <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', zIndex: 2, borderRadius: '10px', overflow: 'hidden', marginBottom: '20px' }}>
-                      <img src={story.img} alt={story.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </div>
+                    <div style={{
+                      background: 'var(--bg-dark-purple)',
+                      borderRadius: '10px',
+                      padding: '25px',
+                      position: 'relative',
+                      zIndex: 2,
+                      border: '1px solid rgba(255,255,255,0.05)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      height: '100%',
+                      boxSizing: 'border-box'
+                    }}>
+                      <div>
+                        <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', zIndex: 2, borderRadius: '10px', overflow: 'hidden', marginBottom: '25px' }}>
+                          <img src={story.img} alt={story.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
 
-                    <h3 style={{ fontSize: '1.6rem', margin: '0', lineHeight: 1.2 }}>{story.title}</h3>
+                        <h3 style={{ fontSize: '1.6rem', margin: '0 0 15px 0', lineHeight: 1.2 }}>{story.title}</h3>
+                        
+                        <p style={{ 
+                          color: 'rgba(255,255,255,0.6)', 
+                          fontSize: '0.95rem', 
+                          lineHeight: 1.6, 
+                          margin: '0 0 30px 0',
+                          fontFamily: "'Lora', serif" 
+                        }}>
+                          {story.desc}
+                        </p>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
+                        <button style={{
+                          background: 'transparent',
+                          border: '1px solid rgba(255,255,255,0.2)',
+                          color: 'white',
+                          padding: '10px 20px',
+                          borderRadius: '30px',
+                          fontFamily: "'Playfair Display', serif",
+                          fontSize: '0.9rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'background 0.2s, border-color 0.2s'
+                        }}
+                        onMouseOver={e => {
+                          e.currentTarget.style.background = 'var(--brand-purple)';
+                          e.currentTarget.style.borderColor = 'var(--brand-purple)';
+                        }}
+                        onMouseOut={e => {
+                          e.currentTarget.style.background = 'transparent';
+                          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
+                        }}
+                        >
+                          Read More
+                        </button>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <img src={story.authorImg} alt={story.authorName} style={{ width: '35px', height: '35px', borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.2)' }} />
+                          <span style={{ fontFamily: "'Playfair Display', serif", fontSize: '0.95rem', fontWeight: 600 }}>{story.authorName}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </Link>
               </div>
