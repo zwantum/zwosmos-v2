@@ -1,6 +1,6 @@
 # ZWOSMOS V2 🌌
 
-Welcome to Zwosmos V2! This is a Daily Space Fact web application built with React, React Three Fiber, and Vite.
+Welcome to Zwosmos V2! This is a Daily Space Fact web application built with React, React Three Fiber, and Vite. 
  
 ## Features
 - **Daily Space Facts:** Discover a new fascinating fact about the cosmos every day.
