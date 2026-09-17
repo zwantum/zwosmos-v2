@@ -20,6 +20,7 @@ export function useBaseComposer(isVisible: boolean): EffectComposer | null {
 
     try {
       renderer.autoClear = false;
+      renderer.setClearColor(0x000000, 0);
       const comp = new EffectComposer(renderer);
       const renderPass = new RenderPass(scene, camera);
       comp.addPass(renderPass);

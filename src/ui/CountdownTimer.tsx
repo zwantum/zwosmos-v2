@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useMobile } from '../contexts/MobileContext';
 
 const CountdownTimer: React.FC = () => {
+  const { isMobile } = useMobile();
   const [time, setTime] = useState<string>('00:00:00');
 
   useEffect(() => {
@@ -23,26 +25,24 @@ const CountdownTimer: React.FC = () => {
 
   return (
     <div style={{
-      position: 'fixed',
-      bottom: '40px',
-      left: '50%',
-      transform: 'translateX(-50%)',
-      zIndex: 10,
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '12px',
       color: '#38bdf8',
       fontFamily: "'Orbitron', sans-serif",
-      fontSize: '1rem',
-      letterSpacing: '3px',
+      fontSize: isMobile ? '0.82rem' : '0.92rem',
+      letterSpacing: '2.5px',
       textShadow: '0 0 10px rgba(56, 189, 248, 0.8), 0 0 20px rgba(56, 189, 248, 0.4)',
-      background: 'rgba(12, 74, 110, 0.3)',
-      backdropFilter: 'blur(8px)',
-      border: '1px solid rgba(56, 189, 248, 0.3)',
-      padding: '10px 20px',
-      borderRadius: '8px',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '10px'
+      background: 'rgba(12, 74, 110, 0.35)',
+      backdropFilter: 'blur(10px)',
+      border: '1px solid rgba(56, 189, 248, 0.4)',
+      padding: isMobile ? '10px 22px' : '12px 30px',
+      borderRadius: '30px',
+      boxShadow: '0 0 20px rgba(56, 189, 248, 0.25), inset 0 0 12px rgba(56, 189, 248, 0.15)',
+      pointerEvents: 'auto'
     }}>
-      <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', letterSpacing: '2px' }}>NEXT FACT IN</span>
+      <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: isMobile ? '0.72rem' : '0.8rem', letterSpacing: '2px' }}>NEXT FACT IN</span>
       <span style={{ fontWeight: 'bold' }}>{time}</span>
     </div>
   );

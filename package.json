@@ -34,6 +34,7 @@
     "@vercel/analytics": "^1.5.0",
     "gsap": "^3.12.7",
     "lucide-react": "^1.41.0",
+    "ogl": "^1.0.11",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.18.3",

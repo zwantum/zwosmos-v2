@@ -1,5 +1,6 @@
 import React from 'react';
 import { useMobile } from '../contexts/MobileContext';
+import CountdownTimer from './CountdownTimer';
 
 const HeroContent: React.FC = () => {
   const { isMobile } = useMobile();
@@ -21,8 +22,7 @@ const HeroContent: React.FC = () => {
       padding: isMobile ? '0 15px' : '0 20px',
       boxSizing: 'border-box'
     }}>
-      <div
-      >
+      <div>
         <h3 style={{
           fontFamily: "'Orbitron', sans-serif",
           color: '#38bdf8',
@@ -58,34 +58,7 @@ const HeroContent: React.FC = () => {
           Since 1990 it has completed more than 200,000 orbits, travelling farther than a trip to Neptune and back.
         </p>
 
-        <button style={{
-          fontFamily: "'Orbitron', sans-serif",
-          padding: isMobile ? '12px 24px' : '14px 32px',
-          fontSize: isMobile ? '0.8rem' : '0.9rem',
-          letterSpacing: '2px',
-          color: '#fff',
-          backgroundColor: 'transparent',
-          border: '2px solid #38bdf8',
-          borderRadius: '30px',
-          cursor: 'pointer',
-          fontWeight: 'bold',
-          textTransform: 'uppercase',
-          boxShadow: '0 0 15px rgba(56, 189, 248, 0.4), inset 0 0 10px rgba(56, 189, 248, 0.2)',
-          transition: 'all 0.3s ease',
-        }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(56, 189, 248, 0.2)';
-            e.currentTarget.style.boxShadow = '0 0 25px rgba(56, 189, 248, 0.8), inset 0 0 15px rgba(56, 189, 248, 0.5)';
-            e.currentTarget.style.transform = 'translateY(-2px)';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.boxShadow = '0 0 15px rgba(56, 189, 248, 0.4), inset 0 0 10px rgba(56, 189, 248, 0.2)';
-            e.currentTarget.style.transform = 'translateY(0)';
-          }}
-        >
-          Explore Cosmos
-        </button>
+        <CountdownTimer />
       </div>
     </div>
   );
