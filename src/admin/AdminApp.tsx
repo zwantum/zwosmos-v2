@@ -18,6 +18,9 @@ export default function AdminApp() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
+    }).catch(err => {
+      console.warn('Admin session check error:', err);
+      setLoading(false);
     });
 
     const {

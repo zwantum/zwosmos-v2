@@ -128,6 +128,7 @@ import CategoryPage from './ui/CategoryPage';
 import AuthorPage from './ui/AuthorPage';
 import TagPage from './ui/TagPage';
 import RssPage from './ui/RssPage';
+import NotFoundPage from './ui/NotFoundPage';
 import ScrollToTopButton from './ui/ScrollToTopButton';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
@@ -141,6 +142,14 @@ function ScrollToTop() {
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
   }, [pathname]);
+  return null;
+}
+
+// Hard-navigates to /admin to ensure AdminApp is mounted via index.tsx
+function AdminRedirect() {
+  useEffect(() => {
+    window.location.href = '/admin';
+  }, []);
   return null;
 }
 
@@ -184,6 +193,13 @@ function App() {
                 {/* Tag routes */}
                 <Route path="/tag/:tagSlug" element={<TagPage />} />
                 <Route path="/tags" element={<TagPage />} />
+
+                {/* Admin direct routing fallback if navigated inside SPA */}
+                <Route path="/admin" element={<AdminRedirect />} />
+                <Route path="/admin/*" element={<AdminRedirect />} />
+
+                {/* 404 Catch-all route */}
+                <Route path="*" element={<NotFoundPage />} />
               </Routes>
               <ScrollToTopButton />
             </BlogProvider>
