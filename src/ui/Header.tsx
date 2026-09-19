@@ -25,7 +25,7 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
   // Large tab (>= 800px) and desktop use desktop header
   const isMobileHeader = winWidth < 800;
   const isLargeView = winWidth >= 800;
-  const isLargeTab = winWidth >= 800 && winWidth <= 1024;
+  const isLargeTab = winWidth >= 800 && winWidth <= 1180;
 
   const effectiveIsLight = propIsLight !== undefined ? propIsLight : contextIsLight;
 
@@ -219,7 +219,7 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '14px 18px',
+            padding: winWidth < 600 ? '14px 30px' : '14px 50px',
             width: '100%',
             boxSizing: 'border-box',
             background: menuOpen
@@ -889,7 +889,7 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        padding: isLargeView ? '32px 20px 20px' : '55px 24px 35px',
+        padding: isLargeTab ? '32px 50px 20px' : isLargeView ? '32px 20px 20px' : '55px 24px 35px',
         textAlign: 'center',
         width: '100%',
         boxSizing: 'border-box'

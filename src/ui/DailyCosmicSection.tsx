@@ -44,10 +44,10 @@ export const DailyCosmicSection: React.FC = () => {
     };
   }, []);
 
-  const isSmallPhone = winWidth < 641;
-  const isSmallTab   = winWidth >= 641 && winWidth < 800;
-  const isLargeView = winWidth >= 800;
-  const isDesktop   = winWidth >= 1025;
+  const isSmallPhone = winWidth < 600;
+  const isSmallTab   = winWidth >= 600 && winWidth < 800;
+  const isTablet     = winWidth >= 600 && winWidth <= 1180;
+  const isDesktop    = winWidth > 1180;
 
   const renderAstronomyTitle = (title: string) => {
     if (!title) return 'This Day in Astronomy';
@@ -82,7 +82,7 @@ export const DailyCosmicSection: React.FC = () => {
         width: '100%',
         background: 'transparent',
         backgroundColor: 'transparent',
-        padding: isDesktop ? '18px 32px 30px' : isLargeView ? '8px 32px 24px' : isSmallPhone ? '30px 16px' : isSmallTab ? '10px 28px 10px' : '10px 32px 50px',
+        padding: isDesktop ? '18px 32px 30px' : isTablet ? (isSmallTab ? '10px 50px 10px' : '10px 50px 24px') : isSmallPhone ? '30px 30px' : '10px 32px 50px',
         boxSizing: 'border-box',
         zIndex: 10
       }}

@@ -22,6 +22,17 @@ export const BooksPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeModalBook, setActiveModalBook] = useState<BookItem | null>(null);
 
+  const [winWidth, setWinWidth] = useState<number>(() => (typeof window !== 'undefined' ? window.innerWidth : 1200));
+
+  useEffect(() => {
+    const handleResize = () => setWinWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const isPhone = winWidth < 600;
+  const isTablet = winWidth >= 600 && winWidth <= 1180;
+
   useEffect(() => {
     let isMounted = true;
     booksService.getBooks().then(data => {
@@ -82,7 +93,7 @@ export const BooksPage: React.FC = () => {
         style={{
           maxWidth: '1360px',
           margin: '0 auto',
-          padding: isMobile ? '35px 16px 50px' : '55px 40px 70px',
+          padding: isPhone ? '35px 30px 50px' : isTablet ? '45px 50px 60px' : '55px 40px 70px',
           boxSizing: 'border-box'
         }}
       >

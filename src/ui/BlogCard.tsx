@@ -319,15 +319,12 @@ export const BlogCard = ({
                     lineHeight: isHorizontal ? 1.45 : 1.6,
                     margin: isHorizontal ? '0 0 10px 0' : isFeatured ? '0 0 16px 0' : '0 0 16px 0',
                     fontFamily: "'Lora', serif",
-                    minHeight: (isHorizontal || isMobile || isFeatured) ? 'auto' : '96px',
-                    ...(isHorizontal
-                      ? {
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical' as const,
-                          overflow: 'hidden'
-                        }
-                      : {})
+                    display: '-webkit-box',
+                    WebkitLineClamp: isHorizontal ? 2 : 3,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    wordBreak: 'break-word'
                   }}
                 >
                   {desc}
@@ -340,7 +337,7 @@ export const BlogCard = ({
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginTop: isHorizontal ? 'auto' : (!showExcerpt || !desc) ? '12px' : '14px'
+                marginTop: 'auto'
               }}
             >
               <button

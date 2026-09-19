@@ -27,6 +27,19 @@ const POSTS_PER_PAGE = 12;
 const BlogIndexPage: React.FC = () => {
   const { isMobile } = useMobile();
   const { isLight } = useTheme();
+
+  // Window width tracking for accurate tablet (both small & large tab) detection
+  const [winWidth, setWinWidth] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1200));
+  useEffect(() => {
+    const onResize = () => setWinWidth(window.innerWidth);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  const isSmallTab = winWidth >= 600 && winWidth < 800;
+  const isLargeTab = winWidth >= 800 && winWidth <= 1180;
+  const isTablet = isSmallTab || isLargeTab;
+  const isPhone = winWidth < 600;
   const { posts: livePosts } = useBlogPosts();
   const [searchParams, setSearchParams] = useSearchParams();
   const urlSearch = searchParams.get('search') || '';
@@ -129,7 +142,7 @@ const BlogIndexPage: React.FC = () => {
         style={{
           maxWidth: '1260px',
           margin: '0 auto',
-          padding: isMobile ? '20px 14px 50px' : '35px 24px 70px',
+          padding: isPhone ? '20px 30px 50px' : isTablet ? '28px 50px 70px' : '35px 24px 70px',
           boxSizing: 'border-box'
         }}
       >
@@ -394,10 +407,10 @@ const BlogIndexPage: React.FC = () => {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: isMobile
+              gridTemplateColumns: isPhone
                 ? '1fr'
                 : 'repeat(3, 1fr)',
-              gap: isMobile ? '24px 14px' : '32px 20px'
+              gap: isPhone ? '24px 14px' : (isSmallTab ? '24px 12px' : '32px 20px')
             }}
           >
             {paginatedPosts.map(post => (

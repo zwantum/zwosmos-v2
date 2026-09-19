@@ -23,6 +23,19 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ slug: propSlug }) =>
   const { categorySlug } = useParams<{ categorySlug?: string }>();
   const activeSlug = propSlug || categorySlug || 'space-news';
 
+  // Window width tracking for accurate tablet (both small & large tab) detection
+  const [winWidth, setWinWidth] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1200));
+  useEffect(() => {
+    const onResize = () => setWinWidth(window.innerWidth);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  const isSmallTab = winWidth >= 600 && winWidth < 800;
+  const isLargeTab = winWidth >= 800 && winWidth <= 1180;
+  const isTablet = isSmallTab || isLargeTab;
+  const isPhone = winWidth < 600;
+
   const [currentPage, setCurrentPage] = useState<number>(1);
   const { posts: livePosts } = useBlogPosts();
 
@@ -96,7 +109,11 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ slug: propSlug }) =>
         style={{
           maxWidth: '1260px',
           margin: '0 auto',
-          padding: isMobile ? '20px 16px 60px' : '35px 24px 80px',
+          padding: isPhone
+            ? '20px 30px 60px'
+            : isTablet
+            ? '28px 50px 70px'
+            : '35px 24px 80px',
           boxSizing: 'border-box'
         }}
       >
@@ -242,10 +259,10 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ slug: propSlug }) =>
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: isMobile
+              gridTemplateColumns: isPhone
                 ? '1fr'
                 : 'repeat(3, 1fr)',
-              gap: isMobile ? '24px 14px' : '32px 20px'
+              gap: isPhone ? '24px 14px' : (isSmallTab ? '24px 12px' : '32px 20px')
             }}
           >
             {paginatedPosts.map(post => (

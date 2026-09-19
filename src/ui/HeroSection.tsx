@@ -29,11 +29,11 @@ export const HeroSection: React.FC = () => {
     return () => window.removeEventListener('resize', onResize);
   }, []);
   // Layout purely based on width — ignores isMobile (touch detection can be wrong in DevTools)
-  const isSmallPhone = winWidth < 641;   // < 641px → phone
-  const isSmallTab   = winWidth >= 641 && winWidth < 800; // 641–799px → small tab
-  const isTablet    = winWidth >= 641 && winWidth < 1024; // 641–1023px → tablet
+  const isSmallPhone = winWidth < 600;   // < 600px → phone
+  const isSmallTab   = winWidth >= 600 && winWidth < 800; // 600–799px → small tab
+  const isTablet    = winWidth >= 600 && winWidth <= 1180; // 600–1180px → tablet
   const isLargeView = winWidth >= 800;
-  const isDesktop   = winWidth >= 1025; // desktop view only
+  const isDesktop   = winWidth > 1180; // desktop view only
 
   return (
     <section
@@ -106,7 +106,7 @@ export const HeroSection: React.FC = () => {
           zIndex: 5,
           maxWidth: '1200px',
           margin: isSmallPhone ? '10px auto 0' : isDesktop ? '28px auto 0' : isLargeView ? '24px auto 0' : isSmallTab ? '30px auto 0' : '40px auto 0',
-          padding: isSmallPhone ? '0 16px' : '0 28px',
+          padding: isSmallPhone ? '0 30px' : isTablet ? '0 50px' : '0 28px',
           boxSizing: 'border-box'
         }}
       >

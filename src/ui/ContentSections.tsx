@@ -52,11 +52,11 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  const isSmallPhone = winWidth < 641;
-  const isSmallTab   = winWidth >= 641 && winWidth < 800;
-  const isTablet = winWidth >= 641 && winWidth < 1024;
+  const isSmallPhone = winWidth < 600;
+  const isSmallTab   = winWidth >= 600 && winWidth < 800;
+  const isTablet = winWidth >= 600 && winWidth <= 1180;
   const isLargeView = winWidth >= 800;
-  const isDesktop = winWidth >= 1025;
+  const isDesktop = winWidth > 1180;
 
   // Helper to find a post by matching category slug, or fallback
   const getPostByCatSlug = (slug: string) => {
@@ -346,7 +346,7 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
       {/* ========================================================================= */}
       {/* 4. EXPLORE BY TOPIC - Cosmic Compendium (Spacious, borderless with hover separator) */}
       {/* ========================================================================= */}
-      <section className="content-section" style={{ padding: isLargeView ? '32px 20px 36px 20px' : isSmallPhone ? '50px 20px' : isSmallTab ? '64px 20px 70px 20px' : '80px 20px 90px 20px' }}>
+      <section className="content-section" style={{ padding: isDesktop ? '32px 20px 36px 20px' : isTablet ? (isSmallTab ? '64px 50px 70px 50px' : '32px 50px 36px 50px') : '50px 30px' }}>
         <div className="section-container">
           <div style={{ marginBottom: isLargeView ? '26px' : isSmallPhone ? '32px' : isSmallTab ? '38px' : '48px' }}>
             <div style={{ color: 'var(--brand-purple)', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '2.5px', textTransform: 'uppercase', marginBottom: '8px' }}>
@@ -724,7 +724,7 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
       </section>
 
       {/* Quote Section */}
-      <section className="content-section" style={{ textAlign: 'center', padding: isLargeView ? '28px 20px 0px' : isSmallPhone ? '50px 20px 0px' : isSmallTab ? '20px 20px 0px' : '50px 20px 0px', fontFamily: "'Playfair Display', serif" }}>
+      <section className="content-section" style={{ textAlign: 'center', padding: isDesktop ? '28px 20px 0px' : isTablet ? (isSmallTab ? '20px 50px 0px' : '28px 50px 0px') : '50px 30px 0px', fontFamily: "'Playfair Display', serif" }}>
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
           <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--brand-purple)', margin: isSmallTab ? '0 auto 16px' : '0 auto 30px' }}></div>
           <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 'clamp(1.5rem, 1.1rem + 2vw, 2.5rem)', margin: '0 0 20px 0', fontWeight: 600, letterSpacing: '-0.5px', color: isLight ? '#111827' : '#ffffff' }}>

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useMobile } from '../contexts/MobileContext';
@@ -9,6 +9,17 @@ import { Compass, BookOpen, Sparkles, ArrowRight, Radio, Orbit, Telescope, Globe
 export const NotFoundPage: React.FC = () => {
   const { isLight } = useTheme();
   const { isMobile } = useMobile();
+
+  const [winWidth, setWinWidth] = useState<number>(() => (typeof window !== 'undefined' ? window.innerWidth : 1200));
+
+  useEffect(() => {
+    const handleResize = () => setWinWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const isPhone = winWidth < 600;
+  const isTablet = winWidth >= 600 && winWidth <= 1180;
 
   useEffect(() => {
     document.title = '404 - Cosmic Void | Zwosmos';
@@ -75,7 +86,7 @@ export const NotFoundPage: React.FC = () => {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: isMobile ? '40px 18px 60px' : '60px 24px 90px',
+          padding: isPhone ? '40px 30px 60px' : isTablet ? '50px 50px 70px' : '60px 24px 90px',
           maxWidth: '1100px',
           margin: '0 auto',
           width: '100%',
