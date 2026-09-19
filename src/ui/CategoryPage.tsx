@@ -9,6 +9,7 @@ import {
   getCategoryBySlug,
   getPostsByCategorySlug
 } from '../data/blogData';
+import { useBlogPosts } from '@zwantum/blog/react';
 
 interface CategoryPageProps {
   slug?: string;
@@ -23,16 +24,45 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ slug: propSlug }) =>
   const activeSlug = propSlug || categorySlug || 'space-news';
 
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const { posts: livePosts } = useBlogPosts();
 
   // Current category info
   const currentCategory = useMemo(() => {
     return getCategoryBySlug(activeSlug);
   }, [activeSlug]);
 
-  // Posts belonging to this category
+  // Posts belonging to this category (dynamically matched from Supabase, or fallback)
   const categoryPosts = useMemo(() => {
+    if (livePosts && livePosts.length > 0) {
+      const matched = livePosts.filter(p => {
+        return (
+          p.categories?.some(
+            c =>
+              c.slug?.toLowerCase() === activeSlug.toLowerCase() ||
+              c.slug?.toLowerCase() === currentCategory.slug.toLowerCase() ||
+              c.name?.toLowerCase() === currentCategory.name.toLowerCase()
+          ) || false
+        );
+      });
+      if (matched.length > 0) {
+        return matched.map(post => ({
+          id: post.slug || post.id,
+          category: post.categories?.[0]?.name || currentCategory.name,
+          categorySlug: post.categories?.[0]?.slug || currentCategory.slug,
+          title: post.title,
+          desc: post.excerpt || '',
+          img: post.featured_image?.url || currentCategory.heroImg,
+          authorName: post.author?.name || 'Editorial Team',
+          authorImg: post.author?.profile_image_url || undefined,
+          date: post.published_at
+            ? new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+            : 'Recent',
+          readTime: `${post.reading_time || 5} min read`
+        }));
+      }
+    }
     return getPostsByCategorySlug(currentCategory.slug);
-  }, [currentCategory.slug]);
+  }, [livePosts, activeSlug, currentCategory]);
 
   // Reset pagination when category changes
   useEffect(() => {

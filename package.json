@@ -32,6 +32,7 @@
     "@tiptap/react": "^3.31.3",
     "@tiptap/starter-kit": "^3.31.3",
     "@vercel/analytics": "^1.5.0",
+    "@zwantum/blog": "^1.0.1",
     "gsap": "^3.12.7",
     "lucide-react": "^1.41.0",
     "ogl": "^1.0.11",

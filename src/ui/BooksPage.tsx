@@ -1,236 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useMobile } from '../contexts/MobileContext';
 import { useTheme } from '../contexts/ThemeContext';
 import Header from './Header';
 import Footer from './Footer';
-
-interface BookItem {
-  id: number;
-  category: string;
-  title: string;
-  author: string;
-  year: number;
-  pages: number;
-  rating: number;
-  reviewsCount: number;
-  price: string;
-  desc: string;
-  longDesc: string;
-  gradient: string;
-  spineColor: string;
-  accentColor: string;
-  tags: string[];
-  featured?: boolean;
-}
-
-const BOOKS_DATA: BookItem[] = [
-  {
-    id: 1,
-    category: 'ASTROPHYSICS',
-    title: 'Beyond the Horizon',
-    author: 'J. A. Kerr',
-    year: 2024,
-    pages: 368,
-    rating: 4.9,
-    reviewsCount: 382,
-    price: '$24.99',
-    desc: 'On black holes, cosmic boundaries, and the fundamental limits of our scientific observation.',
-    longDesc: 'An exhilarating dive into event horizons, Hawking radiation, and the latest telescope observations resolving the fiery accretion disks of supermassive singularities at galactic cores.',
-    gradient: 'linear-gradient(145deg, #18181b 0%, #09090b 100%)',
-    spineColor: '#3f3f46',
-    accentColor: '#a855f7',
-    tags: ['Black Holes', 'Event Horizons', 'Singularity', 'Gravitational Waves'],
-    featured: true
-  },
-  {
-    id: 2,
-    category: 'COSMIC EXPLORATION',
-    title: 'Orbital Paths',
-    author: 'L. Morgan',
-    year: 2023,
-    pages: 412,
-    rating: 4.8,
-    reviewsCount: 294,
-    price: '$22.50',
-    desc: 'Journeys through space, gravitational slingshots, and the unyielding human drive to explore.',
-    longDesc: 'Chronicles humankind’s boldest trajectories across the solar system—from the Voyager grand tours to modern ion-drive probes skimming the atmosphere of Jupiter’s Galilean moons.',
-    gradient: 'linear-gradient(145deg, #1e1b4b 0%, #090514 100%)',
-    spineColor: '#4338ca',
-    accentColor: '#818cf8',
-    tags: ['Orbital Mechanics', 'Deep Space', 'Voyager', 'Interplanetary']
-  },
-  {
-    id: 3,
-    category: 'COSMOLOGY',
-    title: 'Silent Stars',
-    author: 'M. Ilya',
-    year: 2025,
-    pages: 320,
-    rating: 4.9,
-    reviewsCount: 410,
-    price: '$19.99',
-    desc: 'A meditation on cosmic time, primordial light, and the vast acoustic quiet between galaxies.',
-    longDesc: 'Tracing the cosmic timeline from the Big Bang’s initial quantum fluctuations to the ultimate heat death of the universe, painted with profound lyrical elegance and rigorous physical insight.',
-    gradient: 'linear-gradient(145deg, #3b0764 0%, #150024 100%)',
-    spineColor: '#7e22ce',
-    accentColor: '#c084fc',
-    tags: ['Cosmic Microwave Background', 'Dark Energy', 'Deep Time', 'Inflation']
-  },
-  {
-    id: 4,
-    category: 'COSMOLOGY',
-    title: 'Cosmos',
-    author: 'Carl Sagan',
-    year: 1980,
-    pages: 396,
-    rating: 5.0,
-    reviewsCount: 12450,
-    price: '$21.99',
-    desc: 'The landmark journey through fifteen billion years of cosmic evolution and civilization.',
-    longDesc: 'Carl Sagan’s eternal opus intertwining science and civilization, exploring the universe from ancient Alexandrian libraries to interstellar futures, reminding us we are the cosmos knowing itself.',
-    gradient: 'linear-gradient(145deg, #0c4a6e 0%, #031525 100%)',
-    spineColor: '#0284c7',
-    accentColor: '#38bdf8',
-    tags: ['Evolution', 'Humanity', 'Planetary Astronomy', 'Philosophy'],
-    featured: true
-  },
-  {
-    id: 5,
-    category: 'ASTROPHYSICS',
-    title: 'Astrophysics for People in a Hurry',
-    author: 'Neil deGrasse Tyson',
-    year: 2017,
-    pages: 224,
-    rating: 4.7,
-    reviewsCount: 8930,
-    price: '$16.95',
-    desc: 'Quick, witty, and illuminating answers to the greatest questions in astrophysics.',
-    longDesc: 'What is the nature of space and time? How do we fit within the cosmos? Tyson breaks down complex cosmic mechanics into pocket-sized mind-expanding chapters.',
-    gradient: 'linear-gradient(145deg, #451a03 0%, #1a0800 100%)',
-    spineColor: '#b45309',
-    accentColor: '#fbbf24',
-    tags: ['Quantum Realm', 'Dark Matter', 'Stellar Evolution', 'General Relativity']
-  },
-  {
-    id: 6,
-    category: 'QUANTUM & SPACETIME',
-    title: 'A Brief History of Time',
-    author: 'Stephen Hawking',
-    year: 1988,
-    pages: 256,
-    rating: 4.9,
-    reviewsCount: 15300,
-    price: '$18.99',
-    desc: 'From the Big Bang to black holes: the definitive primer on modern theoretical cosmology.',
-    longDesc: 'Stephen Hawking explores the boundaries of space and time, the possibility of time travel, black hole thermodynamics, and the unified theory that could explain everything in our universe.',
-    gradient: 'linear-gradient(145deg, #022c22 0%, #01140f 100%)',
-    spineColor: '#059669',
-    accentColor: '#34d399',
-    tags: ['Spacetime', 'Light Cones', 'Thermodynamics', 'Unified Theory']
-  },
-  {
-    id: 7,
-    category: 'COSMIC EXPLORATION',
-    title: 'Pale Blue Dot',
-    author: 'Carl Sagan',
-    year: 1994,
-    pages: 384,
-    rating: 4.9,
-    reviewsCount: 6200,
-    price: '$20.50',
-    desc: 'A vision of the human future in space, anchored by the iconic Voyager retrospective image.',
-    longDesc: 'Inspired by Voyager 1’s photograph of Earth as a lonely mote of dust suspended in a sunbeam, Sagan paints an unforgettable manifesto on human fragility and cosmic responsibility.',
-    gradient: 'linear-gradient(145deg, #172554 0%, #080f24 100%)',
-    spineColor: '#2563eb',
-    accentColor: '#60a5fa',
-    tags: ['Earth', 'Voyager 1', 'Future Colonization', 'Cosmic Perspective']
-  },
-  {
-    id: 8,
-    category: 'QUANTUM & SPACETIME',
-    title: 'The Elegant Universe',
-    author: 'Brian Greene',
-    year: 1999,
-    pages: 464,
-    rating: 4.8,
-    reviewsCount: 4500,
-    price: '$23.00',
-    desc: 'Superstrings, hidden dimensions, and the quest for the ultimate theory of everything.',
-    longDesc: 'Brian Greene elucidates string theory, where particles are vibrating microscopic strings and reality unfolds across 11 dimensions, bridging quantum mechanics and Einstein’s general relativity.',
-    gradient: 'linear-gradient(145deg, #312e81 0%, #100e38 100%)',
-    spineColor: '#4f46e5',
-    accentColor: '#a5b4fc',
-    tags: ['String Theory', 'Dimensions', 'Calabi-Yau', 'Quantum Mechanics']
-  },
-  {
-    id: 9,
-    category: 'PLANETARY SCIENCE',
-    title: 'The Planets',
-    author: 'Dava Sobel',
-    year: 2005,
-    pages: 288,
-    rating: 4.6,
-    reviewsCount: 1840,
-    price: '$17.50',
-    desc: 'A poetic, mythic, and scientific tour through the extraordinary worlds in our solar system.',
-    longDesc: 'Each chapter celebrates a planetary neighbor—from the scorched canyons of Mercury to the cryogenic storms of Neptune—uniting cutting-edge planetary astronomy with myth and music.',
-    gradient: 'linear-gradient(145deg, #701a75 0%, #29042b 100%)',
-    spineColor: '#a21caf',
-    accentColor: '#f472b6',
-    tags: ['Solar System', 'Planetary Geology', 'Moons', 'Planetary Science']
-  },
-  {
-    id: 10,
-    category: 'COSMOLOGY',
-    title: 'Until the End of Time',
-    author: 'Brian Greene',
-    year: 2020,
-    pages: 448,
-    rating: 4.8,
-    reviewsCount: 2900,
-    price: '$25.00',
-    desc: 'Mind, matter, and our search for meaning in an ever-evolving, entropic cosmos.',
-    longDesc: 'A sweeping narrative exploring how life and mind emerged from primordial chaos, and how conscious creatures formulate purpose while hurtling toward entropy’s inevitable silence.',
-    gradient: 'linear-gradient(145deg, #4c0519 0%, #1e0108 100%)',
-    spineColor: '#be123c',
-    accentColor: '#fb7185',
-    tags: ['Entropy', 'Consciousness', 'Deep Future', 'Meaning']
-  },
-  {
-    id: 11,
-    category: 'COSMIC EXPLORATION',
-    title: 'Packing for Mars',
-    author: 'Mary Roach',
-    year: 2010,
-    pages: 334,
-    rating: 4.7,
-    reviewsCount: 3410,
-    price: '$17.95',
-    desc: 'The curious science of life in the cosmic void—from zero-gravity bodily quirks to isolation.',
-    longDesc: 'An uproarious yet deeply researched probe into the unglamorous realities of space flight, simulation modules, astronaut hygiene, and the strange biology required to cross 50 million miles of void.',
-    gradient: 'linear-gradient(145deg, #78350f 0%, #2c1202 100%)',
-    spineColor: '#d97706',
-    accentColor: '#fde047',
-    tags: ['Human Spaceflight', 'Mars', 'Microgravity', 'Astronautics']
-  },
-  {
-    id: 12,
-    category: 'ASTROPHYSICS',
-    title: 'Death by Black Hole',
-    author: 'Neil deGrasse Tyson',
-    year: 2007,
-    pages: 384,
-    rating: 4.8,
-    reviewsCount: 4200,
-    price: '$19.50',
-    desc: 'And other cosmic quandaries: playful, profound explorations of the violent universe.',
-    longDesc: 'From spaghettification near gravitational singularities to the spectra of solar eclipses and planetary demotions, Tyson guides readers through the most energetic spectacles in astrophysics.',
-    gradient: 'linear-gradient(145deg, #1c1917 0%, #0a0908 100%)',
-    spineColor: '#57534e',
-    accentColor: '#e0e7ff',
-    tags: ['Spaghettification', 'Astrophysics', 'Cosmic Hazards', 'Tidal Forces']
-  }
-];
+import { BookItem, booksService, INITIAL_BOOKS } from '../lib/booksService';
 
 const CATEGORIES: { label: string; value: string }[] = [
   { label: 'All Publications', value: 'ALL' },
@@ -244,24 +17,49 @@ const CATEGORIES: { label: string; value: string }[] = [
 export const BooksPage: React.FC = () => {
   const { isMobile } = useMobile();
   const { isLight, toggleTheme } = useTheme();
+  const [books, setBooks] = useState<BookItem[]>(INITIAL_BOOKS);
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeModalBook, setActiveModalBook] = useState<BookItem | null>(null);
 
+  useEffect(() => {
+    let isMounted = true;
+    booksService.getBooks().then(data => {
+      if (isMounted && data && data.length > 0) {
+        setBooks(data);
+      }
+    }).catch(err => {
+      console.warn('Could not load books from service:', err);
+    });
+
+    const handleUpdate = () => {
+      booksService.getBooks().then(data => {
+        if (isMounted && data) setBooks(data);
+      });
+    };
+
+    window.addEventListener('zwosmos_books_updated', handleUpdate);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('zwosmos_books_updated', handleUpdate);
+    };
+  }, []);
+
   // Filtered books based on category and search query
   const filteredBooks = useMemo(() => {
-    return BOOKS_DATA.filter(book => {
-      const matchesCat = selectedCategory === 'ALL' || book.category === selectedCategory;
+    return books.filter(book => {
+      const matchesCat = selectedCategory === 'ALL' || book.category.toUpperCase() === selectedCategory.toUpperCase();
       const query = searchQuery.trim().toLowerCase();
       if (!query) return matchesCat;
-      const matchesSearch =
-        book.title.toLowerCase().includes(query) ||
-        book.author.toLowerCase().includes(query) ||
-        book.desc.toLowerCase().includes(query) ||
-        book.tags.some(tag => tag.toLowerCase().includes(query));
-      return matchesCat && matchesSearch;
+      return (
+        matchesCat &&
+        (book.title.toLowerCase().includes(query) ||
+          book.author.toLowerCase().includes(query) ||
+          book.desc.toLowerCase().includes(query) ||
+          (book.tags && book.tags.some(tag => tag.toLowerCase().includes(query))))
+      );
     });
-  }, [selectedCategory, searchQuery]);
+  }, [books, selectedCategory, searchQuery]);
 
   return (
     <div
@@ -576,7 +374,7 @@ export const BooksPage: React.FC = () => {
                 }}
                 onClick={() => setActiveModalBook(book)}
               >
-                {/* 3D Book Cover */}
+                {/* Book Cover */}
                 <div
                   style={{
                     perspective: '700px',
@@ -585,47 +383,65 @@ export const BooksPage: React.FC = () => {
                     alignItems: 'center'
                   }}
                 >
-                  <div
-                    className="book-spine-cover"
-                    style={{
-                      width: isMobile ? '105px' : '115px',
-                      height: isMobile ? '160px' : '175px',
-                      background: book.gradient,
-                      borderRadius: '2px 6px 6px 2px',
-                      boxShadow: '8px 8px 18px rgba(0,0,0,0.4), inset -2px 0 4px rgba(255,255,255,0.1)',
-                      borderLeft: `4px solid ${book.spineColor}`,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      padding: '16px 10px',
-                      boxSizing: 'border-box',
-                      transformOrigin: 'left center',
-                      transition: 'transform 0.45s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.45s ease'
-                    }}
-                  >
-                    <div
+                  {book.coverImage ? (
+                    <img
+                      src={book.coverImage}
+                      alt={book.title}
+                      className="book-spine-cover"
                       style={{
-                        fontFamily: "'Orbitron', sans-serif",
-                        fontSize: '0.78rem',
-                        textAlign: 'center',
-                        color: 'rgba(255,255,255,0.92)',
-                        textShadow: '0 2px 4px rgba(0,0,0,0.8)'
+                        width: isMobile ? '105px' : '115px',
+                        height: isMobile ? '160px' : '175px',
+                        objectFit: 'cover',
+                        borderRadius: '4px 8px 8px 4px',
+                        boxShadow: '8px 8px 20px rgba(0,0,0,0.4)',
+                        borderLeft: '4px solid rgba(255,255,255,0.2)',
+                        transformOrigin: 'left center',
+                        transition: 'transform 0.45s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.45s ease'
+                      }}
+                    />
+                  ) : (
+                    <div
+                      className="book-spine-cover"
+                      style={{
+                        width: isMobile ? '105px' : '115px',
+                        height: isMobile ? '160px' : '175px',
+                        background: book.gradient,
+                        borderRadius: '2px 6px 6px 2px',
+                        boxShadow: '8px 8px 18px rgba(0,0,0,0.4), inset -2px 0 4px rgba(255,255,255,0.1)',
+                        borderLeft: `4px solid ${book.spineColor}`,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        padding: '16px 10px',
+                        boxSizing: 'border-box',
+                        transformOrigin: 'left center',
+                        transition: 'transform 0.45s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.45s ease'
                       }}
                     >
-                      {book.title.toUpperCase()}
+                      <div
+                        style={{
+                          fontFamily: "'Orbitron', sans-serif",
+                          fontSize: '0.78rem',
+                          textAlign: 'center',
+                          color: 'rgba(255,255,255,0.92)',
+                          textShadow: '0 2px 4px rgba(0,0,0,0.8)'
+                        }}
+                      >
+                        {book.title.toUpperCase()}
+                      </div>
+                      <div
+                        style={{
+                          marginTop: 'auto',
+                          fontSize: '0.62rem',
+                          textAlign: 'center',
+                          letterSpacing: '1px',
+                          color: 'rgba(255,255,255,0.5)',
+                          fontFamily: "'Orbitron', sans-serif"
+                        }}
+                      >
+                        {book.author.toUpperCase()}
+                      </div>
                     </div>
-                    <div
-                      style={{
-                        marginTop: 'auto',
-                        fontSize: '0.62rem',
-                        textAlign: 'center',
-                        letterSpacing: '1px',
-                        color: 'rgba(255,255,255,0.5)',
-                        fontFamily: "'Orbitron', sans-serif"
-                      }}
-                    >
-                      {book.author.toUpperCase()}
-                    </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Details */}
@@ -713,7 +529,11 @@ export const BooksPage: React.FC = () => {
                     <button
                       onClick={e => {
                         e.stopPropagation();
-                        setActiveModalBook(book);
+                        if (book.buyUrl) {
+                          window.open(book.buyUrl, '_blank', 'noopener,noreferrer');
+                        } else {
+                          setActiveModalBook(book);
+                        }
                       }}
                       style={{
                         background: 'transparent',
@@ -807,43 +627,59 @@ export const BooksPage: React.FC = () => {
 
             <div style={{ display: 'flex', gap: isMobile ? '16px' : '26px', alignItems: 'flex-start', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
               {/* Cover in Modal */}
-              <div
-                style={{
-                  width: '130px',
-                  height: '195px',
-                  background: activeModalBook.gradient,
-                  borderRadius: '2px 6px 6px 2px',
-                  borderLeft: `4px solid ${activeModalBook.spineColor}`,
-                  boxShadow: '10px 10px 22px rgba(0,0,0,0.5)',
-                  flexShrink: 0,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  padding: '18px 10px',
-                  boxSizing: 'border-box'
-                }}
-              >
+              {activeModalBook.coverImage ? (
+                <img
+                  src={activeModalBook.coverImage}
+                  alt={activeModalBook.title}
+                  style={{
+                    width: '130px',
+                    height: '195px',
+                    objectFit: 'cover',
+                    borderRadius: '4px 8px 8px 4px',
+                    boxShadow: '10px 10px 24px rgba(0,0,0,0.6)',
+                    borderLeft: '4px solid rgba(255,255,255,0.2)',
+                    flexShrink: 0
+                  }}
+                />
+              ) : (
                 <div
                   style={{
-                    fontFamily: "'Orbitron', sans-serif",
-                    fontSize: '0.86rem',
-                    textAlign: 'center',
-                    color: 'rgba(255,255,255,0.92)'
+                    width: '130px',
+                    height: '195px',
+                    background: activeModalBook.gradient,
+                    borderRadius: '2px 6px 6px 2px',
+                    borderLeft: `4px solid ${activeModalBook.spineColor}`,
+                    boxShadow: '10px 10px 22px rgba(0,0,0,0.5)',
+                    flexShrink: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    padding: '18px 10px',
+                    boxSizing: 'border-box'
                   }}
                 >
-                  {activeModalBook.title.toUpperCase()}
+                  <div
+                    style={{
+                      fontFamily: "'Orbitron', sans-serif",
+                      fontSize: '0.86rem',
+                      textAlign: 'center',
+                      color: 'rgba(255,255,255,0.92)'
+                    }}
+                  >
+                    {activeModalBook.title.toUpperCase()}
+                  </div>
+                  <div
+                    style={{
+                      marginTop: 'auto',
+                      fontSize: '0.66rem',
+                      textAlign: 'center',
+                      color: 'rgba(255,255,255,0.55)',
+                      fontFamily: "'Orbitron', sans-serif"
+                    }}
+                  >
+                    {activeModalBook.author.toUpperCase()}
+                  </div>
                 </div>
-                <div
-                  style={{
-                    marginTop: 'auto',
-                    fontSize: '0.66rem',
-                    textAlign: 'center',
-                    color: 'rgba(255,255,255,0.55)',
-                    fontFamily: "'Orbitron', sans-serif"
-                  }}
-                >
-                  {activeModalBook.author.toUpperCase()}
-                </div>
-              </div>
+              )}
 
               {/* Info in Modal */}
               <div style={{ flex: 1 }}>
@@ -880,16 +716,22 @@ export const BooksPage: React.FC = () => {
                     marginBottom: '14px'
                   }}
                 >
-                  By <strong style={{ color: isLight ? '#111827' : '#ffffff' }}>{activeModalBook.author}</strong> • {activeModalBook.year} • {activeModalBook.pages} pages
+                  By <strong style={{ color: isLight ? '#111827' : '#ffffff' }}>{activeModalBook.author}</strong>
+                  {activeModalBook.year ? ` • ${activeModalBook.year}` : ''}
+                  {activeModalBook.pages && Number(activeModalBook.pages) > 0 ? ` • ${activeModalBook.pages} pages` : ''}
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                  <span style={{ color: '#fbbf24', fontSize: '1rem' }}>★★★★★</span>
-                  <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{activeModalBook.rating} / 5.0</span>
-                  <span style={{ color: isLight ? '#9ca3af' : 'rgba(255,255,255,0.4)', fontSize: '0.82rem' }}>
-                    ({activeModalBook.reviewsCount} reviews)
-                  </span>
-                </div>
+                {activeModalBook.rating && Number(activeModalBook.rating) > 0 ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                    <span style={{ color: '#fbbf24', fontSize: '1rem' }}>★★★★★</span>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{activeModalBook.rating} / 5.0</span>
+                    {activeModalBook.reviewsCount && Number(activeModalBook.reviewsCount) > 0 ? (
+                      <span style={{ color: isLight ? '#9ca3af' : 'rgba(255,255,255,0.4)', fontSize: '0.82rem' }}>
+                        ({activeModalBook.reviewsCount} reviews)
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
 
                 <div style={{ fontSize: '0.84rem', fontWeight: 600, color: 'var(--brand-purple)', marginBottom: '14px', fontFamily: "'Orbitron', sans-serif", letterSpacing: '1px' }}>
                   HARDCOVER EDITION
@@ -927,49 +769,51 @@ export const BooksPage: React.FC = () => {
 
                 {/* Actions */}
                 <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                  <a
-                    href="https://bookshop.org"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      background: 'var(--brand-purple)',
-                      color: '#ffffff',
-                      textDecoration: 'none',
-                      borderRadius: '25px',
-                      padding: '10px 20px',
-                      fontFamily: "'Playfair Display', serif",
-                      fontSize: '0.88rem',
-                      fontWeight: 600,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      boxShadow: '0 4px 14px rgba(147, 51, 234, 0.4)'
-                    }}
-                  >
-                    Buy via Bookshop.org &nearr;
-                  </a>
-
-                  <a
-                    href="https://amazon.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      background: 'transparent',
-                      color: isLight ? '#111827' : '#ffffff',
-                      border: isLight ? '1px solid #d1d5db' : '1px solid rgba(255,255,255,0.2)',
-                      textDecoration: 'none',
-                      borderRadius: '25px',
-                      padding: '10px 20px',
-                      fontFamily: "'Playfair Display', serif",
-                      fontSize: '0.88rem',
-                      fontWeight: 600,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px'
-                    }}
-                  >
-                    View on Amazon &nearr;
-                  </a>
+                  {activeModalBook.buyUrl ? (
+                    <a
+                      href={activeModalBook.buyUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        background: 'var(--brand-purple)',
+                        color: '#ffffff',
+                        textDecoration: 'none',
+                        borderRadius: '25px',
+                        padding: '10px 22px',
+                        fontFamily: "'Playfair Display', serif",
+                        fontSize: '0.88rem',
+                        fontWeight: 600,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        boxShadow: '0 4px 14px rgba(147, 51, 234, 0.4)'
+                      }}
+                    >
+                      Buy Now
+                    </a>
+                  ) : (
+                    <a
+                      href={`https://www.google.com/search?q=${encodeURIComponent(activeModalBook.title + ' ' + activeModalBook.author + ' book buy')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        background: 'var(--brand-purple)',
+                        color: '#ffffff',
+                        textDecoration: 'none',
+                        borderRadius: '25px',
+                        padding: '10px 22px',
+                        fontFamily: "'Playfair Display', serif",
+                        fontSize: '0.88rem',
+                        fontWeight: 600,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        boxShadow: '0 4px 14px rgba(147, 51, 234, 0.4)'
+                      }}
+                    >
+                      Find & Buy Online &nearr;
+                    </a>
+                  )}
                 </div>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { MobileProvider } from './contexts/MobileContext';
 import WebGLWarning from './ui/WebGLWarning';
 import HeroSection from './ui/HeroSection';
@@ -22,13 +22,8 @@ function AppContent() {
   const isWebGL2Enabled = useWebGL2Enabled();
   const { isLight } = useTheme();
 
-  const [winWidth, setWinWidth] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1200));
-  useEffect(() => {
-    const onResize = () => setWinWidth(window.innerWidth);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-  const isSmallPhone = winWidth < 641;
+  // Initialize Global Open Graph and Site SEO
+  useSEO();
 
   // show nothing while checking WebGL enabled
   if (isWebGL2Enabled === null) {
@@ -114,11 +109,11 @@ function AppContent() {
       </div>
       */}
 
-      {/* New Editorial Hero Section (On mobile, DailyCosmicSection is rendered inside HeroSection before Featured Blog Post) */}
+      {/* Editorial Hero Section (Header + Featured Blog Showcase) */}
       <HeroSection />
 
-      {/* Daily Cosmic Modules: This Day in Astronomy & Space Fact (Tablet and Desktop only) */}
-      {!isSmallPhone && <DailyCosmicSection />}
+      {/* Daily Cosmic Modules: This Day in Astronomy & Space Fact */}
+      <DailyCosmicSection />
 
       {/* Content Sections seamlessly merged under the same background */}
       <ContentSections />
@@ -130,9 +125,24 @@ import BlogIndexPage from './ui/BlogIndexPage';
 import BlogPostPage from './ui/BlogPostPage';
 import BooksPage from './ui/BooksPage';
 import CategoryPage from './ui/CategoryPage';
+import AuthorPage from './ui/AuthorPage';
+import TagPage from './ui/TagPage';
+import RssPage from './ui/RssPage';
 import ScrollToTopButton from './ui/ScrollToTopButton';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
+import { BlogProvider } from '@zwantum/blog/react';
+import { blogClient } from './lib/blogClient';
+import { useSEO } from './lib/seoService';
+
+// Scrolls to the top of the page on every route change
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
+  }, [pathname]);
+  return null;
+}
 
 function App() {
   return (
@@ -140,29 +150,43 @@ function App() {
       <ErrorBoundary>
         <ThemeProvider>
           <MobileProvider>
-            <Routes>
-              <Route path="/" element={<AppContent />} />
-              <Route path="/blog" element={<BlogIndexPage />} />
-              <Route path="/blog/:id" element={<BlogPostPage />} />
-              <Route path="/books" element={<BooksPage />} />
+            <BlogProvider client={blogClient}>
+                <ScrollToTop />
+              <Routes>
+                <Route path="/" element={<AppContent />} />
+                <Route path="/blog" element={<BlogIndexPage />} />
+                <Route path="/blog/:id" element={<BlogPostPage />} />
+                <Route path="/books" element={<BooksPage />} />
 
-              {/* Direct Top-Level Category Routes: domain/{category-name} */}
-              <Route path="/space-news" element={<CategoryPage slug="space-news" />} />
-              <Route path="/solar-system" element={<CategoryPage slug="solar-system" />} />
-              <Route path="/telescopes-technology" element={<CategoryPage slug="telescopes-technology" />} />
-              <Route path="/universe" element={<CategoryPage slug="universe" />} />
-              <Route path="/space-exploration" element={<CategoryPage slug="space-exploration" />} />
-              <Route path="/skywatching" element={<CategoryPage slug="skywatching" />} />
-              <Route path="/space-culture" element={<CategoryPage slug="space-culture" />} />
-              <Route path="/learn" element={<CategoryPage slug="learn" />} />
-              <Route path="/people-history" element={<CategoryPage slug="people-history" />} />
+                {/* RSS 2.0 Feed Routes */}
+                <Route path="/rss.xml" element={<RssPage />} />
+                <Route path="/rss" element={<RssPage />} />
 
-              {/* Fallback category routes */}
-              <Route path="/category" element={<CategoryPage slug="space-news" />} />
-              <Route path="/category/:categorySlug" element={<CategoryPage />} />
-              <Route path="/blog/category/:categorySlug" element={<CategoryPage />} />
-            </Routes>
-            <ScrollToTopButton />
+                {/* Direct Top-Level Category Routes: domain/{category-name} */}
+                <Route path="/space-news" element={<CategoryPage slug="space-news" />} />
+                <Route path="/solar-system" element={<CategoryPage slug="solar-system" />} />
+                <Route path="/telescopes-technology" element={<CategoryPage slug="telescopes-technology" />} />
+                <Route path="/universe" element={<CategoryPage slug="universe" />} />
+                <Route path="/space-exploration" element={<CategoryPage slug="space-exploration" />} />
+                <Route path="/skywatching" element={<CategoryPage slug="skywatching" />} />
+                <Route path="/space-culture" element={<CategoryPage slug="space-culture" />} />
+                <Route path="/learn" element={<CategoryPage slug="learn" />} />
+                <Route path="/people-history" element={<CategoryPage slug="people-history" />} />
+
+                {/* Fallback category routes */}
+                <Route path="/category" element={<CategoryPage slug="space-news" />} />
+                <Route path="/category/:categorySlug" element={<CategoryPage />} />
+                <Route path="/blog/category/:categorySlug" element={<CategoryPage />} />
+
+                {/* Author routes */}
+                <Route path="/author/:authorSlug" element={<AuthorPage />} />
+
+                {/* Tag routes */}
+                <Route path="/tag/:tagSlug" element={<TagPage />} />
+                <Route path="/tags" element={<TagPage />} />
+              </Routes>
+              <ScrollToTopButton />
+            </BlogProvider>
           </MobileProvider>
         </ThemeProvider>
       </ErrorBoundary>

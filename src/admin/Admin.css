@@ -1,0 +1,38 @@
+/* ==========================================================================
+   Admin Dashboard Global Typography & Layout Overrides
+   Strictly isolated to admin; does not touch frontend
+   ========================================================================== */
+
+.admin-app,
+.admin-app *,
+.admin-dashboard,
+.admin-dashboard * {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+}
+
+.admin-app h1,
+.admin-app h2,
+.admin-app h3,
+.admin-app h4,
+.admin-app h5,
+.admin-app h6,
+.admin-dashboard h1,
+.admin-dashboard h2,
+.admin-dashboard h3,
+.admin-dashboard h4,
+.admin-dashboard h5,
+.admin-dashboard h6 {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+  letter-spacing: -0.02em;
+}
+
+.admin-app button,
+.admin-app input,
+.admin-app select,
+.admin-app textarea,
+.admin-dashboard button,
+.admin-dashboard input,
+.admin-dashboard select,
+.admin-dashboard textarea {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+}

@@ -3,6 +3,8 @@ import { useTheme } from '../contexts/ThemeContext';
 import { Link } from 'react-router-dom';
 import { BlogCard } from './BlogCard';
 import Footer from './Footer';
+import { useBlogPosts } from '@zwantum/blog/react';
+import { BookItem, booksService, INITIAL_BOOKS, getDailyOrbitBooks } from '../lib/booksService';
 
 export interface ContentSectionsProps {
   hasHero?: boolean;
@@ -10,6 +12,37 @@ export interface ContentSectionsProps {
 
 const ContentSections: React.FC<ContentSectionsProps> = () => {
   const { isLight } = useTheme();
+  const { posts: livePosts } = useBlogPosts();
+  const [orbitBooks, setOrbitBooks] = useState<BookItem[]>(() => getDailyOrbitBooks(INITIAL_BOOKS, 3));
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchOrbitBooks = async () => {
+      try {
+        const all = await booksService.getBooks();
+        if (!isMounted || !all || all.length === 0) return;
+        setOrbitBooks(getDailyOrbitBooks(all, 3));
+      } catch (err) {
+        console.warn('Failed to load books for Reading Orbit section:', err);
+      }
+    };
+
+    fetchOrbitBooks();
+
+    const handleUpdate = (e: any) => {
+      if (e?.detail && Array.isArray(e.detail) && e.detail.length > 0) {
+        setOrbitBooks(getDailyOrbitBooks(e.detail, 3));
+      } else {
+        fetchOrbitBooks();
+      }
+    };
+
+    window.addEventListener('zwosmos_books_updated', handleUpdate);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('zwosmos_books_updated', handleUpdate);
+    };
+  }, []);
 
   // Pure width-based breakpoint logic (ignores isMobile touch emulation)
   const [winWidth, setWinWidth] = useState(() => window.innerWidth);
@@ -24,6 +57,113 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
   const isTablet = winWidth >= 641 && winWidth < 1024;
   const isLargeView = winWidth >= 800;
   const isDesktop = winWidth >= 1025;
+
+  // Helper to find a post by matching category slug, or fallback
+  const getPostByCatSlug = (slug: string) => {
+    return livePosts?.find(p => p.categories?.some(c => c.slug?.toLowerCase() === slug.toLowerCase()));
+  };
+
+  const mapToCard = (post: any, fallback: any) => {
+    if (!post) return fallback;
+    return {
+      id: post.slug || post.id,
+      category: (post.categories?.[0]?.name || fallback.category).toUpperCase(),
+      title: post.title,
+      desc: post.excerpt || fallback.desc,
+      authorName: post.author?.name || fallback.authorName,
+      date: post.published_at
+        ? new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        : fallback.date,
+      img: post.featured_image?.url || fallback.img
+    };
+  };
+
+  // Section 1: Deep Space & Universe stories
+  const deepSpace1 = mapToCard(getPostByCatSlug('universe'), {
+    id: 1,
+    category: 'DEEP SPACE',
+    title: 'The Nursery of New Stars',
+    desc: 'Far far away, behind the word mountains, interstellar gas collapses into protostellar furnaces across the Pillars of Creation.',
+    authorName: 'Dr. Elena Vance',
+    date: 'Sep 24, 2026',
+    img: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1000&auto=format&fit=crop'
+  });
+  const deepSpace2 = mapToCard(getPostByCatSlug('space-news'), {
+    id: 4,
+    category: 'DEEP SPACE',
+    title: 'The Symphony of Black Holes',
+    desc: 'When two supermassive black holes collide, spacetime itself rings like a bell, radiating gravitational waves across the cosmos.',
+    authorName: 'Marie Curie',
+    date: 'Sep 10, 2026',
+    img: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000&auto=format&fit=crop'
+  });
+  const deepSpace3 = mapToCard(getPostByCatSlug('space-exploration'), {
+    id: 7,
+    category: 'DEEP SPACE',
+    title: 'The Cosmic Web and Dark Voids',
+    desc: 'Invisible filaments of cold dark matter shape the scaffolding of the universe, bridging billion-light-year gulfs between galaxies.',
+    authorName: 'Dr. Marcus Vance',
+    date: 'Aug 30, 2026',
+    img: 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=1000&auto=format&fit=crop'
+  });
+
+  // Section 2: Technology & Observatories
+  const techFeatured = mapToCard(getPostByCatSlug('telescopes-technology'), {
+    id: 2,
+    category: 'TECHNOLOGY',
+    title: 'Seeing Further Than Ever Before: The James Webb Frontier',
+    desc: '',
+    authorName: 'Jane Smith',
+    date: 'Sep 20, 2026',
+    img: 'https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?q=80&w=1000&auto=format&fit=crop'
+  });
+  const techStacked1 = mapToCard(getPostByCatSlug('learn'), {
+    id: 5,
+    category: 'TECHNOLOGY',
+    title: 'Submillimeter Telescopes: Piercing Cosmic Dust',
+    desc: 'Antenna arrays high in the Atacama resolve newborn circumstellar disks with sub-arcsecond precision.',
+    authorName: 'Dr. Aris Thorne',
+    date: 'Sep 12, 2026',
+    img: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=600&auto=format&fit=crop'
+  });
+  const techStacked2 = mapToCard(getPostByCatSlug('people-history'), {
+    id: 8,
+    category: 'TECHNOLOGY',
+    title: 'Interstellar Probes: Beyond the Heliopause',
+    desc: 'Deep space probes venturing past the heliopause, transmitting telemetry across interstellar space.',
+    authorName: 'Carl Sagan',
+    date: 'Sep 05, 2026',
+    img: 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?q=80&w=600&auto=format&fit=crop'
+  });
+
+  // Section 3: Solar System & Planetary Frontiers
+  const solarCard1 = mapToCard(getPostByCatSlug('solar-system'), {
+    id: 3,
+    category: 'SOLAR SYSTEM',
+    title: 'When the Sun Disappears',
+    desc: "During total solar eclipse, the sun's ghostly outer atmosphere reveals magnetic storms that govern space weather.",
+    authorName: 'Alan Turing',
+    date: 'Sep 15, 2026',
+    img: 'https://images.unsplash.com/photo-1541873676-a18131494184?q=80&w=600&auto=format&fit=crop'
+  });
+  const solarCard2 = mapToCard(getPostByCatSlug('skywatching'), {
+    id: 6,
+    category: 'SOLAR SYSTEM',
+    title: 'Subsurface Oceans of Enceladus',
+    desc: 'Plumes of water vapor and organic molecules blasting through the icy crust hint at subterranean vents harboring life.',
+    authorName: 'Ada Lovelace',
+    date: 'Aug 28, 2026',
+    img: 'https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?q=80&w=600&auto=format&fit=crop'
+  });
+  const solarCard3 = mapToCard(getPostByCatSlug('space-culture'), {
+    id: 8,
+    category: 'SOLAR SYSTEM',
+    title: 'Storms of Jupiter: Great Red Spot',
+    desc: "NASA's Juno spacecraft penetrates deep into Jupiter's cloud decks, unmasking vortex roots plunging into hydrogen oceans.",
+    authorName: 'Carl Sagan',
+    date: 'Sep 05, 2026',
+    img: 'https://images.unsplash.com/photo-1614732414444-096e5f1122d5?q=80&w=600&auto=format&fit=crop'
+  });
 
   return (
     <div
@@ -49,41 +189,13 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
               </div>
               <h2 className="section-title" style={{ marginBottom: 0, color: isLight ? '#111827' : '#ffffff' }}>Deep Space Chronicles</h2>
             </div>
-            <Link to="/blog" style={{ color: 'var(--brand-purple)', textDecoration: 'none', fontWeight: 600, letterSpacing: '2px', fontSize: '0.86rem' }}>
+            <Link to="/universe" style={{ color: 'var(--brand-purple)', textDecoration: 'none', fontWeight: 600, letterSpacing: '2px', fontSize: '0.86rem' }}>
               VIEW ALL IN DEEP SPACE &rarr;
             </Link>
           </div>
 
           <div className="grid-3">
-            {[
-              { 
-                id: 1, 
-                category: 'DEEP SPACE', 
-                title: 'The Nursery of New Stars', 
-                desc: 'Far far away, behind the word mountains, interstellar gas collapses into protostellar furnaces across the Pillars of Creation.',
-                authorName: 'Dr. Elena Vance',
-                date: 'Sep 24, 2026',
-                img: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1000&auto=format&fit=crop' 
-              },
-              { 
-                id: 4, 
-                category: 'DEEP SPACE', 
-                title: 'The Symphony of Black Holes', 
-                desc: 'When two supermassive black holes collide, spacetime itself rings like a bell, radiating gravitational waves across the cosmos.',
-                authorName: 'Marie Curie',
-                date: 'Sep 10, 2026',
-                img: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000&auto=format&fit=crop' 
-              },
-              { 
-                id: 7, 
-                category: 'DEEP SPACE', 
-                title: 'The Cosmic Web and Dark Voids', 
-                desc: 'Invisible filaments of cold dark matter shape the scaffolding of the universe, bridging billion-light-year gulfs between galaxies.',
-                authorName: 'Dr. Marcus Vance',
-                date: 'Aug 30, 2026',
-                img: 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=1000&auto=format&fit=crop' 
-              }
-            ].map((story) => (
+            {[deepSpace1, deepSpace2, deepSpace3].map((story) => (
               <BlogCard
                 key={story.id}
                 id={story.id}
@@ -112,7 +224,7 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
               </div>
               <h2 className="section-title" style={{ marginBottom: 0, color: isLight ? '#111827' : '#ffffff' }}>Technology & Observatories</h2>
             </div>
-            <Link to="/blog" style={{ color: 'var(--brand-purple)', textDecoration: 'none', fontWeight: 600, letterSpacing: '2px', fontSize: '0.86rem' }}>
+            <Link to="/telescopes-technology" style={{ color: 'var(--brand-purple)', textDecoration: 'none', fontWeight: 600, letterSpacing: '2px', fontSize: '0.86rem' }}>
               VIEW ALL IN TECHNOLOGY &rarr;
             </Link>
           </div>
@@ -128,14 +240,14 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
             {/* Left Column: Large Featured Hero Card */}
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
               <BlogCard
-                id={2}
-                category="TECHNOLOGY"
-                title="Seeing Further Than Ever Before: The James Webb Frontier"
+                id={techFeatured.id}
+                category={techFeatured.category}
+                title={techFeatured.title}
                 desc=""
                 showExcerpt={false}
-                authorName="Jane Smith"
-                date="Sep 20, 2026"
-                img="https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?q=80&w=1000&auto=format&fit=crop"
+                authorName={techFeatured.authorName}
+                date={techFeatured.date}
+                img={techFeatured.img}
                 variant="featured"
               />
             </div>
@@ -143,24 +255,24 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
             {/* Right Column: Stacked Horizontal Cards (2 Cards) */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', height: '100%' }}>
               <BlogCard
-                id={5}
-                category="TECHNOLOGY"
-                title="Submillimeter Telescopes: Piercing Cosmic Dust"
-                desc="Antenna arrays high in the Atacama resolve newborn circumstellar disks with sub-arcsecond precision."
-                authorName="Dr. Aris Thorne"
-                date="Sep 12, 2026"
-                img="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=600&auto=format&fit=crop"
+                id={techStacked1.id}
+                category={techStacked1.category}
+                title={techStacked1.title}
+                desc={techStacked1.desc}
+                authorName={techStacked1.authorName}
+                date={techStacked1.date}
+                img={techStacked1.img}
                 variant="horizontal"
               />
 
               <BlogCard
-                id={8}
-                category="TECHNOLOGY"
-                title="Interstellar Probes: Beyond the Heliopause"
-                desc="Deep space probes venturing past the heliopause, transmitting telemetry across interstellar space."
-                authorName="Carl Sagan"
-                date="Sep 05, 2026"
-                img="https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?q=80&w=600&auto=format&fit=crop"
+                id={techStacked2.id}
+                category={techStacked2.category}
+                title={techStacked2.title}
+                desc={techStacked2.desc}
+                authorName={techStacked2.authorName}
+                date={techStacked2.date}
+                img={techStacked2.img}
                 variant="horizontal"
               />
             </div>
@@ -180,7 +292,7 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
               </div>
               <h2 className="section-title" style={{ marginBottom: 0, color: isLight ? '#111827' : '#ffffff' }}>Solar System & Planetary Frontiers</h2>
             </div>
-            <Link to="/blog" style={{ color: 'var(--brand-purple)', textDecoration: 'none', fontWeight: 600, letterSpacing: '2px', fontSize: '0.86rem' }}>
+            <Link to="/solar-system" style={{ color: 'var(--brand-purple)', textDecoration: 'none', fontWeight: 600, letterSpacing: '2px', fontSize: '0.86rem' }}>
               VIEW ALL IN SOLAR SYSTEM &rarr;
             </Link>
           </div>
@@ -194,35 +306,35 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
             }}
           >
             <BlogCard
-              id={3}
-              category="SOLAR SYSTEM"
-              title="When the Sun Disappears"
-              desc="During total solar eclipse, the sun's ghostly outer atmosphere reveals magnetic storms that govern space weather."
-              authorName="Alan Turing"
-              date="Sep 15, 2026"
-              img="https://images.unsplash.com/photo-1541873676-a18131494184?q=80&w=600&auto=format&fit=crop"
+              id={solarCard1.id}
+              category={solarCard1.category}
+              title={solarCard1.title}
+              desc={solarCard1.desc}
+              authorName={solarCard1.authorName}
+              date={solarCard1.date}
+              img={solarCard1.img}
               variant="horizontal"
             />
 
             <BlogCard
-              id={6}
-              category="SOLAR SYSTEM"
-              title="Subsurface Oceans of Enceladus"
-              desc="Plumes of water vapor and organic molecules blasting through the icy crust hint at subterranean vents harboring life."
-              authorName="Ada Lovelace"
-              date="Aug 28, 2026"
-              img="https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?q=80&w=600&auto=format&fit=crop"
+              id={solarCard2.id}
+              category={solarCard2.category}
+              title={solarCard2.title}
+              desc={solarCard2.desc}
+              authorName={solarCard2.authorName}
+              date={solarCard2.date}
+              img={solarCard2.img}
               variant="horizontal"
             />
 
             <BlogCard
-              id={8}
-              category="SOLAR SYSTEM"
-              title="Storms of Jupiter: Great Red Spot"
-              desc="NASA's Juno spacecraft penetrates deep into Jupiter's cloud decks, unmasking vortex roots plunging into hydrogen oceans."
-              authorName="Carl Sagan"
-              date="Sep 05, 2026"
-              img="https://images.unsplash.com/photo-1614732414444-096e5f1122d5?q=80&w=600&auto=format&fit=crop"
+              id={solarCard3.id}
+              category={solarCard3.category}
+              title={solarCard3.title}
+              desc={solarCard3.desc}
+              authorName={solarCard3.authorName}
+              date={solarCard3.date}
+              img={solarCard3.img}
               variant="horizontal"
             />
           </div>
@@ -412,31 +524,9 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
           </div>
 
           <div className="grid-3" style={{ gap: '40px' }}>
-            {[
-              { 
-                category: 'ASTROPHYSICS', 
-                title: 'Beyond the Horizon', 
-                author: 'J. A. Kerr', 
-                desc: 'On black holes, cosmic boundaries, and the limits of our knowledge.', 
-                img: 'linear-gradient(to bottom, #111, #1a1a1a)' 
-              },
-              { 
-                category: 'COSMIC EXPLORATION', 
-                title: 'Orbital Paths', 
-                author: 'L. Morgan', 
-                desc: 'Journeys through space, risk, and the human drive to explore.', 
-                img: 'linear-gradient(to bottom, #1e1b4b, #000)' 
-              },
-              { 
-                category: 'COSMOLOGY', 
-                title: 'Silent Stars', 
-                author: 'M. Ilya', 
-                desc: 'A meditation on time, light, and the vast quiet between.', 
-                img: 'linear-gradient(to bottom, #3b0764, #1a0b2e)' 
-              }
-            ].map((book, i) => (
+            {orbitBooks.map((book, i) => (
               <div
-                key={i}
+                key={book.id || i}
                 style={{
                   display: 'flex',
                   gap: '20px',
@@ -459,90 +549,172 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
                   }
                 }}
               >
-                {/* 3D Book Cover */}
-                <div
-                  className="book-3d"
-                  style={{
-                    width: '140px',
-                    flexShrink: 0,
-                    height: '210px',
-                    background: book.img,
-                    borderRadius: '2px 6px 6px 2px',
-                    boxShadow: isLight
-                      ? '8px 8px 18px rgba(0,0,0,0.15), inset -2px 0 5px rgba(255,255,255,0.2)'
-                      : '10px 10px 20px rgba(0,0,0,0.5), inset -2px 0 5px rgba(255,255,255,0.1), inset 5px 0 10px rgba(0,0,0,0.5)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    padding: '20px 10px',
-                    boxSizing: 'border-box',
-                    borderLeft: '4px solid rgba(255,255,255,0.15)',
-                    position: 'relative',
-                    transformOrigin: 'left center',
-                    transition: 'transform 0.45s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.45s ease'
-                  }}
-                >
-                  <div style={{ fontSize: '1rem', textAlign: 'center', fontFamily: "'Orbitron', sans-serif", color: 'rgba(255,255,255,0.9)', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
-                    {book.title.toUpperCase()}
+                {/* Book Cover */}
+                {book.coverImage ? (
+                  <img
+                    src={book.coverImage}
+                    alt={book.title}
+                    className="book-3d"
+                    style={{
+                      width: '140px',
+                      flexShrink: 0,
+                      height: '210px',
+                      objectFit: 'cover',
+                      borderRadius: '4px 8px 8px 4px',
+                      boxShadow: isLight
+                        ? '8px 8px 18px rgba(0,0,0,0.15)'
+                        : '10px 10px 20px rgba(0,0,0,0.5)',
+                      borderLeft: '4px solid rgba(255,255,255,0.2)',
+                      position: 'relative',
+                      transformOrigin: 'left center',
+                      transition: 'transform 0.45s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.45s ease'
+                    }}
+                  />
+                ) : (
+                  <div
+                    className="book-3d"
+                    style={{
+                      width: '140px',
+                      flexShrink: 0,
+                      height: '210px',
+                      background: book.gradient || 'linear-gradient(to bottom, #111, #1a1a1a)',
+                      borderRadius: '2px 6px 6px 2px',
+                      boxShadow: isLight
+                        ? '8px 8px 18px rgba(0,0,0,0.15), inset -2px 0 5px rgba(255,255,255,0.2)'
+                        : '10px 10px 20px rgba(0,0,0,0.5), inset -2px 0 5px rgba(255,255,255,0.1), inset 5px 0 10px rgba(0,0,0,0.5)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      padding: '20px 10px',
+                      boxSizing: 'border-box',
+                      borderLeft: `4px solid ${book.spineColor || 'rgba(255,255,255,0.15)'}`,
+                      position: 'relative',
+                      transformOrigin: 'left center',
+                      transition: 'transform 0.45s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.45s ease'
+                    }}
+                  >
+                    <div style={{ fontSize: '0.95rem', textAlign: 'center', fontFamily: "'Orbitron', sans-serif", color: 'rgba(255,255,255,0.9)', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
+                      {book.title.toUpperCase()}
+                    </div>
+                    <div style={{ marginTop: 'auto', fontSize: '0.7rem', textAlign: 'center', letterSpacing: '2px', color: 'rgba(255,255,255,0.5)' }}>
+                      {book.author.toUpperCase()}
+                    </div>
                   </div>
-                  <div style={{ marginTop: 'auto', fontSize: '0.7rem', textAlign: 'center', letterSpacing: '2px', color: 'rgba(255,255,255,0.5)' }}>
-                    {book.author.toUpperCase()}
-                  </div>
-                </div>
+                )}
 
                 {/* Book Details & Buy Now */}
-                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%', flex: 1, minWidth: 0 }}>
                   <div>
-                    <div style={{ color: 'var(--brand-purple)', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '1px', marginBottom: '8px' }}>
-                      {book.category}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                      <span style={{ color: book.accentColor || 'var(--brand-purple)', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '1px' }}>
+                        {book.category}
+                      </span>
+                      {book.featured && (
+                        <span style={{
+                          fontSize: '0.65rem',
+                          textTransform: 'uppercase',
+                          fontWeight: 700,
+                          letterSpacing: '0.5px',
+                          color: '#f59e0b',
+                          background: isLight ? 'rgba(245, 158, 11, 0.12)' : 'rgba(245, 158, 11, 0.18)',
+                          border: '1px solid rgba(245, 158, 11, 0.35)',
+                          padding: '2px 7px',
+                          borderRadius: '10px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px'
+                        }}>
+                          ★ Featured
+                        </span>
+                      )}
                     </div>
-                    <h4 style={{ fontSize: '1.45rem', margin: '0 0 5px 0', lineHeight: 1.15, fontFamily: "'Playfair Display', serif", color: isLight ? '#111827' : '#ffffff' }}>
+                    <h4 style={{ fontSize: '1.35rem', margin: '0 0 5px 0', lineHeight: 1.15, fontFamily: "'Playfair Display', serif", color: isLight ? '#111827' : '#ffffff' }}>
                       {book.title}
                     </h4>
                     <div style={{ color: isLight ? '#64748b' : 'rgba(255,255,255,0.6)', fontSize: '0.88rem', marginBottom: '12px', fontFamily: "'Lora', serif" }}>
-                      {book.author}
+                      {book.author} {book.year ? `• ${book.year}` : ''}
                     </div>
-                    <p style={{ color: isLight ? '#4b5563' : 'rgba(255,255,255,0.75)', fontSize: '0.94rem', lineHeight: 1.5, margin: 0, fontFamily: "'Lora', serif" }}>
+                    <p style={{ color: isLight ? '#4b5563' : 'rgba(255,255,255,0.75)', fontSize: '0.92rem', lineHeight: 1.5, margin: 0, fontFamily: "'Lora', serif" }}>
                       {book.desc}
                     </p>
                   </div>
 
                   {/* Buy Now Button */}
                   <div style={{ marginTop: '16px' }}>
-                    <Link
-                      to="/books"
-                      style={{
-                        background: 'transparent',
-                        border: '1px solid var(--brand-purple)',
-                        color: isLight ? '#111827' : 'white',
-                        padding: '8px 18px',
-                        borderRadius: '22px',
-                        fontFamily: "'Playfair Display', serif",
-                        fontSize: '0.86rem',
-                        fontWeight: 600,
-                        textDecoration: 'none',
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        transition: 'all 0.25s ease',
-                        boxShadow: isLight ? '0 2px 8px rgba(147, 51, 234, 0.15)' : '0 4px 12px rgba(147, 51, 234, 0.2)'
-                      }}
-                      onMouseOver={e => {
-                        e.currentTarget.style.background = 'var(--brand-purple)';
-                        e.currentTarget.style.color = '#ffffff';
-                        e.currentTarget.style.boxShadow = '0 0 16px rgba(147, 51, 234, 0.6)';
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                      }}
-                      onMouseOut={e => {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color = isLight ? '#111827' : 'white';
-                        e.currentTarget.style.boxShadow = isLight ? '0 2px 8px rgba(147, 51, 234, 0.15)' : '0 4px 12px rgba(147, 51, 234, 0.2)';
-                        e.currentTarget.style.transform = 'translateY(0)';
-                      }}
-                    >
-                      <span>Buy Now</span>
-                      <span style={{ fontSize: '0.88rem' }}>↗</span>
-                    </Link>
+                    {book.buyUrl ? (
+                      <a
+                        href={book.buyUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          background: 'transparent',
+                          border: '1px solid var(--brand-purple)',
+                          color: isLight ? '#111827' : 'white',
+                          padding: '8px 18px',
+                          borderRadius: '22px',
+                          fontFamily: "'Playfair Display', serif",
+                          fontSize: '0.86rem',
+                          fontWeight: 600,
+                          textDecoration: 'none',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          transition: 'all 0.25s ease',
+                          boxShadow: isLight ? '0 2px 8px rgba(147, 51, 234, 0.15)' : '0 4px 12px rgba(147, 51, 234, 0.2)'
+                        }}
+                        onMouseOver={e => {
+                          e.currentTarget.style.background = 'var(--brand-purple)';
+                          e.currentTarget.style.color = '#ffffff';
+                          e.currentTarget.style.boxShadow = '0 0 16px rgba(147, 51, 234, 0.6)';
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                        }}
+                        onMouseOut={e => {
+                          e.currentTarget.style.background = 'transparent';
+                          e.currentTarget.style.color = isLight ? '#111827' : 'white';
+                          e.currentTarget.style.boxShadow = isLight ? '0 2px 8px rgba(147, 51, 234, 0.15)' : '0 4px 12px rgba(147, 51, 234, 0.2)';
+                          e.currentTarget.style.transform = 'translateY(0)';
+                        }}
+                      >
+                        <span>Buy Now</span>
+                        <span style={{ fontSize: '0.88rem' }}>↗</span>
+                      </a>
+                    ) : (
+                      <Link
+                        to="/books"
+                        style={{
+                          background: 'transparent',
+                          border: '1px solid var(--brand-purple)',
+                          color: isLight ? '#111827' : 'white',
+                          padding: '8px 18px',
+                          borderRadius: '22px',
+                          fontFamily: "'Playfair Display', serif",
+                          fontSize: '0.86rem',
+                          fontWeight: 600,
+                          textDecoration: 'none',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          transition: 'all 0.25s ease',
+                          boxShadow: isLight ? '0 2px 8px rgba(147, 51, 234, 0.15)' : '0 4px 12px rgba(147, 51, 234, 0.2)'
+                        }}
+                        onMouseOver={e => {
+                          e.currentTarget.style.background = 'var(--brand-purple)';
+                          e.currentTarget.style.color = '#ffffff';
+                          e.currentTarget.style.boxShadow = '0 0 16px rgba(147, 51, 234, 0.6)';
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                        }}
+                        onMouseOut={e => {
+                          e.currentTarget.style.background = 'transparent';
+                          e.currentTarget.style.color = isLight ? '#111827' : 'white';
+                          e.currentTarget.style.boxShadow = isLight ? '0 2px 8px rgba(147, 51, 234, 0.15)' : '0 4px 12px rgba(147, 51, 234, 0.2)';
+                          e.currentTarget.style.transform = 'translateY(0)';
+                        }}
+                      >
+                        <span>Buy Now</span>
+                        <span style={{ fontSize: '0.88rem' }}>↗</span>
+                      </Link>
+                    )}
                   </div>
                 </div>
               </div>

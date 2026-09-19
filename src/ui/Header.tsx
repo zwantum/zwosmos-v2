@@ -1,7 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import MegaMenu, { MEGA_MENU_ITEMS, ALL_MEGA_MENU_ITEMS, MenuItem } from './MegaMenu';
+import { ALL_BLOG_POSTS } from '../data/blogData';
+import { useBlogPosts } from '@zwantum/blog/react';
 
 export interface HeaderProps {
   isLight?: boolean;
@@ -52,6 +54,33 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
     }, 220);
   };
 
+  const exploreRef = useRef<HTMLDivElement>(null);
+  const megaMenuCardRef = useRef<HTMLDivElement>(null);
+  const [arrowLeft, setArrowLeft] = useState<number | null>(null);
+
+  const updateArrowPosition = () => {
+    if (exploreRef.current && megaMenuCardRef.current) {
+      const exploreRect = exploreRef.current.getBoundingClientRect();
+      const cardRect = megaMenuCardRef.current.getBoundingClientRect();
+      const exploreCenter = exploreRect.left + exploreRect.width / 2;
+      const calculatedLeft = exploreCenter - cardRect.left;
+      if (calculatedLeft > 0 && calculatedLeft < cardRect.width) {
+        setArrowLeft(calculatedLeft);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (exploreHovered) {
+      requestAnimationFrame(updateArrowPosition);
+    }
+  }, [exploreHovered, winWidth]);
+
+  useEffect(() => {
+    window.addEventListener('resize', updateArrowPosition);
+    return () => window.removeEventListener('resize', updateArrowPosition);
+  }, []);
+
   useEffect(() => {
     return () => {
       if (exploreTimeoutRef.current) {
@@ -59,8 +88,77 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
       }
     };
   }, []);
-  // Search input focus state
+
+  // Live blog posts for instant search suggestions
+  const { posts: livePosts } = useBlogPosts();
+  const allPosts = useMemo(() => {
+    if (livePosts && livePosts.length > 0) {
+      return livePosts.map(post => ({
+        id: post.slug || post.id,
+        category: post.categories?.[0]?.name || 'Space News',
+        categorySlug: post.categories?.[0]?.slug || 'space-news',
+        title: post.title,
+        desc: post.excerpt || '',
+        img: post.featured_image?.url || 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1600&auto=format&fit=crop',
+        authorName: post.author?.name || 'Editorial Team',
+        authorImg: post.author?.profile_image_url || undefined,
+        date: post.published_at
+          ? new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+          : 'Recent',
+        readTime: `${post.reading_time || 5} min read`
+      }));
+    }
+    return ALL_BLOG_POSTS;
+  }, [livePosts]);
+
+  // Search input focus state & live dropdown state
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [showLiveResults, setShowLiveResults] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  // Filter matching posts & categories when user types 2+ characters
+  const searchResults = useMemo(() => {
+    const q = searchVal.trim().toLowerCase();
+    if (q.length < 2) return { posts: [], categories: [] };
+
+    const matchingPosts = allPosts.filter(p =>
+      p.title.toLowerCase().includes(q) ||
+      p.category.toLowerCase().includes(q) ||
+      (p.desc && p.desc.toLowerCase().includes(q)) ||
+      (p.authorName && p.authorName.toLowerCase().includes(q))
+    ).slice(0, 3);
+
+    const matchingCategories = ALL_MEGA_MENU_ITEMS.filter(c =>
+      c.title.toLowerCase().includes(q) ||
+      (c.desc && c.desc.toLowerCase().includes(q))
+    ).slice(0, 3);
+
+    return { posts: matchingPosts, categories: matchingCategories };
+  }, [searchVal, allPosts]);
+
+  // Close live results when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setShowLiveResults(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSelectPost = (postId: string | number) => {
+    setShowLiveResults(false);
+    setSearchOverlayOpen(false);
+    navigate(`/blog/${postId}`);
+  };
+
+  const handleSelectCategory = (href: string) => {
+    setShowLiveResults(false);
+    setSearchOverlayOpen(false);
+    navigate(href);
+  };
+
   // Mobile search overlay
   const [searchOverlayOpen, setSearchOverlayOpen] = useState(false);
   const mobileSearchRef = useRef<HTMLInputElement>(null);
@@ -89,9 +187,11 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
     }
   }, [isMobileHeader, menuOpen]);
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSearchSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (searchVal.trim()) {
+      setShowLiveResults(false);
+      setSearchOverlayOpen(false);
       navigate(`/blog?search=${encodeURIComponent(searchVal.trim())}`);
     }
   };
@@ -375,6 +475,158 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
                 ✕
               </button>
             </div>
+
+            {/* Mobile Live Search Results Container */}
+            {searchVal.trim().length >= 2 && (
+              <div
+                onClick={e => e.stopPropagation()}
+                style={{
+                  flex: 1,
+                  maxHeight: 'calc(100vh - 120px)',
+                  overflowY: 'auto',
+                  WebkitOverflowScrolling: 'touch',
+                  background: currentIsDark
+                    ? 'linear-gradient(180deg, rgba(20, 10, 36, 0.98) 0%, rgba(10, 5, 20, 0.99) 100%)'
+                    : 'rgba(255, 255, 255, 0.98)',
+                  padding: '16px 18px 32px',
+                  boxSizing: 'border-box'
+                }}
+              >
+                {/* Categories */}
+                {searchResults.categories.length > 0 && (
+                  <div style={{ marginBottom: '14px', paddingBottom: '10px', borderBottom: currentIsDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.06)' }}>
+                    <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '0.64rem', color: 'var(--brand-purple)', letterSpacing: '1px', marginBottom: '8px', fontWeight: 600 }}>
+                      TOPIC CATEGORIES
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {searchResults.categories.map((cat, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => handleSelectCategory(cat.href)}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            fontSize: '0.74rem',
+                            padding: '6px 12px',
+                            borderRadius: '16px',
+                            background: currentIsDark ? 'rgba(147, 51, 234, 0.18)' : 'rgba(147, 51, 234, 0.1)',
+                            border: '1px solid rgba(147, 51, 234, 0.3)',
+                            color: currentIsDark ? '#e9d5ff' : '#7e22ce',
+                            fontFamily: "'Orbitron', sans-serif",
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <span style={{ color: 'var(--brand-purple)' }}>✦</span> {cat.title}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Header */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <span style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '0.66rem', color: 'var(--brand-purple)', letterSpacing: '1.2px', fontWeight: 600 }}>
+                    STORIES ({searchResults.posts.length})
+                  </span>
+                </div>
+
+                {/* Posts List */}
+                {searchResults.posts.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {searchResults.posts.map(post => (
+                      <div
+                        key={post.id}
+                        onClick={() => handleSelectPost(post.id)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          padding: '10px',
+                          borderRadius: '12px',
+                          cursor: 'pointer',
+                          background: currentIsDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                          border: currentIsDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.05)',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '46px',
+                            height: '46px',
+                            borderRadius: '8px',
+                            overflow: 'hidden',
+                            flexShrink: 0,
+                            border: currentIsDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.08)'
+                          }}
+                        >
+                          <img
+                            src={post.img}
+                            alt={post.title}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div
+                            style={{
+                              fontFamily: "'Playfair Display', serif",
+                              fontSize: '0.86rem',
+                              fontWeight: 600,
+                              lineHeight: 1.3,
+                              color: currentIsDark ? '#ffffff' : '#111827',
+                              overflow: 'hidden',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              textOverflow: 'ellipsis',
+                              marginBottom: '3px'
+                            }}
+                          >
+                            {post.title}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem', fontFamily: "'Lora', serif" }}>
+                            <span style={{ color: 'var(--brand-purple)', fontWeight: 600 }}>{post.category}</span>
+                            <span style={{ color: currentIsDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)' }}>•</span>
+                            <span style={{ color: currentIsDark ? 'rgba(255,255,255,0.55)' : '#6b7280' }}>{post.date}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ padding: '30px 12px', textAlign: 'center', color: currentIsDark ? 'rgba(255,255,255,0.6)' : '#6b7280', fontFamily: "'Lora', serif", fontSize: '0.88rem' }}>
+                    <div style={{ color: 'var(--brand-purple)', fontSize: '1.4rem', marginBottom: '6px' }}>✦</div>
+                    No stories found matching "{searchVal.trim()}"
+                  </div>
+                )}
+
+                {/* View All Button */}
+                <div
+                  onClick={() => handleSearchSubmit()}
+                  style={{
+                    marginTop: '14px',
+                    padding: '12px 14px',
+                    borderRadius: '12px',
+                    background: 'var(--brand-purple)',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    cursor: 'pointer',
+                    fontFamily: "'Orbitron', sans-serif",
+                    fontSize: '0.76rem',
+                    letterSpacing: '1px',
+                    fontWeight: 600,
+                    boxShadow: '0 4px 14px rgba(147, 51, 234, 0.4)'
+                  }}
+                >
+                  <span>VIEW ALL RESULTS FOR "{searchVal.trim().toUpperCase()}"</span>
+                  <span>→</span>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -718,6 +970,7 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
               return (
                 <div
                   key={item.label}
+                  ref={isExplore ? exploreRef : undefined}
                   onMouseEnter={isExplore ? handleExploreEnter : undefined}
                   onMouseLeave={isExplore ? handleExploreLeave : undefined}
                   style={{
@@ -818,89 +1071,295 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
           </span>
         </button>
 
-        {/* Enhanced Modern Search Bar Pill */}
-        <form
-          onSubmit={handleSearchSubmit}
-          style={{ display: 'inline-flex', alignItems: 'center', position: 'relative' }}
+        {/* Enhanced Modern Search Bar Pill with Live Results */}
+        <div
+          ref={searchContainerRef}
+          style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}
         >
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-            {/* Search Glass Icon */}
-            <svg
-              width="13"
-              height="13"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke={isSearchFocused ? '#9333ea' : '#64748b'}
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{
-                position: 'absolute',
-                left: '11px',
-                pointerEvents: 'none',
-                transition: 'stroke 0.2s ease',
-                zIndex: 2
-              }}
-            >
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-
-            <input
-              type="text"
-              value={searchVal}
-              onChange={e => setSearchVal(e.target.value)}
-              onFocus={() => setIsSearchFocused(true)}
-              onBlur={() => setIsSearchFocused(false)}
-              placeholder="Search..."
-              style={{
-                width: isSearchFocused ? '175px' : '135px',
-                height: '30px',
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(246,243,255,0.92) 100%)',
-                border: isSearchFocused ? '1px solid #9333ea' : '1px solid rgba(255,255,255,0.6)',
-                borderRadius: '9999px',
-                padding: '0 18px 0 32px',
-                fontSize: '0.78rem',
-                fontWeight: 500,
-                color: '#0f172a',
-                fontFamily: "'Orbitron', sans-serif",
-                letterSpacing: '0.5px',
-                outline: 'none',
-                boxShadow: isSearchFocused
-                  ? '0 0 0 3px rgba(147,51,234,0.28), 0 4px 16px rgba(147,51,234,0.2)'
-                  : '0 2px 8px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.8)',
-                transition: 'all 0.25s cubic-bezier(0.4,0,0.2,1)'
-              }}
-            />
-
-            {searchVal && (
-              <button
-                type="button"
-                onClick={() => setSearchVal('')}
-                title="Clear search"
+          <form
+            onSubmit={handleSearchSubmit}
+            style={{ display: 'inline-flex', alignItems: 'center', position: 'relative' }}
+          >
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              {/* Search Glass Icon */}
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke={isSearchFocused ? '#9333ea' : '#64748b'}
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
                 style={{
                   position: 'absolute',
-                  right: '8px',
-                  width: '16px',
-                  height: '16px',
-                  borderRadius: '50%',
-                  background: '#cbd5e1',
-                  border: 'none',
+                  left: '11px',
+                  pointerEvents: 'none',
+                  transition: 'stroke 0.2s ease',
+                  zIndex: 2
+                }}
+              >
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+
+              <input
+                type="text"
+                value={searchVal}
+                onChange={e => {
+                  setSearchVal(e.target.value);
+                  setShowLiveResults(true);
+                }}
+                onFocus={() => {
+                  setIsSearchFocused(true);
+                  if (searchVal.trim().length >= 2) setShowLiveResults(true);
+                }}
+                onBlur={() => setIsSearchFocused(false)}
+                onKeyDown={e => {
+                  if (e.key === 'Escape') setShowLiveResults(false);
+                }}
+                placeholder="Search..."
+                style={{
+                  width: (isSearchFocused || (showLiveResults && searchVal.trim().length >= 2)) ? '190px' : '135px',
+                  height: '30px',
+                  background: 'linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(246,243,255,0.92) 100%)',
+                  border: (isSearchFocused || (showLiveResults && searchVal.trim().length >= 2)) ? '1px solid #9333ea' : '1px solid rgba(255,255,255,0.6)',
+                  borderRadius: '9999px',
+                  padding: searchVal ? '0 28px 0 32px' : '0 18px 0 32px',
+                  fontSize: '0.78rem',
+                  fontWeight: 500,
+                  color: '#0f172a',
+                  fontFamily: "'Orbitron', sans-serif",
+                  letterSpacing: '0.5px',
+                  outline: 'none',
+                  boxShadow: (isSearchFocused || (showLiveResults && searchVal.trim().length >= 2))
+                    ? '0 0 0 3px rgba(147,51,234,0.28), 0 4px 16px rgba(147,51,234,0.2)'
+                    : '0 2px 8px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.8)',
+                  transition: 'all 0.25s cubic-bezier(0.4,0,0.2,1)'
+                }}
+              />
+
+              {searchVal && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchVal('');
+                    setShowLiveResults(false);
+                  }}
+                  title="Clear search"
+                  style={{
+                    position: 'absolute',
+                    right: '8px',
+                    width: '16px',
+                    height: '16px',
+                    borderRadius: '50%',
+                    background: '#cbd5e1',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    fontSize: '10px',
+                    lineHeight: 1,
+                    color: '#475569',
+                    padding: 0
+                  }}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </form>
+
+          {/* Desktop Live Search Autocomplete Dropdown */}
+          {showLiveResults && searchVal.trim().length >= 2 && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 14px)',
+                right: 0,
+                width: '390px',
+                maxWidth: 'calc(100vw - 32px)',
+                background: currentIsDark
+                  ? 'linear-gradient(145deg, rgba(22, 11, 38, 0.98) 0%, rgba(13, 6, 24, 0.99) 100%)'
+                  : 'linear-gradient(145deg, rgba(255, 255, 255, 0.99) 0%, rgba(249, 246, 255, 0.99) 100%)',
+                backdropFilter: 'blur(24px)',
+                WebkitBackdropFilter: 'blur(24px)',
+                border: currentIsDark
+                  ? '1px solid rgba(168, 85, 247, 0.35)'
+                  : '1px solid rgba(147, 51, 234, 0.25)',
+                borderRadius: '16px',
+                boxShadow: currentIsDark
+                  ? '0 20px 50px rgba(0,0,0,0.75), 0 0 24px rgba(168,85,247,0.2)'
+                  : '0 20px 45px rgba(147,51,234,0.18), 0 4px 16px rgba(0,0,0,0.06)',
+                padding: '12px',
+                boxSizing: 'border-box',
+                zIndex: 1000,
+                animation: 'megaOverlayFade 0.2s ease-out',
+                textAlign: 'left'
+              }}
+            >
+              {/* Matching Categories Chips (if any) */}
+              {searchResults.categories.length > 0 && (
+                <div style={{ marginBottom: '10px', paddingBottom: '8px', borderBottom: currentIsDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.06)' }}>
+                  <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '0.62rem', color: 'var(--brand-purple)', letterSpacing: '1px', marginBottom: '6px', fontWeight: 600 }}>
+                    CATEGORIES
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {searchResults.categories.map((cat, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleSelectCategory(cat.href)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                          fontSize: '0.72rem',
+                          padding: '4px 10px',
+                          borderRadius: '14px',
+                          background: currentIsDark ? 'rgba(147, 51, 234, 0.18)' : 'rgba(147, 51, 234, 0.1)',
+                          border: '1px solid rgba(147, 51, 234, 0.3)',
+                          color: currentIsDark ? '#e9d5ff' : '#7e22ce',
+                          fontFamily: "'Orbitron', sans-serif",
+                          cursor: 'pointer',
+                          transition: 'all 0.18s ease'
+                        }}
+                        onMouseOver={e => {
+                          e.currentTarget.style.background = 'var(--brand-purple)';
+                          e.currentTarget.style.color = '#ffffff';
+                        }}
+                        onMouseOut={e => {
+                          e.currentTarget.style.background = currentIsDark ? 'rgba(147, 51, 234, 0.18)' : 'rgba(147, 51, 234, 0.1)';
+                          e.currentTarget.style.color = currentIsDark ? '#e9d5ff' : '#7e22ce';
+                        }}
+                      >
+                        <span>✦</span> {cat.title}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Header */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 6px 8px 6px' }}>
+                <span style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '0.64rem', color: 'var(--brand-purple)', letterSpacing: '1px', fontWeight: 600 }}>
+                  STORIES ({searchResults.posts.length})
+                </span>
+                <span style={{ fontSize: '0.68rem', color: currentIsDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)', fontFamily: "'Lora', serif" }}>
+                  Press Enter to search
+                </span>
+              </div>
+
+              {/* Post Items */}
+              {searchResults.posts.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', overflow: 'hidden' }}>
+                  {searchResults.posts.map(post => (
+                    <div
+                      key={post.id}
+                      onClick={() => handleSelectPost(post.id)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '8px',
+                        borderRadius: '10px',
+                        cursor: 'pointer',
+                        textDecoration: 'none',
+                        transition: 'all 0.18s ease'
+                      }}
+                      onMouseOver={e => {
+                        e.currentTarget.style.background = currentIsDark ? 'rgba(147, 51, 234, 0.2)' : 'rgba(147, 51, 234, 0.08)';
+                        e.currentTarget.style.transform = 'translateX(3px)';
+                      }}
+                      onMouseOut={e => {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.transform = 'translateX(0)';
+                      }}
+                    >
+                      {/* Thumbnail */}
+                      <div
+                        style={{
+                          width: '42px',
+                          height: '42px',
+                          borderRadius: '8px',
+                          overflow: 'hidden',
+                          flexShrink: 0,
+                          border: currentIsDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.08)'
+                        }}
+                      >
+                        <img
+                          src={post.img}
+                          alt={post.title}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      </div>
+
+                      {/* Info */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div
+                          style={{
+                            fontFamily: "'Playfair Display', serif",
+                            fontSize: '0.82rem',
+                            fontWeight: 600,
+                            lineHeight: 1.25,
+                            color: currentIsDark ? '#ffffff' : '#111827',
+                            overflow: 'hidden',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            textOverflow: 'ellipsis',
+                            marginBottom: '1px'
+                          }}
+                        >
+                          {post.title}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.68rem', fontFamily: "'Lora', serif" }}>
+                          <span style={{ color: 'var(--brand-purple)', fontWeight: 600 }}>{post.category}</span>
+                          <span style={{ color: currentIsDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)' }}>•</span>
+                          <span style={{ color: currentIsDark ? 'rgba(255,255,255,0.55)' : '#6b7280' }}>{post.date}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ padding: '24px 12px', textAlign: 'center', color: currentIsDark ? 'rgba(255,255,255,0.6)' : '#6b7280', fontFamily: "'Lora', serif", fontSize: '0.82rem' }}>
+                  <div style={{ color: 'var(--brand-purple)', fontSize: '1.2rem', marginBottom: '4px' }}>✦</div>
+                  No stories found matching "{searchVal.trim()}"
+                </div>
+              )}
+
+              {/* Footer: View all results */}
+              <div
+                onClick={() => handleSearchSubmit()}
+                style={{
+                  marginTop: '8px',
+                  paddingTop: '8px',
+                  borderTop: currentIsDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.06)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  gap: '6px',
                   cursor: 'pointer',
-                  fontSize: '10px',
-                  lineHeight: 1,
-                  color: '#475569',
-                  padding: 0
+                  color: 'var(--brand-purple)',
+                  fontFamily: "'Orbitron', sans-serif",
+                  fontSize: '0.72rem',
+                  letterSpacing: '1px',
+                  fontWeight: 600,
+                  padding: '8px 4px',
+                  borderRadius: '8px',
+                  transition: 'all 0.18s ease'
                 }}
+                onMouseOver={e => (e.currentTarget.style.background = currentIsDark ? 'rgba(147, 51, 234, 0.15)' : 'rgba(147, 51, 234, 0.08)')}
+                onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
               >
-                ✕
-              </button>
-            )}
-          </div>
-        </form>
+                <span>VIEW ALL RESULTS FOR "{searchVal.trim().toUpperCase()}"</span>
+                <span>→</span>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Hamburger Menu Icon */}
         <button
@@ -959,7 +1418,9 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
         }}
       >
         <div
+          ref={megaMenuCardRef}
           style={{
+            position: 'relative',
             width: 'min(980px, 94vw)',
             borderRadius: '26px',
             padding: '24px 28px',
@@ -977,6 +1438,33 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
             boxSizing: 'border-box'
           }}
         >
+            {/* Top Pointer / Arrow pointing directly to EXPLORE button */}
+            <div
+              style={{
+                position: 'absolute',
+                top: '-8px',
+                left: arrowLeft !== null ? `${arrowLeft}px` : '31%',
+                transform: 'translateX(-50%) rotate(45deg)',
+                width: '14px',
+                height: '14px',
+                background: currentIsDark
+                  ? 'rgba(72, 44, 105, 0.96)'
+                  : '#ffffff',
+                borderTop: currentIsDark
+                  ? '1px solid rgba(216, 180, 254, 0.5)'
+                  : '1px solid rgba(147, 51, 234, 0.35)',
+                borderLeft: currentIsDark
+                  ? '1px solid rgba(216, 180, 254, 0.5)'
+                  : '1px solid rgba(147, 51, 234, 0.35)',
+                borderRight: 'none',
+                borderBottom: 'none',
+                boxShadow: currentIsDark
+                  ? '-3px -3px 8px rgba(168, 85, 247, 0.2)'
+                  : '-3px -3px 6px rgba(109, 40, 217, 0.1)',
+                zIndex: 10,
+                pointerEvents: 'none'
+              }}
+            />
             {/* Top header row */}
             <div
               style={{

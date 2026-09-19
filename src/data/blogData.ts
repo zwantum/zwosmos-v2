@@ -67,7 +67,7 @@ export const CATEGORY_MAP: Record<string, CategoryInfo> = {
     name: 'Learn',
     slug: 'learn',
     desc: 'Astronomy guides, scientific explainers, astrophysical mechanics, and fundamental physics made engaging and accessible.',
-    heroImg: 'https://images.unsplash.com/photo-1507842229451-7f01be8610ce?q=80&w=1600&auto=format&fit=crop'
+    heroImg: 'https://images.unsplash.com/photo-1502134249126-9f3755a50d78?q=80&w=1600&auto=format&fit=crop'
   },
   'people-history': {
     name: 'People & History',
@@ -181,7 +181,7 @@ export const ALL_BLOG_POSTS: BlogPost[] = [
     authorName: 'David Chen',
     authorImg: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop',
     date: 'Aug 18, 2026',
-    img: 'https://images.unsplash.com/photo-1507842229451-7f01be8610ce?q=80&w=1000&auto=format&fit=crop',
+    img: 'https://images.unsplash.com/photo-1502134249126-9f3755a50d78?q=80&w=1000&auto=format&fit=crop',
     readTime: '5 min read'
   },
 

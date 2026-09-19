@@ -169,10 +169,15 @@ export default function Aurora(props: AuroraProps) {
 
     let program: Program | undefined;
 
+    let lastW = 0;
+    let lastH = 0;
     function resize() {
       if (!ctn || !renderer) return;
       const width = ctn.offsetWidth || 300;
       const height = ctn.offsetHeight || 300;
+      if (width === lastW && height === lastH) return;
+      lastW = width;
+      lastH = height;
       renderer.setSize(width, height);
       if (program) {
         program.uniforms.uResolution.value = [width, height];

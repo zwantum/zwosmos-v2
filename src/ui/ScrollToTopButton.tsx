@@ -1,10 +1,47 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import './ScrollToTopButton.css';
 
 export default function ScrollToTopButton() {
   const { isLight } = useTheme();
   const [isLaunching, setIsLaunching] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const checkScroll = () => {
+      const rootEl = document.getElementById('root');
+      const currentScroll = Math.max(
+        window.scrollY || 0,
+        window.pageYOffset || 0,
+        document.documentElement.scrollTop || 0,
+        document.body.scrollTop || 0,
+        rootEl?.scrollTop || 0
+      );
+
+      // Show after a few scrolls / small height (120px)
+      if (currentScroll > 120) {
+        setIsVisible(true);
+      } else {
+        setIsVisible(false);
+      }
+    };
+
+    // Initial check on mount
+    checkScroll();
+
+    // Use capture phase so scrolls inside any nested containers (like #root) are caught
+    window.addEventListener('scroll', checkScroll, true);
+    document.addEventListener('scroll', checkScroll, true);
+    window.addEventListener('wheel', checkScroll, { passive: true });
+    window.addEventListener('touchmove', checkScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', checkScroll, true);
+      document.removeEventListener('scroll', checkScroll, true);
+      window.removeEventListener('wheel', checkScroll);
+      window.removeEventListener('touchmove', checkScroll);
+    };
+  }, []);
 
   const scrollToTop = () => {
     if (isLaunching) return;
@@ -50,7 +87,12 @@ export default function ScrollToTopButton() {
     <button
       type="button"
       id="zwosmos-scroll-to-top"
-      className={`scroll-to-top-btn ${isLight ? 'light-mode' : ''} ${isLaunching ? 'is-launching' : ''}`}
+      className={`scroll-to-top-btn ${isLight ? 'light-mode' : ''} ${isVisible ? 'is-visible' : ''} ${isLaunching ? 'is-launching' : ''}`}
+      style={
+        isVisible
+          ? { opacity: 1, visibility: 'visible', pointerEvents: 'auto', transform: 'translateY(0) scale(1)' }
+          : { opacity: 0, visibility: 'hidden', pointerEvents: 'none', transform: 'translateY(20px) scale(0.85)' }
+      }
       onClick={scrollToTop}
       title="Scroll to top"
       aria-label="Scroll to top"

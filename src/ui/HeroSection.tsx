@@ -3,11 +3,23 @@ import { Link } from 'react-router-dom';
 import { useMobile } from '../contexts/MobileContext';
 import { useTheme } from '../contexts/ThemeContext';
 import Header from './Header';
-import DailyCosmicSection from './DailyCosmicSection';
+import SoftAurora from './SoftAurora';
+import Aurora from './Aurora';
+import { useBlogPosts } from '@zwantum/blog/react';
 
 export const HeroSection: React.FC = () => {
   const { isMobile } = useMobile();
   const { isLight } = useTheme();
+
+  // Fetch live blog posts from Supabase database
+  const { posts: livePosts } = useBlogPosts();
+  const featuredPost = livePosts?.find(p => p.is_featured) || livePosts?.[0];
+
+  const featuredImg = featuredPost?.featured_image?.url || "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Nancy_Grace_Roman_at_Console_%2841304996424%29.jpg/1280px-Nancy_Grace_Roman_at_Console_%2841304996424%29.jpg";
+  const featuredLink = featuredPost ? `/blog/${featuredPost.slug || featuredPost.id}` : "/blog/2";
+  const featuredTitle = featuredPost?.title || "Nancy Grace Roman Telescope Unfolds Mystery";
+  const featuredExcerpt = featuredPost?.excerpt || "Nancy Grace Roman Telescope Unfolds Mystery: Delving into NASA's revolutionary wide-field infrared observatory, engineered to unlock the subtle gravitational physics of dark energy and map billions of galaxies across the cosmic dawn.";
+  const featuredCategory = featuredPost?.categories?.[0]?.name || "SPACE NEWS";
 
   // Detect tablet (641–900px) — iPad Mini is 768px but flagged as isMobile=true
   const [winWidth, setWinWidth] = useState(() => window.innerWidth);
@@ -34,11 +46,56 @@ export const HeroSection: React.FC = () => {
         paddingBottom: isDesktop ? '38px' : isLargeView ? '32px' : isSmallPhone ? '40px' : isSmallTab ? '48px' : '65px'
       }}
     >
+      {/* Background Soft Aurora React Bits WebGL Component */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 0,
+          pointerEvents: 'none',
+          overflow: 'hidden',
+          maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 75%, rgba(0,0,0,0) 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 75%, rgba(0,0,0,0) 100%)',
+          opacity: 1
+        }}
+      >
+        {isLight ? (
+          <Aurora
+            key="hero-light-aurora"
+            colorStops={["#5227FF", "#7cff67", "#5227FF"]}
+            amplitude={isSmallPhone ? 1.0 : 1.2}
+            blend={isSmallPhone ? 0.5 : 0.6}
+            frequency={isSmallPhone ? 0.95 : 2.0}
+            inverted={false}
+            lightMode={true}
+          />
+        ) : (
+          <SoftAurora
+            speed={0.6}
+            scale={1.5}
+            brightness={1}
+            color1="#f7f7f7"
+            color2="#e100ff"
+            noiseFrequency={2.5}
+            noiseAmplitude={1}
+            bandHeight={0.5}
+            bandSpread={1}
+            octaveDecay={0.1}
+            layerOffset={0}
+            colorSpeed={1}
+            enableMouseInteraction
+            mouseInfluence={0.25}
+          />
+        )}
+      </div>
+
       {/* 1. TOP HEADER (LOGO + FLOATING NAVIGATION PILL) */}
       <Header />
-
-      {/* Mobile view only: This Day in Astronomy & Space Fact of the day at first */}
-      {isSmallPhone && <DailyCosmicSection />}
 
       {/* ========================================================================= */}
       {/* 2. FEATURED HERO BLOG SHOWCASE                                            */}
@@ -54,7 +111,7 @@ export const HeroSection: React.FC = () => {
         }}
       >
         <Link
-          to="/blog/2"
+          to={featuredLink}
           style={{
             display: 'grid',
             gridTemplateColumns: isSmallPhone ? '1fr' : '1.15fr 1fr',
@@ -64,7 +121,7 @@ export const HeroSection: React.FC = () => {
             color: 'inherit'
           }}
         >
-          {/* Left Column: Rounded Historic Photo (Exact photo from reference Image 2) */}
+          {/* Left Column: Rounded Historic Photo */}
           <div
             style={{
               position: 'relative',
@@ -90,8 +147,8 @@ export const HeroSection: React.FC = () => {
             }}
           >
             <img
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Nancy_Grace_Roman_at_Console_%2841304996424%29.jpg/1280px-Nancy_Grace_Roman_at_Console_%2841304996424%29.jpg"
-              alt="Dr. Nancy Grace Roman in front of NASA observatory telemetry controls"
+              src={featuredImg}
+              alt={featuredTitle}
               style={{
                 width: '100%',
                 height: isSmallPhone ? '260px' : isTablet ? '320px' : '380px',
@@ -109,10 +166,28 @@ export const HeroSection: React.FC = () => {
               justifyContent: 'center'
             }}
           >
+            {featuredCategory && (
+              <div
+                style={{
+                  color: 'var(--brand-purple)',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  letterSpacing: '2.5px',
+                  textTransform: 'uppercase',
+                  marginBottom: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                ✦ FEATURED • {featuredCategory}
+              </div>
+            )}
+
             <h1
               style={{
                 fontFamily: "'Playfair Display', serif",
-                fontSize: isSmallPhone ? '2.1rem' : isSmallTab ? '1.75rem' : '45px',
+                fontSize: isSmallPhone ? '2.1rem' : isSmallTab ? '1.75rem' : '44px',
                 lineHeight: 1.22,
                 color: isLight ? '#111827' : '#ffffff',
                 margin: '0 0 16px 0',
@@ -120,8 +195,7 @@ export const HeroSection: React.FC = () => {
                 letterSpacing: '-0.5px'
               }}
             >
-              Nancy Grace Roman<br />
-              Telescope <span style={{ fontStyle: 'italic', fontWeight: 400, color: isLight ? 'var(--brand-purple)' : '#f3e8ff' }}>Unfolds</span> Mystery
+              {featuredTitle}
             </h1>
 
             <p
@@ -140,7 +214,7 @@ export const HeroSection: React.FC = () => {
                 } : {})
               }}
             >
-              Nancy Grace Roman Telescope Unfolds Mystery: Delving into NASA's revolutionary wide-field infrared observatory, engineered to unlock the subtle gravitational physics of dark energy and map billions of galaxies across the cosmic dawn.
+              {featuredExcerpt}
             </p>
 
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>

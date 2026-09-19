@@ -1,10 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useMobile } from '../contexts/MobileContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { BlogCard } from './BlogCard';
 import Header from './Header';
 import Footer from './Footer';
 import { ALL_BLOG_POSTS } from '../data/blogData';
+import { useBlogPosts } from '@zwantum/blog/react';
 
 // The exact 9 categories from MegaMenu + All Stories
 const BLOG_CATEGORIES = [
@@ -25,9 +27,41 @@ const POSTS_PER_PAGE = 12;
 const BlogIndexPage: React.FC = () => {
   const { isMobile } = useMobile();
   const { isLight } = useTheme();
+  const { posts: livePosts } = useBlogPosts();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlSearch = searchParams.get('search') || '';
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>(urlSearch);
   const [currentPage, setCurrentPage] = useState<number>(1);
+
+  // Synchronize when URL search param changes
+  useEffect(() => {
+    setSearchQuery(urlSearch);
+    if (urlSearch) {
+      setCurrentPage(1);
+    }
+  }, [urlSearch]);
+
+  // Combine live database posts or fallback to curated list if DB has no posts yet
+  const allPosts = useMemo(() => {
+    if (livePosts && livePosts.length > 0) {
+      return livePosts.map(post => ({
+        id: post.slug || post.id,
+        category: post.categories?.[0]?.name || 'Space News',
+        categorySlug: post.categories?.[0]?.slug || 'space-news',
+        title: post.title,
+        desc: post.excerpt || '',
+        img: post.featured_image?.url || 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1600&auto=format&fit=crop',
+        authorName: post.author?.name || 'Editorial Team',
+        authorImg: post.author?.profile_image_url || undefined,
+        date: post.published_at
+          ? new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+          : 'Recent',
+        readTime: `${post.reading_time || 5} min read`
+      }));
+    }
+    return ALL_BLOG_POSTS;
+  }, [livePosts]);
 
   // Reset page when category changes
   const handleCategorySelect = (catVal: string) => {
@@ -35,15 +69,26 @@ const BlogIndexPage: React.FC = () => {
     setCurrentPage(1);
   };
 
-  // Reset page when search changes
+  // Reset page and sync URL when search changes
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
+    setCurrentPage(1);
+    if (query.trim()) {
+      setSearchParams({ search: query.trim() }, { replace: true });
+    } else {
+      setSearchParams({}, { replace: true });
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setSearchParams({}, { replace: true });
     setCurrentPage(1);
   };
 
   // Filtered posts based on category and search query
   const filteredPosts = useMemo(() => {
-    return ALL_BLOG_POSTS.filter(post => {
+    return allPosts.filter(post => {
       const matchesCat = selectedCategory === 'ALL' || post.category.toLowerCase() === selectedCategory.toLowerCase();
       const query = searchQuery.trim().toLowerCase();
       if (!query) return matchesCat;
@@ -54,7 +99,7 @@ const BlogIndexPage: React.FC = () => {
         post.category.toLowerCase().includes(query);
       return matchesCat && matchesSearch;
     });
-  }, [selectedCategory, searchQuery]);
+  }, [allPosts, selectedCategory, searchQuery]);
 
   // Total pages
   const totalPages = Math.ceil(filteredPosts.length / POSTS_PER_PAGE);
@@ -183,10 +228,7 @@ const BlogIndexPage: React.FC = () => {
 
             {searchQuery && (
               <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setCurrentPage(1);
-                }}
+                onClick={handleClearSearch}
                 style={{
                   position: 'absolute',
                   right: '16px',
@@ -329,9 +371,8 @@ const BlogIndexPage: React.FC = () => {
             </p>
             <button
               onClick={() => {
-                setSearchQuery('');
                 setSelectedCategory('ALL');
-                setCurrentPage(1);
+                handleClearSearch();
               }}
               style={{
                 background: 'var(--brand-purple)',

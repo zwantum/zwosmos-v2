@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import Auth from './Auth';
 import AdminDashboard from './AdminDashboard';
+import './Admin.css';
 
 export default function AdminApp() {
   const [session, setSession] = useState<any>(null);
@@ -43,7 +44,7 @@ export default function AdminApp() {
   }
 
   return (
-    <div className="admin-app" style={{ background: 'var(--bg-main)', minHeight: '100vh', color: 'white', fontFamily: "'Inter', sans-serif" }}>
+    <div className="admin-app" style={{ background: '#f8fafc', minHeight: '100vh', color: '#0f172a', fontFamily: "'Inter', sans-serif" }}>
       <Routes>
         <Route path="/" element={session ? <AdminDashboard /> : <Navigate to="/login" replace />} />
         <Route path="/login" element={!session ? <Auth /> : <Navigate to="/" replace />} />

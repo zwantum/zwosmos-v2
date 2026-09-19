@@ -28,6 +28,186 @@ html[data-theme="light"] #root {
   color: #111827;
 }
 
+/* ==========================================================================
+   Article Prose & Content Theme Typography Rules
+   ========================================================================== */
+
+/* Light Theme Article Typography */
+body.light-theme .zw-blog-content,
+html[data-theme="light"] .zw-blog-content,
+body.light-theme .zw-blog-prose,
+html[data-theme="light"] .zw-blog-prose,
+.zw-blog-content-wrapper.light-mode {
+  color: #1e293b !important;
+}
+
+body.light-theme .zw-blog-content p,
+html[data-theme="light"] .zw-blog-content p,
+body.light-theme .zw-blog-prose p,
+html[data-theme="light"] .zw-blog-prose p,
+.zw-blog-content-wrapper.light-mode p,
+body.light-theme .zw-blog-content span,
+html[data-theme="light"] .zw-blog-content span,
+body.light-theme .zw-blog-prose span,
+html[data-theme="light"] .zw-blog-prose span,
+.zw-blog-content-wrapper.light-mode span,
+body.light-theme .zw-blog-content li,
+html[data-theme="light"] .zw-blog-content li,
+body.light-theme .zw-blog-prose li,
+html[data-theme="light"] .zw-blog-prose li,
+.zw-blog-content-wrapper.light-mode li,
+body.light-theme .zw-blog-content strong,
+html[data-theme="light"] .zw-blog-content strong,
+body.light-theme .zw-blog-prose strong,
+html[data-theme="light"] .zw-blog-prose strong,
+.zw-blog-content-wrapper.light-mode strong,
+body.light-theme .zw-blog-content em,
+html[data-theme="light"] .zw-blog-content em,
+body.light-theme .zw-blog-prose em,
+html[data-theme="light"] .zw-blog-prose em,
+.zw-blog-content-wrapper.light-mode em {
+  color: #1e293b !important;
+}
+
+body.light-theme .zw-blog-content h1,
+body.light-theme .zw-blog-content h2,
+body.light-theme .zw-blog-content h3,
+body.light-theme .zw-blog-content h4,
+body.light-theme .zw-blog-content h5,
+body.light-theme .zw-blog-content h6,
+html[data-theme="light"] .zw-blog-content h1,
+html[data-theme="light"] .zw-blog-content h2,
+html[data-theme="light"] .zw-blog-content h3,
+html[data-theme="light"] .zw-blog-content h4,
+html[data-theme="light"] .zw-blog-content h5,
+html[data-theme="light"] .zw-blog-content h6,
+body.light-theme .zw-blog-prose h1,
+body.light-theme .zw-blog-prose h2,
+body.light-theme .zw-blog-prose h3,
+body.light-theme .zw-blog-prose h4,
+body.light-theme .zw-blog-prose h5,
+body.light-theme .zw-blog-prose h6,
+html[data-theme="light"] .zw-blog-prose h1,
+html[data-theme="light"] .zw-blog-prose h2,
+html[data-theme="light"] .zw-blog-prose h3,
+html[data-theme="light"] .zw-blog-prose h4,
+html[data-theme="light"] .zw-blog-prose h5,
+html[data-theme="light"] .zw-blog-prose h6,
+.zw-blog-content-wrapper.light-mode h1,
+.zw-blog-content-wrapper.light-mode h2,
+.zw-blog-content-wrapper.light-mode h3,
+.zw-blog-content-wrapper.light-mode h4,
+.zw-blog-content-wrapper.light-mode h5,
+.zw-blog-content-wrapper.light-mode h6 {
+  color: #0f172a !important;
+}
+
+body.light-theme .zw-blog-content blockquote,
+html[data-theme="light"] .zw-blog-content blockquote,
+body.light-theme .zw-blog-prose blockquote,
+html[data-theme="light"] .zw-blog-prose blockquote,
+.zw-blog-content-wrapper.light-mode blockquote {
+  background: rgba(147, 51, 234, 0.06) !important;
+  border-left: 4px solid var(--brand-purple) !important;
+  color: #1e293b !important;
+}
+
+body.light-theme .zw-blog-content a,
+html[data-theme="light"] .zw-blog-content a,
+body.light-theme .zw-blog-prose a,
+html[data-theme="light"] .zw-blog-prose a,
+.zw-blog-content-wrapper.light-mode a {
+  color: #7c3aed !important;
+}
+
+/* Dark Theme Article Typography */
+body.dark-theme .zw-blog-content,
+html[data-theme="dark"] .zw-blog-content,
+body.dark-theme .zw-blog-prose,
+html[data-theme="dark"] .zw-blog-prose,
+.zw-blog-content-wrapper.dark-mode {
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+
+body.dark-theme .zw-blog-content p,
+html[data-theme="dark"] .zw-blog-content p,
+body.dark-theme .zw-blog-prose p,
+html[data-theme="dark"] .zw-blog-prose p,
+.zw-blog-content-wrapper.dark-mode p,
+body.dark-theme .zw-blog-content span,
+html[data-theme="dark"] .zw-blog-content span,
+body.dark-theme .zw-blog-prose span,
+html[data-theme="dark"] .zw-blog-prose span,
+.zw-blog-content-wrapper.dark-mode span,
+body.dark-theme .zw-blog-content li,
+html[data-theme="dark"] .zw-blog-content li,
+body.dark-theme .zw-blog-prose li,
+html[data-theme="dark"] .zw-blog-prose li,
+.zw-blog-content-wrapper.dark-mode li,
+body.dark-theme .zw-blog-content strong,
+html[data-theme="dark"] .zw-blog-content strong,
+body.dark-theme .zw-blog-prose strong,
+html[data-theme="dark"] .zw-blog-prose strong,
+.zw-blog-content-wrapper.dark-mode strong,
+body.dark-theme .zw-blog-content em,
+html[data-theme="dark"] .zw-blog-content em,
+body.dark-theme .zw-blog-prose em,
+html[data-theme="dark"] .zw-blog-prose em,
+.zw-blog-content-wrapper.dark-mode em {
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+
+body.dark-theme .zw-blog-content h1,
+body.dark-theme .zw-blog-content h2,
+body.dark-theme .zw-blog-content h3,
+body.dark-theme .zw-blog-content h4,
+body.dark-theme .zw-blog-content h5,
+body.dark-theme .zw-blog-content h6,
+html[data-theme="dark"] .zw-blog-content h1,
+html[data-theme="dark"] .zw-blog-content h2,
+html[data-theme="dark"] .zw-blog-content h3,
+html[data-theme="dark"] .zw-blog-content h4,
+html[data-theme="dark"] .zw-blog-content h5,
+html[data-theme="dark"] .zw-blog-content h6,
+body.dark-theme .zw-blog-prose h1,
+body.dark-theme .zw-blog-prose h2,
+body.dark-theme .zw-blog-prose h3,
+body.dark-theme .zw-blog-prose h4,
+body.dark-theme .zw-blog-prose h5,
+body.dark-theme .zw-blog-prose h6,
+html[data-theme="dark"] .zw-blog-prose h1,
+html[data-theme="dark"] .zw-blog-prose h2,
+html[data-theme="dark"] .zw-blog-prose h3,
+html[data-theme="dark"] .zw-blog-prose h4,
+html[data-theme="dark"] .zw-blog-prose h5,
+html[data-theme="dark"] .zw-blog-prose h6,
+.zw-blog-content-wrapper.dark-mode h1,
+.zw-blog-content-wrapper.dark-mode h2,
+.zw-blog-content-wrapper.dark-mode h3,
+.zw-blog-content-wrapper.dark-mode h4,
+.zw-blog-content-wrapper.dark-mode h5,
+.zw-blog-content-wrapper.dark-mode h6 {
+  color: #ffffff !important;
+}
+
+body.dark-theme .zw-blog-content blockquote,
+html[data-theme="dark"] .zw-blog-content blockquote,
+body.dark-theme .zw-blog-prose blockquote,
+html[data-theme="dark"] .zw-blog-prose blockquote,
+.zw-blog-content-wrapper.dark-mode blockquote {
+  background: rgba(147, 51, 234, 0.08) !important;
+  border-left: 4px solid var(--brand-purple) !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+body.dark-theme .zw-blog-content a,
+html[data-theme="dark"] .zw-blog-content a,
+body.dark-theme .zw-blog-prose a,
+html[data-theme="dark"] .zw-blog-prose a,
+.zw-blog-content-wrapper.dark-mode a {
+  color: #a855f7 !important;
+}
+
 h1, h2, h3, h4, h5, h6, .section-title {
   font-family: 'Playfair Display', serif;
 }
@@ -404,3 +584,143 @@ h1, h2, h3, h4, h5, h6, .section-title {
     transform: translateY(0);
   }
 }
+
+/* ==========================================================================
+   Blog Rich Content - FAQ Dark & Light Mode Styling
+   ========================================================================== */
+
+.zw-blog-faq {
+  border-radius: 12px !important;
+  margin: 1.2rem 0 !important;
+  padding: 16px 20px !important;
+  transition: all 0.2s ease !important;
+}
+
+body:not(.light-theme) .zw-blog-faq,
+.dark .zw-blog-faq,
+[data-theme='dark'] .zw-blog-faq {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+body:not(.light-theme) .zw-blog-faq:hover,
+.dark .zw-blog-faq:hover,
+[data-theme='dark'] .zw-blog-faq:hover {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border-color: rgba(168, 85, 247, 0.45) !important;
+}
+
+body:not(.light-theme) .zw-blog-faq[open],
+.dark .zw-blog-faq[open],
+[data-theme='dark'] .zw-blog-faq[open] {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(168, 85, 247, 0.55) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+}
+
+body:not(.light-theme) .zw-blog-faq-question,
+.dark .zw-blog-faq-question,
+[data-theme='dark'] .zw-blog-faq-question {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  font-size: 1.05rem !important;
+  outline: none !important;
+}
+
+body:not(.light-theme) .zw-blog-faq[open] .zw-blog-faq-question,
+.dark .zw-blog-faq[open] .zw-blog-faq-question,
+[data-theme='dark'] .zw-blog-faq[open] .zw-blog-faq-question {
+  color: #c084fc !important;
+}
+
+body:not(.light-theme) .zw-blog-faq-answer,
+.dark .zw-blog-faq-answer,
+[data-theme='dark'] .zw-blog-faq-answer {
+  color: rgba(255, 255, 255, 0.82) !important;
+  margin-top: 12px !important;
+  line-height: 1.7 !important;
+  font-size: 0.98rem !important;
+  padding-top: 8px !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Remove divider lines after blog headings */
+.zw-blog-content h1,
+.zw-blog-content h2,
+.zw-blog-content h3,
+.zw-blog-content h4,
+.zw-blog-content h5,
+.zw-blog-content h6,
+.zw-blog-content-wrapper h1,
+.zw-blog-content-wrapper h2,
+.zw-blog-content-wrapper h3,
+.zw-blog-content-wrapper h4,
+.zw-blog-content-wrapper h5,
+.zw-blog-content-wrapper h6 {
+  border: none !important;
+  border-bottom: none !important;
+  padding-bottom: 0 !important;
+}
+
+/* ==========================================================================
+   Daily Cosmic & Facts Modules Rich Text Typography (Italic, Bold & Links)
+   Guarantees italics and bold render visibly across all browsers and devices
+   ========================================================================== */
+
+.zw-cosmic-rich-content {
+  font-synthesis: weight style !important;
+}
+
+.zw-cosmic-rich-content em,
+.zw-cosmic-rich-content i,
+.zw-cosmic-rich-content cite,
+.zw-cosmic-rich-content [style*="font-style: italic"],
+.zw-cosmic-rich-content [style*="font-style:italic"] {
+  font-style: italic !important;
+  display: inline !important;
+}
+
+/* Ensure bright, clear contrast for italicized words in dark & light themes */
+body:not(.light-theme) .zw-cosmic-rich-content em,
+body:not(.light-theme) .zw-cosmic-rich-content i,
+body:not(.light-theme) .zw-cosmic-rich-content cite,
+.dark .zw-cosmic-rich-content em,
+.dark .zw-cosmic-rich-content i {
+  color: #ffffff !important;
+}
+
+body.light-theme .zw-cosmic-rich-content em,
+body.light-theme .zw-cosmic-rich-content i,
+html[data-theme='light'] .zw-cosmic-rich-content em,
+html[data-theme='light'] .zw-cosmic-rich-content i {
+  color: #0f172a !important;
+}
+
+.zw-cosmic-rich-content strong,
+.zw-cosmic-rich-content b {
+  font-weight: 700 !important;
+}
+
+body:not(.light-theme) .zw-cosmic-rich-content strong,
+body:not(.light-theme) .zw-cosmic-rich-content b,
+.dark .zw-cosmic-rich-content strong,
+.dark .zw-cosmic-rich-content b {
+  color: #ffffff !important;
+}
+
+body.light-theme .zw-cosmic-rich-content strong,
+body.light-theme .zw-cosmic-rich-content b,
+html[data-theme='light'] .zw-cosmic-rich-content strong,
+html[data-theme='light'] .zw-cosmic-rich-content b {
+  color: #0f172a !important;
+}
+
+.zw-cosmic-rich-content strong em,
+.zw-cosmic-rich-content em strong,
+.zw-cosmic-rich-content b i,
+.zw-cosmic-rich-content i b {
+  font-weight: 700 !important;
+  font-style: italic !important;
+}
+

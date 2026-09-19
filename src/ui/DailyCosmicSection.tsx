@@ -1,21 +1,79 @@
 import React, { useState, useEffect } from 'react';
 import { useMobile } from '../contexts/MobileContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { getCosmicData, DailyCosmicData, DEFAULT_COSMIC_DATA } from '../lib/cosmicService';
 
 export const DailyCosmicSection: React.FC = () => {
   const { isMobile } = useMobile();
   const { isLight } = useTheme();
 
-  const [winWidth, setWinWidth] = useState(() => window.innerWidth);
+  const [winWidth, setWinWidth] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1200));
+  const [cosmic, setCosmic] = useState<DailyCosmicData>(DEFAULT_COSMIC_DATA);
+
   useEffect(() => {
     const onResize = () => setWinWidth(window.innerWidth);
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    getCosmicData().then((data) => {
+      if (mounted && data) {
+        setCosmic(data);
+      }
+    });
+
+    const handleUpdate = (e: any) => {
+      if (e?.detail) {
+        setCosmic(e.detail);
+      } else {
+        getCosmicData().then((data) => {
+          if (mounted && data) setCosmic(data);
+        });
+      }
+    };
+
+    window.addEventListener('zwosmos_daily_cosmic_updated', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener('zwosmos_daily_cosmic_updated', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+    };
+  }, []);
+
   const isSmallPhone = winWidth < 641;
   const isSmallTab   = winWidth >= 641 && winWidth < 800;
   const isLargeView = winWidth >= 800;
   const isDesktop   = winWidth >= 1025;
+
+  const renderAstronomyTitle = (title: string) => {
+    if (!title) return 'This Day in Astronomy';
+    if (title === 'This Day in Astronomy') {
+      return (
+        <>
+          This Day in{' '}
+          <em style={{ fontStyle: 'italic', color: isLight ? 'var(--brand-purple)' : '#ffffff' }}>
+            Astronomy
+          </em>
+        </>
+      );
+    }
+    if (title.endsWith(' Astronomy')) {
+      const base = title.slice(0, -9);
+      return (
+        <>
+          {base}{' '}
+          <em style={{ fontStyle: 'italic', color: isLight ? 'var(--brand-purple)' : '#ffffff' }}>
+            Astronomy
+          </em>
+        </>
+      );
+    }
+    return title;
+  };
 
   return (
     <section
@@ -29,6 +87,61 @@ export const DailyCosmicSection: React.FC = () => {
         zIndex: 10
       }}
     >
+      <style>{`
+        .zw-cosmic-rich-content {
+          font-synthesis: weight style !important;
+        }
+        .zw-cosmic-rich-content p {
+          margin: 0 0 0.85em 0;
+        }
+        .zw-cosmic-rich-content p:last-child {
+          margin-bottom: 0;
+        }
+        .zw-cosmic-rich-content a {
+          color: ${isLight ? 'var(--brand-purple)' : '#d8b4fe'};
+          text-decoration: underline;
+        }
+        .zw-cosmic-rich-content strong,
+        .zw-cosmic-rich-content b {
+          color: ${isLight ? '#111827' : '#ffffff'} !important;
+          font-weight: 700 !important;
+        }
+        .zw-cosmic-rich-content em,
+        .zw-cosmic-rich-content i,
+        .zw-cosmic-rich-content cite,
+        .zw-cosmic-rich-content [style*="font-style: italic"],
+        .zw-cosmic-rich-content [style*="font-style:italic"] {
+          font-style: italic !important;
+          color: ${isLight ? '#111827' : '#ffffff'} !important;
+          display: inline !important;
+        }
+        .zw-cosmic-rich-content strong em,
+        .zw-cosmic-rich-content em strong,
+        .zw-cosmic-rich-content b i,
+        .zw-cosmic-rich-content i b {
+          font-weight: 700 !important;
+          font-style: italic !important;
+          color: ${isLight ? '#111827' : '#ffffff'} !important;
+        }
+        .zw-cosmic-scrollable {
+          scrollbar-width: thin;
+          scrollbar-color: ${isLight ? 'rgba(0, 0, 0, 0.2) transparent' : 'rgba(255, 255, 255, 0.3) transparent'};
+        }
+        .zw-cosmic-scrollable::-webkit-scrollbar {
+          width: 4px;
+        }
+        .zw-cosmic-scrollable::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .zw-cosmic-scrollable::-webkit-scrollbar-thumb {
+          background: ${isLight ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.3)'};
+          border-radius: 4px;
+        }
+        .zw-cosmic-scrollable::-webkit-scrollbar-thumb:hover {
+          background: ${isLight ? 'var(--brand-purple)' : '#ffcc00'};
+        }
+      `}</style>
+
       <div
         style={{
           maxWidth: '1160px',
@@ -40,102 +153,143 @@ export const DailyCosmicSection: React.FC = () => {
         }}
       >
         {/* =================================================================== */}
-        {/* LEFT MODULE: THIS DAY IN ASTRONOMY (Border Card with 2 Outer Dots)  */}
+        {/* LEFT MODULE: THIS DAY IN ASTRONOMY (Normal Border with Sidebar Tabs)*/}
         {/* =================================================================== */}
         <div
           style={{
             position: 'relative',
-            border: isLight ? '1.5px solid #d1d5db' : '1.5px solid rgba(255, 255, 255, 0.75)',
-            borderRadius: '22px',
-            padding: isMobile ? '28px 24px' : '36px 34px',
-            background: isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.015)',
-            boxShadow: isLight ? '0 4px 20px rgba(0, 0, 0, 0.06)' : 'none',
-            boxSizing: 'border-box',
-            transition: 'all 0.3s ease'
-          }}
-          onMouseOver={e => {
-            e.currentTarget.style.borderColor = isLight ? 'var(--brand-purple)' : 'rgba(216, 180, 254, 0.9)';
-            e.currentTarget.style.boxShadow = isLight
-              ? '0 8px 24px rgba(0, 0, 0, 0.10)'
-              : '0 12px 36px rgba(0, 0, 0, 0.4), 0 0 24px rgba(147, 51, 234, 0.2)';
-          }}
-          onMouseOut={e => {
-            e.currentTarget.style.borderColor = isLight ? '#d1d5db' : 'rgba(255, 255, 255, 0.75)';
-            e.currentTarget.style.boxShadow = isLight ? '0 4px 20px rgba(0, 0, 0, 0.06)' : 'none';
+            marginLeft: isSmallPhone ? '18px' : '24px',
+            boxSizing: 'border-box'
           }}
         >
-          {/* Top Circular White Pin overlapping left border */}
+          {/* Main Card with Normal Border */}
           <div
             style={{
-              position: 'absolute',
-              left: '-9px',
-              top: '46px',
-              width: '16px',
-              height: '16px',
-              borderRadius: '50%',
-              backgroundColor: isLight ? 'var(--brand-purple)' : '#ffffff',
+              position: 'relative',
+              border: '1.5px solid var(--brand-purple)',
+              borderRadius: '16px',
+              padding: isMobile ? '26px 20px 24px 28px' : '34px 30px 32px 36px',
+              background: isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.015)',
               boxShadow: isLight
-                ? '0 0 10px rgba(147, 51, 234, 0.6)'
-                : '0 0 10px rgba(255, 255, 255, 0.9), 0 0 16px rgba(168, 85, 247, 0.6)'
+                ? '0 4px 20px rgba(0, 0, 0, 0.06)'
+                : '0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(147, 51, 234, 0.2)',
+              boxSizing: 'border-box',
+              transition: 'all 0.3s ease'
             }}
-          />
-
-          {/* Bottom Circular White Pin overlapping left border */}
-          <div
-            style={{
-              position: 'absolute',
-              left: '-9px',
-              top: '92px',
-              width: '16px',
-              height: '16px',
-              borderRadius: '50%',
-              backgroundColor: isLight ? 'var(--brand-purple)' : '#ffffff',
-              boxShadow: isLight
-                ? '0 0 10px rgba(147, 51, 234, 0.6)'
-                : '0 0 10px rgba(255, 255, 255, 0.9), 0 0 16px rgba(168, 85, 247, 0.6)'
+            onMouseOver={e => {
+              e.currentTarget.style.boxShadow = isLight
+                ? '0 8px 24px rgba(147, 51, 234, 0.15)'
+                : '0 12px 36px rgba(0, 0, 0, 0.6), 0 0 28px rgba(147, 51, 234, 0.35)';
             }}
-          />
-
-          {/* Title */}
-          <h3
-            style={{
-              margin: '0 0 6px',
-              fontFamily: "'Playfair Display', serif",
-              fontSize: isMobile ? '1.35rem' : '1.6rem',
-              fontWeight: 700,
-              color: isLight ? '#111827' : '#ffffff',
-              lineHeight: 1.2
+            onMouseOut={e => {
+              e.currentTarget.style.boxShadow = isLight
+                ? '0 4px 20px rgba(0, 0, 0, 0.06)'
+                : '0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(147, 51, 234, 0.2)';
             }}
           >
-            This Day in <em style={{ fontStyle: 'italic', color: isLight ? 'var(--brand-purple)' : '#ffffff' }}>Astronomy</em>
-          </h3>
+            {/* Signature Floating Sidebar Tabs on the Left Border */}
+            <div
+              style={{
+                position: 'absolute',
+                top: isMobile ? '16px' : '22px',
+                left: 0,
+                transform: 'translateX(-50%)',
+                zIndex: 5,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '10px',
+                pointerEvents: 'none'
+              }}
+            >
+              {/* Date Pill Tab */}
+              <div
+                style={{
+                  background: isLight ? '#ffffff' : '#080711',
+                  border: '1.5px solid var(--brand-purple)',
+                  borderRadius: '20px',
+                  padding: '14px 6px',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  writingMode: 'vertical-rl',
+                  transform: 'rotate(180deg)',
+                  color: isLight ? '#111827' : '#ffffff',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  letterSpacing: '1.2px',
+                  textTransform: 'uppercase',
+                  boxShadow: isLight ? '0 2px 8px rgba(0,0,0,0.1)' : '0 4px 12px rgba(0,0,0,0.6)',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {cosmic.astronomyDate}
+              </div>
 
-          {/* Complete Date Below Title (Small Text) */}
-          <div
-            style={{
-              margin: '0 0 14px',
-              fontFamily: "'Lora', serif",
-              fontSize: '0.82rem',
-              fontWeight: 500,
-              color: isLight ? 'var(--brand-purple)' : '#d8b4fe',
-              letterSpacing: '0.5px'
-            }}
-          >
-            September 18, 1977
+              {/* Calendar Icon Button */}
+              <div
+                title={cosmic.astronomyDate}
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  background: isLight ? '#ffffff' : '#080711',
+                  border: '1.5px solid var(--brand-purple)',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  color: isLight ? 'var(--brand-purple)' : '#ffffff',
+                  boxShadow: isLight ? '0 2px 8px rgba(0,0,0,0.1)' : '0 4px 12px rgba(0,0,0,0.6)'
+                }}
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+              </div>
+            </div>
+            {/* Dynamic Title */}
+            <h3
+              style={{
+                margin: '0 0 10px',
+                fontFamily: "'Playfair Display', serif",
+                fontSize: isMobile ? '1.35rem' : '1.6rem',
+                fontWeight: 700,
+                color: isLight ? '#111827' : '#ffffff',
+                lineHeight: 1.2
+              }}
+            >
+              {renderAstronomyTitle(cosmic.astronomyTitle)}
+            </h3>
+
+            {/* Dynamic Rich Text Description (Scrollable if > 5 lines) */}
+            <div
+              className="zw-cosmic-rich-content zw-cosmic-scrollable"
+              style={{
+                margin: 0,
+                fontFamily: "'Lora', Georgia, 'Times New Roman', serif",
+                fontSynthesis: 'weight style',
+                fontSize: isMobile ? '0.9rem' : '0.98rem',
+                lineHeight: 1.68,
+                color: isLight ? '#4b5563' : '#cbd5e1',
+                maxHeight: isMobile ? '130px' : '135px',
+                overflowY: 'auto',
+                paddingRight: '6px'
+              }}
+              dangerouslySetInnerHTML={{ __html: cosmic.astronomyContent }}
+            />
           </div>
-
-          {/* Description */}
-          <p
-            style={{
-              margin: 0,
-              fontFamily: "'Lora', serif",
-              fontSize: isMobile ? '0.9rem' : '0.98rem',
-              lineHeight: 1.68,
-              color: isLight ? '#4b5563' : '#cbd5e1'
-            }}
-          >
-            On this day in 1977, Voyager 1 looked back across millions of miles of deep space to capture the first-ever image of the Earth and Moon together in a single frame—a luminous blue jewel paired with its companion, poised against the silent cosmic abyss.
-          </p>
         </div>
 
         {/* =================================================================== */}
@@ -146,11 +300,8 @@ export const DailyCosmicSection: React.FC = () => {
             style={{
               width: '3px',
               height: '140px',
-              background: isLight
-                ? 'linear-gradient(to bottom, var(--brand-purple) 0%, rgba(219, 39, 119, 0.9) 100%)'
-                : 'linear-gradient(to bottom, #ffffff 0%, var(--brand-purple) 50%, rgba(219, 39, 119, 0.9) 100%)',
-              borderRadius: '3px',
-              boxShadow: '0 0 12px rgba(168, 85, 247, 0.5)',
+              backgroundColor: '#ffba00',
+              borderRadius: '2px',
               justifySelf: 'center',
               alignSelf: 'center',
               flexShrink: 0
@@ -173,11 +324,8 @@ export const DailyCosmicSection: React.FC = () => {
             <div
               style={{
                 width: '3px',
-                background: isLight
-                  ? 'linear-gradient(to bottom, var(--brand-purple) 0%, rgba(219, 39, 119, 0.8) 100%)'
-                  : 'linear-gradient(to bottom, #ffffff 0%, var(--brand-purple) 60%, rgba(219, 39, 119, 0.8) 100%)',
-                borderRadius: '3px',
-                boxShadow: '0 0 12px rgba(168, 85, 247, 0.5)',
+                backgroundColor: '#ffba00',
+                borderRadius: '2px',
                 flexShrink: 0
               }}
             />
@@ -197,20 +345,24 @@ export const DailyCosmicSection: React.FC = () => {
                 lineHeight: 1.2
               }}
             >
-              SPACE FACT OF THE DAY
+              {cosmic.factTitle}
             </h3>
 
-            <p
+            <div
+              className={isSmallPhone ? "zw-cosmic-rich-content" : "zw-cosmic-rich-content zw-cosmic-scrollable"}
               style={{
                 margin: 0,
-                fontFamily: "'Lora', serif",
+                fontFamily: "'Lora', Georgia, 'Times New Roman', serif",
+                fontSynthesis: 'weight style',
                 fontSize: isMobile ? '0.9rem' : '0.98rem',
                 lineHeight: 1.68,
-                color: isLight ? '#4b5563' : '#cbd5e1'
+                color: isLight ? '#4b5563' : '#cbd5e1',
+                maxHeight: isSmallPhone ? 'none' : isMobile ? '130px' : '135px',
+                overflowY: isSmallPhone ? 'visible' : 'auto',
+                paddingRight: isSmallPhone ? '0px' : '6px'
               }}
-            >
-              If two pieces of the same type of metal touch in the vacuum of space, they will bond permanently into a single solid piece through cold welding. On Earth, a thin oxide film keeps metal atoms apart, but in the pure void, the atoms have no idea they belong to different pieces.
-            </p>
+              dangerouslySetInnerHTML={{ __html: cosmic.factContent }}
+            />
           </div>
         </div>
       </div>

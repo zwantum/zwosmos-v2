@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" 
+  xmlns:atom="http://www.w3.org/2005/Atom"
+  xmlns:content="http://purl.org/rss/1.0/modules/content/"
+  xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Zwosmos — Cosmic Dispatch Feed</title>
+    <link>https://zwosmos.com</link>
+    <description>Latest cosmology, space discoveries, and astronomical observations from Zwosmos.</description>
+    <language>en-US</language>
+    <lastBuildDate>Fri, 18 Sep 2026 10:00:00 GMT</lastBuildDate>
+    <atom:link href="https://zwosmos.com/rss.xml" rel="self" type="application/rss+xml"/>
+    <image>
+      <url>https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&amp;auto=format&amp;fit=crop&amp;q=80</url>
+      <title>Zwosmos</title>
+      <link>https://zwosmos.com</link>
+    </image>
+    <item>
+      <title>James Webb Resolves Earliest Supermassive Black Hole</title>
+      <link>https://zwosmos.com/blog/james-webb-resolves-earliest-black-hole</link>
+      <guid isPermaLink="true">https://zwosmos.com/blog/james-webb-resolves-earliest-black-hole</guid>
+      <pubDate>Fri, 18 Sep 2026 08:00:00 GMT</pubDate>
+      <dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Zwosmos Editorial Team</dc:creator>
+      <category>Space News</category>
+      <description><![CDATA[New deep-field spectroscopy from JWST unveils a primordial singularity that challenges current theories of cosmic evolution.]]></description>
+      <enclosure url="https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&amp;w=1000&amp;auto=format&amp;fit=crop" length="0" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Mapping the Cosmic Microwave Background with Quantum Sensors</title>
+      <link>https://zwosmos.com/blog/mapping-cosmic-microwave-background</link>
+      <guid isPermaLink="true">https://zwosmos.com/blog/mapping-cosmic-microwave-background</guid>
+      <pubDate>Thu, 17 Sep 2026 12:00:00 GMT</pubDate>
+      <dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Dr. Maya Lin</dc:creator>
+      <category>Cosmology</category>
+      <description><![CDATA[Next-generation cryogenic detectors on high-altitude balloons measure relic polarization from cosmic inflation.]]></description>
+      <enclosure url="https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&amp;w=1000&amp;auto=format&amp;fit=crop" length="0" type="image/jpeg" />
+    </item>
+  </channel>
+</rss>

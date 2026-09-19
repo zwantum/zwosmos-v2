@@ -1,144 +1,29 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
-import { Plus, Edit2, Trash2 } from 'lucide-react';
-import TiptapEditor from './TiptapEditor';
+import { BlogAdmin } from '@zwantum/blog/admin';
+import { blogClient } from '../lib/blogClient';
+import { PushNotificationContainer } from './PushNotification';
+import '@zwantum/blog-admin/styles.css';
+import '@zwantum/blog-editor/styles.css';
+import '@zwantum/blog-editor/content.css';
+import './BlogsManager.css';
 
 export default function BlogsManager() {
-  const [blogs, setBlogs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  
-  // Form State
-  const [title, setTitle] = useState('');
-  const [category, setCategory] = useState('');
-  const [slug, setSlug] = useState('');
-  const [desc, setDesc] = useState('');
-  const [img, setImg] = useState('');
-  const [content, setContent] = useState('');
-  const [isArchived, setIsArchived] = useState(false);
-
-  useEffect(() => {
-    fetchBlogs();
-  }, []);
-
-  const fetchBlogs = async () => {
-    if (!supabase) {
-      setLoading(false);
-      return;
-    }
-    const { data, error } = await supabase.from('blogs').select('*').order('created_at', { ascending: false });
-    if (!error && data) {
-      setBlogs(data);
-    }
-    setLoading(false);
-  };
-
-  const handleSave = async () => {
-    if (!supabase) return;
-    
-    const newBlog = { 
-      title, 
-      category, 
-      slug,
-      "desc": desc, 
-      img, 
-      content,
-      is_archived: isArchived 
-    };
-
-    const { error } = await supabase.from('blogs').insert([newBlog]);
-    if (!error) {
-      setIsEditing(false);
-      resetForm();
-      fetchBlogs();
-    } else {
-      alert('Error saving blog: ' + error.message);
-    }
-  };
-
-  const resetForm = () => {
-    setTitle('');
-    setCategory('');
-    setSlug('');
-    setDesc('');
-    setImg('');
-    setContent('');
-    setIsArchived(false);
-  };
-
-  if (isEditing) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2>Create New Blog</h2>
-          <button onClick={() => setIsEditing(false)} style={{ background: 'transparent', color: 'white', border: '1px solid rgba(255,255,255,0.2)', padding: '8px 16px', borderRadius: '5px', cursor: 'pointer' }}>Cancel</button>
-        </div>
-
-        <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} style={inputStyle} />
-        <input placeholder="Image URL (or implement uploader)" value={img} onChange={e => setImg(e.target.value)} style={inputStyle} />
-        <input placeholder="Slug (e.g. my-first-post)" value={slug} onChange={e => setSlug(e.target.value)} style={inputStyle} />
-        <input placeholder="Category" value={category} onChange={e => setCategory(e.target.value)} style={inputStyle} />
-        
-        <div>
-          <label style={{ display: 'block', marginBottom: '8px', color: 'rgba(255,255,255,0.8)' }}>Short Description (Appears on the blog card)</label>
-          <textarea placeholder="Write a short summary..." value={desc} onChange={e => setDesc(e.target.value)} style={{...inputStyle, height: '80px', fontFamily: 'inherit'}} />
-        </div>
-        
-        <div>
-          <label style={{ display: 'block', marginBottom: '8px', color: 'rgba(255,255,255,0.8)' }}>Main Blog Content</label>
-          <TiptapEditor value={content} onChange={setContent} />
-        </div>
-
-        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'rgba(255,255,255,0.8)', cursor: 'pointer' }}>
-          <input type="checkbox" checked={isArchived} onChange={e => setIsArchived(e.target.checked)} style={{ width: '18px', height: '18px' }} />
-          Archive this post (hide from public view)
-        </label>
-
-        <button onClick={handleSave} style={{ background: 'var(--brand-purple)', color: 'white', border: 'none', padding: '12px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>Save Blog</button>
-      </div>
-    );
-  }
-
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h2>Existing Blogs</h2>
-        <button onClick={() => setIsEditing(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--brand-purple)', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '5px', cursor: 'pointer' }}>
-          <Plus size={18} /> New Blog
-        </button>
+    <div className="zw-blog-admin-box-wrapper">
+      <PushNotificationContainer />
+      <BlogAdmin
+        client={blogClient}
+        title="Blog"
+        subtitle="Manage articles & discussions"
+        className="zw-blog-admin-boxed"
+      />
+      {/* Exactly one clean copyright line in the blog module */}
+      <div className="zw-single-copyright-bar">
+        <span>© {new Date().getFullYear()} Zwantum</span>
+        <span className="zw-copyright-dot">•</span>
+        <span>
+          Powered by <strong style={{ color: '#0f172a', fontWeight: 600 }}>Zwantum</strong>
+        </span>
       </div>
-
-      {loading ? (
-        <p>Loading blogs...</p>
-      ) : blogs.length === 0 ? (
-        <p style={{ color: 'rgba(255,255,255,0.5)' }}>No blogs found. Create one!</p>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          {blogs.map(blog => (
-            <div key={blog.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-dark-purple)', padding: '15px', borderRadius: '5px', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <div>
-                <h3 style={{ margin: '0 0 5px 0' }}>{blog.title}</h3>
-                <span style={{ fontSize: '0.8rem', color: 'var(--brand-purple)' }}>{blog.category}</span>
-              </div>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer' }}><Edit2 size={18} /></button>
-                <button style={{ background: 'transparent', border: 'none', color: '#ff6b6b', cursor: 'pointer' }}><Trash2 size={18} /></button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
-
-const inputStyle = {
-  width: '100%',
-  padding: '12px',
-  borderRadius: '5px',
-  border: '1px solid rgba(255,255,255,0.2)',
-  background: 'rgba(0,0,0,0.2)',
-  color: 'white',
-  outline: 'none',
-  boxSizing: 'border-box' as const
-};

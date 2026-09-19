@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { useMobile } from '../contexts/MobileContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { settingsService, DEFAULT_SITE_SETTINGS, SiteSettings } from '../lib/settingsService';
 
 export interface MegaMenuProps {
   isOpen: boolean;
@@ -99,6 +100,27 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
   const { isMobile } = useMobile();
   const { isLight } = useTheme();
   const currentIsDark = !isLight;
+  const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SITE_SETTINGS);
+
+  useEffect(() => {
+    let active = true;
+    settingsService.getSettings().then(s => {
+      if (active && s) setSettings(s);
+    });
+
+    const handleUpdate = (e: any) => {
+      if (e?.detail) setSettings(e.detail);
+    };
+
+    window.addEventListener('zwosmos_settings_updated', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+
+    return () => {
+      active = false;
+      window.removeEventListener('zwosmos_settings_updated', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+    };
+  }, []);
 
   // Prevent background scroll when overlay is open & support Escape key
   useEffect(() => {
@@ -469,69 +491,91 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        {/* Right: Social Media Icons (X, Instagram, YouTube, Facebook) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
-          {/* X / Twitter */}
-          <a
-            href="https://twitter.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="X (Twitter)"
-            style={{ color: currentIsDark ? '#ffffff' : '#374151', transition: 'color 0.2s ease', display: 'flex' }}
-            onMouseOver={e => (e.currentTarget.style.color = '#c084fc')}
-            onMouseOut={e => (e.currentTarget.style.color = currentIsDark ? '#ffffff' : '#374151')}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-            </svg>
-          </a>
-
-          {/* Instagram */}
-          <a
-            href="https://instagram.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Instagram"
-            style={{ color: currentIsDark ? '#ffffff' : '#374151', transition: 'color 0.2s ease', display: 'flex' }}
-            onMouseOver={e => (e.currentTarget.style.color = '#c084fc')}
-            onMouseOut={e => (e.currentTarget.style.color = currentIsDark ? '#ffffff' : '#374151')}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
-              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-              <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
-            </svg>
-          </a>
-
-          {/* YouTube */}
-          <a
-            href="https://youtube.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="YouTube"
-            style={{ color: currentIsDark ? '#ffffff' : '#374151', transition: 'color 0.2s ease', display: 'flex' }}
-            onMouseOver={e => (e.currentTarget.style.color = '#c084fc')}
-            onMouseOut={e => (e.currentTarget.style.color = currentIsDark ? '#ffffff' : '#374151')}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-            </svg>
-          </a>
-
-          {/* Facebook */}
-          <a
-            href="https://facebook.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Facebook"
-            style={{ color: currentIsDark ? '#ffffff' : '#374151', transition: 'color 0.2s ease', display: 'flex' }}
-            onMouseOver={e => (e.currentTarget.style.color = '#c084fc')}
-            onMouseOut={e => (e.currentTarget.style.color = currentIsDark ? '#ffffff' : '#374151')}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-            </svg>
-          </a>
+        {/* Right: Dynamic Social Media Icons (Configured via Dashboard Settings) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '18px', flexWrap: 'wrap' }}>
+          {[
+            {
+              id: 'instagram',
+              name: 'Instagram',
+              href: settings.socialInstagram || 'https://instagram.com/zwosmos',
+              svg: (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                  <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+                </svg>
+              )
+            },
+            {
+              id: 'facebook',
+              name: 'Facebook',
+              href: settings.socialFacebook || 'https://facebook.com/zwosmos',
+              svg: (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                </svg>
+              )
+            },
+            {
+              id: 'twitter',
+              name: 'X (Twitter)',
+              href: settings.socialTwitter || 'https://x.com/zwosmos',
+              svg: (
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+              )
+            },
+            {
+              id: 'linkedin',
+              name: 'LinkedIn',
+              href: settings.socialLinkedin || 'https://linkedin.com/company/zwosmos',
+              svg: (
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.64c-.87 0-1.58.7-1.58 1.58a1.58 1.58 0 0 0 1.58 1.58c.87 0 1.57-.7 1.57-1.58a1.57 1.57 0 0 0-1.57-1.58z" />
+                </svg>
+              )
+            },
+            {
+              id: 'youtube',
+              name: 'YouTube',
+              href: settings.socialYoutube || 'https://youtube.com/@zwosmos',
+              svg: (
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                </svg>
+              )
+            }
+          ]
+            .filter(item => Boolean(item.href?.trim()))
+            .map(social => (
+              <a
+                key={social.id}
+                href={social.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={social.name}
+                aria-label={social.name}
+                style={{
+                  color: currentIsDark ? '#ffffff' : '#374151',
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  textDecoration: 'none'
+                }}
+                onMouseOver={e => {
+                  e.currentTarget.style.color = '#c084fc';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseOut={e => {
+                  e.currentTarget.style.color = currentIsDark ? '#ffffff' : '#374151';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                {social.svg}
+              </a>
+            ))}
         </div>
       </footer>
     </div>

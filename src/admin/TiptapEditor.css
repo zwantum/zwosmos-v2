@@ -11,7 +11,10 @@
 
 .tiptap-white-editor h1,
 .tiptap-white-editor h2,
-.tiptap-white-editor h3 {
+.tiptap-white-editor h3,
+.tiptap-white-editor h4,
+.tiptap-white-editor h5,
+.tiptap-white-editor h6 {
   margin-top: 0;
   margin-bottom: 0.5em;
   font-weight: bold;
