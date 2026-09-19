@@ -145,6 +145,3 @@ Supabase migrations are in `supabase/migrations/`:
 
 MIT
 
----
-
-Built with 💜 by [Zwantum](https://zwantum.com)
