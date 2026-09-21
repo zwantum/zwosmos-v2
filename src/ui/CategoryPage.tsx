@@ -10,6 +10,7 @@ import {
   getPostsByCategorySlug
 } from '../data/blogData';
 import { useBlogPosts } from '@zwantum/blog/react';
+import { useSEO } from '../lib/seoService';
 
 interface CategoryPageProps {
   slug?: string;
@@ -32,8 +33,6 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ slug: propSlug }) =>
   }, []);
 
   const isSmallTab = winWidth >= 600 && winWidth < 800;
-  const isLargeTab = winWidth >= 800 && winWidth <= 1180;
-  const isTablet = isSmallTab || isLargeTab;
   const isPhone = winWidth < 600;
 
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -43,6 +42,13 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ slug: propSlug }) =>
   const currentCategory = useMemo(() => {
     return getCategoryBySlug(activeSlug);
   }, [activeSlug]);
+
+  useSEO({
+    title: `${currentCategory.name} - Cosmic Dispatches`,
+    description: currentCategory.desc,
+    image: currentCategory.heroImg,
+    type: 'website'
+  });
 
   // Posts belonging to this category (dynamically matched from Supabase, or fallback)
   const categoryPosts = useMemo(() => {
@@ -109,11 +115,7 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ slug: propSlug }) =>
         style={{
           maxWidth: '1260px',
           margin: '0 auto',
-          padding: isPhone
-            ? '20px 30px 60px'
-            : isTablet
-            ? '28px 50px 70px'
-            : '35px 24px 80px',
+          padding: isMobile ? '20px 16px 60px' : '35px 24px 80px',
           boxSizing: 'border-box'
         }}
       >

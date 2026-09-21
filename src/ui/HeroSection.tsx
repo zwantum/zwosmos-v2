@@ -7,6 +7,23 @@ import SoftAurora from './SoftAurora';
 import Aurora from './Aurora';
 import { useBlogPosts } from '@zwantum/blog/react';
 
+class SafeAuroraBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(err: any) {
+    console.warn('Aurora WebGL safely bypassed:', err);
+  }
+  render() {
+    if (this.state.hasError) return null;
+    return this.props.children;
+  }
+}
+
 export const HeroSection: React.FC = () => {
   const { isMobile } = useMobile();
   const { isLight } = useTheme();
@@ -29,11 +46,11 @@ export const HeroSection: React.FC = () => {
     return () => window.removeEventListener('resize', onResize);
   }, []);
   // Layout purely based on width — ignores isMobile (touch detection can be wrong in DevTools)
-  const isSmallPhone = winWidth < 600;   // < 600px → phone
-  const isSmallTab   = winWidth >= 600 && winWidth < 800; // 600–799px → small tab
-  const isTablet    = winWidth >= 600 && winWidth <= 1180; // 600–1180px → tablet
+  const isSmallPhone = winWidth < 641;   // < 641px → phone
+  const isSmallTab   = winWidth >= 641 && winWidth < 800; // 641–799px → small tab
+  const isTablet    = winWidth >= 641 && winWidth < 1024; // 641–1023px → tablet
   const isLargeView = winWidth >= 800;
-  const isDesktop   = winWidth > 1180; // desktop view only
+  const isDesktop   = winWidth >= 1025; // desktop view only
 
   return (
     <section
@@ -59,39 +76,45 @@ export const HeroSection: React.FC = () => {
           zIndex: 0,
           pointerEvents: 'none',
           overflow: 'hidden',
-          maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 75%, rgba(0,0,0,0) 100%)',
-          WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 75%, rgba(0,0,0,0) 100%)',
+          maskImage: isSmallPhone
+            ? 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 88%)'
+            : 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 75%, rgba(0,0,0,0) 100%)',
+          WebkitMaskImage: isSmallPhone
+            ? 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 88%)'
+            : 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 75%, rgba(0,0,0,0) 100%)',
           opacity: 1
         }}
       >
-        {isLight ? (
-          <Aurora
-            key="hero-light-aurora"
-            colorStops={["#5227FF", "#7cff67", "#5227FF"]}
-            amplitude={isSmallPhone ? 1.0 : 1.2}
-            blend={isSmallPhone ? 0.5 : 0.6}
-            frequency={isSmallPhone ? 0.95 : 2.0}
-            inverted={false}
-            lightMode={true}
-          />
-        ) : (
-          <SoftAurora
-            speed={0.6}
-            scale={1.5}
-            brightness={1}
-            color1="#f7f7f7"
-            color2="#e100ff"
-            noiseFrequency={2.5}
-            noiseAmplitude={1}
-            bandHeight={0.5}
-            bandSpread={1}
-            octaveDecay={0.1}
-            layerOffset={0}
-            colorSpeed={1}
-            enableMouseInteraction
-            mouseInfluence={0.25}
-          />
-        )}
+        <SafeAuroraBoundary>
+          {isLight ? (
+            <Aurora
+              key="hero-light-aurora"
+              colorStops={["#5227FF", "#7cff67", "#5227FF"]}
+              amplitude={isSmallPhone ? 1.0 : 1.2}
+              blend={isSmallPhone ? 0.5 : 0.6}
+              frequency={isSmallPhone ? 0.95 : 2.0}
+              inverted={false}
+              lightMode={true}
+            />
+          ) : (
+            <SoftAurora
+              speed={0.6}
+              scale={1.5}
+              brightness={1}
+              color1="#f7f7f7"
+              color2="#e100ff"
+              noiseFrequency={2.5}
+              noiseAmplitude={1}
+              bandHeight={isSmallPhone ? 0.63 : isSmallTab ? 0.56 : 0.5}
+              bandSpread={1}
+              octaveDecay={0.1}
+              layerOffset={0}
+              colorSpeed={1}
+              enableMouseInteraction
+              mouseInfluence={0.25}
+            />
+          )}
+        </SafeAuroraBoundary>
       </div>
 
       {/* 1. TOP HEADER (LOGO + FLOATING NAVIGATION PILL) */}
@@ -106,7 +129,7 @@ export const HeroSection: React.FC = () => {
           zIndex: 5,
           maxWidth: '1200px',
           margin: isSmallPhone ? '10px auto 0' : isDesktop ? '28px auto 0' : isLargeView ? '24px auto 0' : isSmallTab ? '30px auto 0' : '40px auto 0',
-          padding: isSmallPhone ? '0 30px' : isTablet ? '0 50px' : '0 28px',
+          padding: isSmallPhone ? '0 16px' : '0 28px',
           boxSizing: 'border-box'
         }}
       >
@@ -190,6 +213,7 @@ export const HeroSection: React.FC = () => {
                 fontSize: isSmallPhone ? '2.1rem' : isSmallTab ? '1.75rem' : '44px',
                 lineHeight: 1.22,
                 color: isLight ? '#111827' : '#ffffff',
+                textShadow: isLight ? 'none' : '0 2px 14px rgba(0, 0, 0, 0.75)',
                 margin: '0 0 16px 0',
                 fontWeight: 600,
                 letterSpacing: '-0.5px'

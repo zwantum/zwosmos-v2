@@ -29,15 +29,12 @@ export class ErrorBoundary extends Component<PropsWithChildren, ErrorBoundarySta
     }
 
     handleRefresh = (): void => {
+        this.setState({ hasError: false, error: null });
         window.location.reload();
     };
 
-    handleStaticVersion = (): void => {
-        window.location.href = '/templates/Portfolio.html';
-    };
-
-    handleConnectDeveloper = (): void => {
-        window.location.href = '/templates/Portfolio.html#contact';
+    handleGoHome = (): void => {
+        window.location.href = '/';
     };
 
     render() {
@@ -54,15 +51,15 @@ export class ErrorBoundary extends Component<PropsWithChildren, ErrorBoundarySta
                             </svg>
                         </div>
 
-                        <h2>Houston, we have a problem</h2>
+                        <h2>Houston, we encountered a glitch</h2>
 
                         <p className={styles.message}>
-                            Something went wrong with the 3D experience.
+                            Something unexpected occurred while loading this page.
                         </p>
 
                         <div className={styles.errorInfo}>
                             <div className={styles.errorCode}>
-                                {this.state.error?.name || 'Error'}
+                                {this.state.error?.message || this.state.error?.name || 'Error'}
                             </div>
                         </div>
 
@@ -76,34 +73,20 @@ export class ErrorBoundary extends Component<PropsWithChildren, ErrorBoundarySta
                                         <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
                                         <path d="M3 3v5h5"></path>
                                     </svg>
-                                    Retry
+                                    Reload Experience
                                 </span>
                             </button>
 
                             <button
-                                onClick={this.handleStaticVersion}
+                                onClick={this.handleGoHome}
                                 className={`${styles.button} ${styles.secondary}`}
                             >
                                 <span className={styles.buttonText}>
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.buttonIcon}>
-                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                        <line x1="3" y1="9" x2="21" y2="9"></line>
-                                        <line x1="9" y1="21" x2="9" y2="9"></line>
+                                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                                        <polyline points="9 22 9 12 15 12 15 22" />
                                     </svg>
-                                    Static Version
-                                </span>
-                            </button>
-
-                            <button
-                                onClick={this.handleConnectDeveloper}
-                                className={`${styles.button} ${styles.accent}`}
-                            >
-                                <span className={styles.buttonText}>
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.buttonIcon}>
-                                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                                        <polyline points="22,6 12,13 2,6"></polyline>
-                                    </svg>
-                                    Connect with Developer
+                                    Return to Home
                                 </span>
                             </button>
                         </div>

@@ -37,9 +37,9 @@ const Footer: React.FC<FooterProps> = ({ isLight: propIsLight }) => {
   }, []);
 
   // Layout purely based on width (ignores isMobile touch emulation)
-  const isSmallPhone = winWidth < 600;
-  const isSmallTab = winWidth >= 600 && winWidth <= 800; // small tab view
-  const isLargeTablet = winWidth > 800 && winWidth <= 1180; // large tab view
+  const isSmallPhone = winWidth < 641;
+  const isSmallTab = winWidth >= 641 && winWidth <= 800; // small tab view (641px–800px, e.g. iPad Mini 768px)
+  const isLargeTablet = winWidth > 800 && winWidth <= 1180; // large tab view (810px, 820px, 912px, 1024px, 1180px)
 
   // Earth bottom offset per breakpoint
   const earthBottom = isSmallTab
@@ -67,7 +67,7 @@ const Footer: React.FC<FooterProps> = ({ isLight: propIsLight }) => {
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: isSmallPhone ? '40px 30px 70px' : (isSmallTab || isLargeTablet) ? '20px 50px 50px' : '60px 20px 90px',
+        padding: isSmallPhone ? '40px 20px 70px' : isSmallTab ? '20px 20px 50px' : '60px 20px 90px',
         boxSizing: 'border-box',
         overflow: 'hidden',
         textAlign: 'center',

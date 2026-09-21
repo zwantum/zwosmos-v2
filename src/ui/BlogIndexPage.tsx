@@ -7,6 +7,7 @@ import Header from './Header';
 import Footer from './Footer';
 import { ALL_BLOG_POSTS } from '../data/blogData';
 import { useBlogPosts } from '@zwantum/blog/react';
+import { useSEO } from '../lib/seoService';
 
 // The exact 9 categories from MegaMenu + All Stories
 const BLOG_CATEGORIES = [
@@ -27,25 +28,18 @@ const POSTS_PER_PAGE = 12;
 const BlogIndexPage: React.FC = () => {
   const { isMobile } = useMobile();
   const { isLight } = useTheme();
-
-  // Window width tracking for accurate tablet (both small & large tab) detection
-  const [winWidth, setWinWidth] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1200));
-  useEffect(() => {
-    const onResize = () => setWinWidth(window.innerWidth);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-
-  const isSmallTab = winWidth >= 600 && winWidth < 800;
-  const isLargeTab = winWidth >= 800 && winWidth <= 1180;
-  const isTablet = isSmallTab || isLargeTab;
-  const isPhone = winWidth < 600;
   const { posts: livePosts } = useBlogPosts();
   const [searchParams, setSearchParams] = useSearchParams();
   const urlSearch = searchParams.get('search') || '';
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>(urlSearch);
   const [currentPage, setCurrentPage] = useState<number>(1);
+
+  useSEO({
+    title: selectedCategory !== 'ALL' ? `${selectedCategory} - Cosmic Dispatches` : 'Cosmic Feed - All Stories & Astrophysical Dispatches',
+    description: 'Explore the full spectrum of astrophysics, planetary sciences, cosmic explorations, and deep-space revelations.',
+    type: 'website'
+  });
 
   // Synchronize when URL search param changes
   useEffect(() => {
@@ -142,7 +136,7 @@ const BlogIndexPage: React.FC = () => {
         style={{
           maxWidth: '1260px',
           margin: '0 auto',
-          padding: isPhone ? '20px 30px 50px' : isTablet ? '28px 50px 70px' : '35px 24px 70px',
+          padding: isMobile ? '20px 14px 50px' : '35px 24px 70px',
           boxSizing: 'border-box'
         }}
       >
@@ -407,10 +401,10 @@ const BlogIndexPage: React.FC = () => {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: isPhone
+              gridTemplateColumns: isMobile
                 ? '1fr'
                 : 'repeat(3, 1fr)',
-              gap: isPhone ? '24px 14px' : (isSmallTab ? '24px 12px' : '32px 20px')
+              gap: isMobile ? '24px 14px' : '32px 20px'
             }}
           >
             {paginatedPosts.map(post => (

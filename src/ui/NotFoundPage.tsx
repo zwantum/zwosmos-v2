@@ -1,61 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useMobile } from '../contexts/MobileContext';
 import Header from './Header';
 import Footer from './Footer';
-import { Compass, BookOpen, Sparkles, ArrowRight, Radio, Orbit, Telescope, Globe } from 'lucide-react';
+import { Compass, BookOpen, Sparkles } from 'lucide-react';
 
 export const NotFoundPage: React.FC = () => {
   const { isLight } = useTheme();
   const { isMobile } = useMobile();
 
-  const [winWidth, setWinWidth] = useState<number>(() => (typeof window !== 'undefined' ? window.innerWidth : 1200));
-
-  useEffect(() => {
-    const handleResize = () => setWinWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const isPhone = winWidth < 600;
-  const isTablet = winWidth >= 600 && winWidth <= 1180;
-
   useEffect(() => {
     document.title = '404 - Cosmic Void | Zwosmos';
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   }, []);
-
-  const categories = [
-    {
-      title: 'Space News',
-      desc: 'Latest missions, rocket launches & astronomy headlines',
-      icon: Radio,
-      path: '/space-news',
-      color: '#38bdf8'
-    },
-    {
-      title: 'Solar System',
-      desc: 'Exploring planets, moons, asteroids & planetary science',
-      icon: Orbit,
-      path: '/solar-system',
-      color: '#fbbf24'
-    },
-    {
-      title: 'The Universe',
-      desc: 'Deep cosmos, nebulae, black holes & relativistic physics',
-      icon: Globe,
-      path: '/universe',
-      color: '#c084fc'
-    },
-    {
-      title: 'Telescopes & Tech',
-      desc: 'JWST breakthroughs, observatories & spaceflight optics',
-      icon: Telescope,
-      path: '/telescopes-technology',
-      color: '#34d399'
-    }
-  ];
 
   return (
     <div
@@ -63,7 +21,7 @@ export const NotFoundPage: React.FC = () => {
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        backgroundColor: isLight ? '#f8fafc' : '#080712',
+        backgroundColor: isLight ? '#f8fafc' : '#161616',
         backgroundImage: isLight
           ? 'radial-gradient(ellipse at 50% 15%, rgba(147, 51, 234, 0.08) 0%, transparent 60%)'
           : `
@@ -86,7 +44,7 @@ export const NotFoundPage: React.FC = () => {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: isPhone ? '40px 30px 60px' : isTablet ? '50px 50px 70px' : '60px 24px 90px',
+          padding: isMobile ? '40px 18px 60px' : '60px 24px 0px',
           maxWidth: '1100px',
           margin: '0 auto',
           width: '100%',
@@ -94,44 +52,6 @@ export const NotFoundPage: React.FC = () => {
           textAlign: 'center'
         }}
       >
-        {/* Pulsing Cosmic Anomaly Pill */}
-        <div
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '6px 16px',
-            borderRadius: '9999px',
-            background: isLight ? 'rgba(147, 51, 234, 0.08)' : 'rgba(168, 85, 247, 0.12)',
-            border: isLight ? '1px solid rgba(147, 51, 234, 0.25)' : '1px solid rgba(168, 85, 247, 0.35)',
-            marginBottom: '20px',
-            boxShadow: '0 0 20px rgba(168, 85, 247, 0.15)'
-          }}
-        >
-          <span
-            style={{
-              width: '8px',
-              height: '8px',
-              borderRadius: '50%',
-              background: '#a855f7',
-              boxShadow: '0 0 10px #a855f7',
-              animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
-            }}
-          />
-          <span
-            style={{
-              fontFamily: "'Orbitron', sans-serif",
-              fontSize: '0.75rem',
-              letterSpacing: '2px',
-              fontWeight: 600,
-              color: isLight ? '#7e22ce' : '#c084fc',
-              textTransform: 'uppercase'
-            }}
-          >
-            Cosmic Anomaly Detected
-          </span>
-        </div>
-
         {/* Big Cosmic 404 Display */}
         <div
           style={{
@@ -303,125 +223,7 @@ export const NotFoundPage: React.FC = () => {
           </Link>
         </div>
 
-        {/* Star System Navigation Matrix */}
-        <div style={{ width: '100%', maxWidth: '980px', margin: '0 auto' }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '12px',
-              marginBottom: '28px'
-            }}
-          >
-            <div style={{ height: '1px', flex: 1, maxWidth: '100px', background: isLight ? '#e2e8f0' : 'rgba(255, 255, 255, 0.12)' }} />
-            <span
-              style={{
-                fontFamily: "'Orbitron', sans-serif",
-                fontSize: '0.78rem',
-                letterSpacing: '2px',
-                color: isLight ? '#64748b' : 'rgba(255, 255, 255, 0.5)',
-                textTransform: 'uppercase'
-              }}
-            >
-              Chart a New Course
-            </span>
-            <div style={{ height: '1px', flex: 1, maxWidth: '100px', background: isLight ? '#e2e8f0' : 'rgba(255, 255, 255, 0.12)' }} />
-          </div>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
-              gap: '16px',
-              textAlign: 'left'
-            }}
-          >
-            {categories.map(cat => {
-              const IconComp = cat.icon;
-              return (
-                <Link
-                  key={cat.path}
-                  to={cat.path}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '20px 22px',
-                    borderRadius: '14px',
-                    background: isLight ? '#ffffff' : 'rgba(18, 14, 33, 0.65)',
-                    border: isLight ? '1px solid #e2e8f0' : '1px solid rgba(255, 255, 255, 0.08)',
-                    textDecoration: 'none',
-                    color: 'inherit',
-                    transition: 'all 0.25s ease',
-                    boxShadow: isLight ? '0 2px 10px rgba(0, 0, 0, 0.03)' : '0 4px 20px rgba(0, 0, 0, 0.2)'
-                  }}
-                  onMouseOver={e => {
-                    e.currentTarget.style.borderColor = cat.color;
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = isLight
-                      ? '0 6px 18px rgba(0, 0, 0, 0.08)'
-                      : `0 8px 25px -5px ${cat.color}25`;
-                  }}
-                  onMouseOut={e => {
-                    e.currentTarget.style.borderColor = isLight ? '#e2e8f0' : 'rgba(255, 255, 255, 0.08)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = isLight
-                      ? '0 2px 10px rgba(0, 0, 0, 0.03)'
-                      : '0 4px 20px rgba(0, 0, 0, 0.2)';
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    <div
-                      style={{
-                        width: '42px',
-                        height: '42px',
-                        borderRadius: '10px',
-                        background: `${cat.color}15`,
-                        border: `1px solid ${cat.color}35`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: cat.color,
-                        flexShrink: 0
-                      }}
-                    >
-                      <IconComp size={20} />
-                    </div>
-                    <div>
-                      <h3
-                        style={{
-                          margin: '0 0 4px 0',
-                          fontSize: '1.02rem',
-                          fontWeight: 700,
-                          fontFamily: "'Inter', sans-serif",
-                          color: isLight ? '#0f172a' : '#ffffff'
-                        }}
-                      >
-                        {cat.title}
-                      </h3>
-                      <p
-                        style={{
-                          margin: 0,
-                          fontSize: '0.84rem',
-                          color: isLight ? '#64748b' : 'rgba(255, 255, 255, 0.55)',
-                          lineHeight: 1.4
-                        }}
-                      >
-                        {cat.desc}
-                      </p>
-                    </div>
-                  </div>
-                  <ArrowRight
-                    size={18}
-                    color={cat.color}
-                    style={{ flexShrink: 0, marginLeft: '12px' }}
-                  />
-                </Link>
-              );
-            })}
-          </div>
-        </div>
+       
       </main>
 
       <Footer />

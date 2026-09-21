@@ -1,10 +1,8 @@
 import { useEffect } from 'react';
 import { MobileProvider } from './contexts/MobileContext';
-import WebGLWarning from './ui/WebGLWarning';
 import HeroSection from './ui/HeroSection';
 import DailyCosmicSection from './ui/DailyCosmicSection';
 import ContentSections from './ui/ContentSections';
-import { useWebGL2Enabled } from './hooks/useWebGL2Support';
 import { Analytics } from "@vercel/analytics/react";
 import ErrorBoundary from './ui/ErrorBoundary';
 
@@ -19,37 +17,24 @@ import ErrorBoundary from './ui/ErrorBoundary';
 // import GalaxyScene from './scenes/Galaxy/GalaxyScene';
 
 function AppContent() {
-  const isWebGL2Enabled = useWebGL2Enabled();
   const { isLight } = useTheme();
 
   // Initialize Global Open Graph and Site SEO
   useSEO();
-
-  // show nothing while checking WebGL enabled
-  if (isWebGL2Enabled === null) {
-    return null;
-  }
-
-  // if WebGL is not enabled, show the warning
-  if (isWebGL2Enabled === false) {
-    return <WebGLWarning />;
-  }
 
   return (
     <div
       style={{
         width: '100%',
         minHeight: '100vh',
-        backgroundColor: isLight ? '#ffffff' : '#080712',
+        backgroundColor: isLight ? '#ffffff' : '#161616',
         backgroundImage: isLight
           ? 'none'
           : `
             radial-gradient(ellipse 75% 45% at 50% 15%, rgba(219, 39, 119, 0.09) 0%, rgba(147, 51, 234, 0.08) 38%, transparent 75%),
             radial-gradient(ellipse 80% 45% at 50% 45%, rgba(147, 51, 234, 0.08) 0%, rgba(219, 39, 119, 0.05) 38%, transparent 75%),
             radial-gradient(ellipse 80% 45% at 50% 75%, rgba(147, 51, 234, 0.08) 0%, rgba(219, 39, 119, 0.05) 38%, transparent 75%),
-            radial-gradient(circle at 50% 50%, rgba(88, 28, 135, 0.06) 0%, transparent 80%),
-            linear-gradient(rgba(8, 7, 18, 0.92), rgba(8, 7, 18, 0.92)),
-            url('https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=2400&auto=format&fit=crop')
+            radial-gradient(circle at 50% 50%, rgba(88, 28, 135, 0.06) 0%, transparent 80%)
           `,
         backgroundAttachment: isLight ? 'initial' : 'fixed',
         backgroundSize: isLight ? 'auto' : 'cover',

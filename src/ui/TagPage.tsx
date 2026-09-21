@@ -15,19 +15,6 @@ const TagPage: React.FC = () => {
   const { isLight } = useTheme();
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Window width tracking for accurate tablet (both small & large tab) detection
-  const [winWidth, setWinWidth] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1200));
-  useEffect(() => {
-    const onResize = () => setWinWidth(window.innerWidth);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-
-  const isSmallTab = winWidth >= 600 && winWidth < 800;
-  const isLargeTab = winWidth >= 800 && winWidth <= 1180;
-  const isTablet = isSmallTab || isLargeTab;
-  const isPhone = winWidth < 600;
-
   // Use built-in tagSlug filter from useBlogPosts
   const { posts: livePosts, loading } = useBlogPosts(
     tagSlug ? { tagSlug } : undefined
@@ -77,7 +64,7 @@ const TagPage: React.FC = () => {
   return (
     <div style={{ minHeight: '100vh', background: isLight ? '#ffffff' : 'radial-gradient(ellipse at top center, rgba(147, 51, 234, 0.25) 0%, var(--bg-main) 60%)', backgroundColor: isLight ? '#ffffff' : 'var(--bg-main)', color: isLight ? '#111827' : 'white', boxSizing: 'border-box' }}>
       <Header />
-      <div style={{ maxWidth: '1260px', margin: '0 auto', padding: isPhone ? '20px 30px 60px' : isTablet ? '28px 50px 70px' : '35px 28px 80px', boxSizing: 'border-box' }}>
+      <div style={{ maxWidth: '1260px', margin: '0 auto', padding: isMobile ? '20px 16px 60px' : '35px 24px 80px', boxSizing: 'border-box' }}>
 
         {/* Breadcrumbs */}
         <div style={{ fontSize: isMobile ? '0.78rem' : '0.85rem', color: isLight ? '#6b7280' : 'rgba(255,255,255,0.6)', letterSpacing: '0.5px', fontWeight: 600, fontFamily: "'Lora', serif", marginBottom: isMobile ? '18px' : '26px' }}>
@@ -132,7 +119,7 @@ const TagPage: React.FC = () => {
         )}
 
         {!loading && tagPosts.length > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: isPhone ? '1fr' : 'repeat(3, 1fr)', gap: isPhone ? '24px 14px' : (isSmallTab ? '24px 12px' : '32px 20px') }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? '24px 14px' : '32px 20px' }}>
             {paginatedPosts.map(post => (
               <BlogCard key={post.id} id={post.id} category={post.category} title={post.title} desc={post.desc} img={post.img} authorName={post.authorName} authorImg={post.authorImg} date={post.date} variant="standard" />
             ))}

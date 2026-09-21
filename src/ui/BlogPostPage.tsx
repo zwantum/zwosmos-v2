@@ -24,11 +24,11 @@ const BlogPostPage: React.FC = () => {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  const isSmallTab = winWidth >= 600 && winWidth < 800;
-  const isLargeTab = winWidth >= 800 && winWidth <= 1180;
+  const isSmallTab = winWidth >= 600 && winWidth <= 800;
+  const isLargeTab = winWidth > 800 && winWidth <= 1280;
   const isTablet = isSmallTab || isLargeTab;
   const isPhone = winWidth < 600;
-  const isMobileView = isMobile || winWidth < 800;
+  const isMobileView = isMobile || winWidth <= 800;
   // Fetch live article and all published posts from Supabase via @zwantum/blog
   const { post } = useBlogPost(id || '');
   const { posts: allLivePosts } = useBlogPosts();
@@ -176,7 +176,320 @@ const BlogPostPage: React.FC = () => {
     tags: postTags
   };
 
+  // Font Size Adjustment State: 3 decrease steps (-3, -2, -1), default (0), 3 increase steps (+1, +2, +3)
+  const FONT_SCALE_MAP: Record<number, number> = {
+    [-3]: 0.85,
+    [-2]: 0.90,
+    [-1]: 0.95,
+    [0]: 1.00,
+    [1]: 1.08,
+    [2]: 1.18,
+    [3]: 1.30
+  };
+
+  const [fontLevel, setFontLevel] = React.useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('zw_blog_font_level');
+      if (saved !== null) {
+        const num = parseInt(saved, 10);
+        if (num >= -3 && num <= 3) return num;
+      }
+    } catch {}
+    return 0;
+  });
+
+  const handleSetFontLevel = (level: number) => {
+    const clamped = Math.max(-3, Math.min(3, level));
+    setFontLevel(clamped);
+    try {
+      localStorage.setItem('zw_blog_font_level', clamped.toString());
+    } catch {}
+  };
+
+  const fontScale = FONT_SCALE_MAP[fontLevel] ?? 1.00;
+
   // Reusable Widgets
+  const renderFontSizeControl = () => (
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: postData.imageCaption ? (isMobile ? '12px' : '16px') : (isMobile ? '16px' : '22px'),
+        marginBottom: isMobile ? '8px' : '14px',
+        position: 'relative',
+        zIndex: 2,
+        userSelect: 'none'
+      }}
+    >
+      <div
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: isMobile ? '10px' : '14px',
+          padding: isMobile ? '5px 14px' : '6px 18px',
+          borderRadius: '24px',
+          background: isLight ? 'rgba(255, 255, 255, 0.88)' : 'rgba(255, 255, 255, 0.04)',
+          border: isLight ? '1px solid rgba(0, 0, 0, 0.1)' : '1px solid rgba(255, 255, 255, 0.12)',
+          boxShadow: isLight
+            ? '0 4px 16px rgba(0, 0, 0, 0.06)'
+            : '0 8px 32px rgba(0, 0, 0, 0.45), 0 0 20px rgba(147, 51, 234, 0.12)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          transition: 'all 0.25s ease'
+        }}
+      >
+        {/* Editorial Label with Zwosmos ✦ motif */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontFamily: "'Playfair Display', serif",
+            fontSize: isMobile ? '0.78rem' : '0.84rem',
+            fontWeight: 700,
+            letterSpacing: '0.6px',
+            color: isLight ? '#111827' : '#ffffff',
+            paddingRight: isMobile ? '8px' : '12px',
+            borderRight: isLight ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.12)'
+          }}
+        >
+          <span style={{ color: 'var(--brand-purple)', fontSize: '0.8rem' }}>✦</span>
+          <span>Text Size</span>
+        </div>
+
+        {/* Integrated Stepper Bar: - [Bars / A / Bars] + */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '8px' : '10px' }}>
+          {/* Minus Button */}
+          <button
+            onClick={() => handleSetFontLevel(fontLevel - 1)}
+            disabled={fontLevel === -3}
+            title="Decrease font size (-)"
+            aria-label="Decrease font size"
+            style={{
+              width: isMobile ? '26px' : '28px',
+              height: isMobile ? '26px' : '28px',
+              borderRadius: '50%',
+              border: isLight ? '1px solid rgba(0,0,0,0.12)' : '1px solid rgba(255,255,255,0.18)',
+              background: isLight ? '#f3f4f6' : 'rgba(255, 255, 255, 0.08)',
+              color: fontLevel === -3
+                ? (isLight ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.25)')
+                : (isLight ? '#111827' : '#ffffff'),
+              fontSize: '1.1rem',
+              fontWeight: 700,
+              cursor: fontLevel === -3 ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease',
+              lineHeight: 1,
+              padding: 0
+            }}
+            onMouseOver={e => {
+              if (fontLevel !== -3) {
+                e.currentTarget.style.background = 'var(--brand-purple)';
+                e.currentTarget.style.borderColor = 'var(--brand-purple)';
+                e.currentTarget.style.color = '#ffffff';
+                e.currentTarget.style.transform = 'scale(1.1)';
+              }
+            }}
+            onMouseOut={e => {
+              e.currentTarget.style.background = isLight ? '#f3f4f6' : 'rgba(255, 255, 255, 0.08)';
+              e.currentTarget.style.borderColor = isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.18)';
+              e.currentTarget.style.color = fontLevel === -3
+                ? (isLight ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.25)')
+                : (isLight ? '#111827' : '#ffffff');
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            −
+          </button>
+
+          {/* Left 3 Step Dots: -3, -2, -1 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0 2px' }}>
+            {[-3, -2, -1].map(step => {
+              const isActive = fontLevel <= step;
+              const isCurrent = fontLevel === step;
+              return (
+                <button
+                  key={step}
+                  onClick={() => handleSetFontLevel(step)}
+                  title={`Size level ${step}`}
+                  aria-label={`Size level ${step}`}
+                  style={{
+                    width: isCurrent ? '7px' : (isActive ? '6px' : '5px'),
+                    height: isCurrent ? '7px' : (isActive ? '6px' : '5px'),
+                    borderRadius: '50%',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    background: isActive
+                      ? 'var(--brand-purple)'
+                      : (isLight ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.25)'),
+                    transition: 'all 0.2s ease',
+                    boxShadow: isCurrent ? '0 0 8px var(--brand-purple)' : 'none'
+                  }}
+                  onMouseOver={e => {
+                    e.currentTarget.style.transform = 'scale(1.3)';
+                  }}
+                  onMouseOut={e => {
+                    e.currentTarget.style.transform = 'scale(1)';
+                  }}
+                />
+              );
+            })}
+          </div>
+
+          {/* Center A Indicator / Reset Button */}
+          <button
+            onClick={() => handleSetFontLevel(0)}
+            title="Default font size (Click to reset)"
+            aria-label="Default font size"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '0 6px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease',
+              position: 'relative'
+            }}
+            onMouseOver={e => {
+              const letter = e.currentTarget.querySelector('.font-size-letter-a') as HTMLElement;
+              if (letter) {
+                letter.style.color = 'var(--brand-purple)';
+                letter.style.transform = 'scale(1.15)';
+              }
+            }}
+            onMouseOut={e => {
+              const letter = e.currentTarget.querySelector('.font-size-letter-a') as HTMLElement;
+              if (letter) {
+                letter.style.color = fontLevel === 0
+                  ? (isLight ? 'var(--brand-purple)' : '#ffffff')
+                  : (isLight ? '#6b7280' : 'rgba(255, 255, 255, 0.6)');
+                letter.style.transform = 'scale(1)';
+              }
+            }}
+          >
+            <span
+              className="font-size-letter-a"
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontSize: isMobile ? '1.12rem' : '1.24rem',
+                fontWeight: 700,
+                color: fontLevel === 0
+                  ? (isLight ? 'var(--brand-purple)' : '#ffffff')
+                  : (isLight ? '#6b7280' : 'rgba(255, 255, 255, 0.6)'),
+                textShadow: (fontLevel === 0 && !isLight)
+                  ? '0 0 10px rgba(168, 85, 247, 0.75)'
+                  : 'none',
+                transition: 'all 0.2s ease',
+                lineHeight: 1
+              }}
+            >
+              A
+            </span>
+            {/* Subtle active indicator dot under A */}
+            <span
+              style={{
+                width: '4px',
+                height: '4px',
+                borderRadius: '50%',
+                background: fontLevel === 0 ? 'var(--brand-purple)' : 'transparent',
+                marginTop: '3px',
+                boxShadow: fontLevel === 0 ? '0 0 6px var(--brand-purple)' : 'none',
+                transition: 'all 0.2s ease'
+              }}
+            />
+          </button>
+
+          {/* Right 3 Step Dots: +1, +2, +3 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0 2px' }}>
+            {[1, 2, 3].map(step => {
+              const isActive = fontLevel >= step;
+              const isCurrent = fontLevel === step;
+              return (
+                <button
+                  key={step}
+                  onClick={() => handleSetFontLevel(step)}
+                  title={`Size level +${step}`}
+                  aria-label={`Size level +${step}`}
+                  style={{
+                    width: isCurrent ? '7px' : (isActive ? '6px' : '5px'),
+                    height: isCurrent ? '7px' : (isActive ? '6px' : '5px'),
+                    borderRadius: '50%',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    background: isActive
+                      ? 'var(--brand-purple)'
+                      : (isLight ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.25)'),
+                    transition: 'all 0.2s ease',
+                    boxShadow: isCurrent ? '0 0 8px var(--brand-purple)' : 'none'
+                  }}
+                  onMouseOver={e => {
+                    e.currentTarget.style.transform = 'scale(1.3)';
+                  }}
+                  onMouseOut={e => {
+                    e.currentTarget.style.transform = 'scale(1)';
+                  }}
+                />
+              );
+            })}
+          </div>
+
+          {/* Plus Button */}
+          <button
+            onClick={() => handleSetFontLevel(fontLevel + 1)}
+            disabled={fontLevel === 3}
+            title="Increase font size (+)"
+            aria-label="Increase font size"
+            style={{
+              width: isMobile ? '26px' : '28px',
+              height: isMobile ? '26px' : '28px',
+              borderRadius: '50%',
+              border: isLight ? '1px solid rgba(0,0,0,0.12)' : '1px solid rgba(255,255,255,0.18)',
+              background: isLight ? '#f3f4f6' : 'rgba(255, 255, 255, 0.08)',
+              color: fontLevel === 3
+                ? (isLight ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.25)')
+                : (isLight ? '#111827' : '#ffffff'),
+              fontSize: '1.1rem',
+              fontWeight: 700,
+              cursor: fontLevel === 3 ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease',
+              lineHeight: 1,
+              padding: 0
+            }}
+            onMouseOver={e => {
+              if (fontLevel !== 3) {
+                e.currentTarget.style.background = 'var(--brand-purple)';
+                e.currentTarget.style.borderColor = 'var(--brand-purple)';
+                e.currentTarget.style.color = '#ffffff';
+                e.currentTarget.style.transform = 'scale(1.1)';
+              }
+            }}
+            onMouseOut={e => {
+              e.currentTarget.style.background = isLight ? '#f3f4f6' : 'rgba(255, 255, 255, 0.08)';
+              e.currentTarget.style.borderColor = isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.18)';
+              e.currentTarget.style.color = fontLevel === 3
+                ? (isLight ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.25)')
+                : (isLight ? '#111827' : '#ffffff');
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            +
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   const renderMobileShare = () => (
     <div
       style={{
@@ -977,7 +1290,7 @@ const BlogPostPage: React.FC = () => {
       {/* Global Shared Header */}
       <Header />
 
-      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: isPhone ? '20px 30px 20px' : isTablet ? '24px 50px 24px' : '25px 4% 20px', boxSizing: 'border-box' }}>
+      <div className="blog-post-page-container" style={{ maxWidth: '1400px', margin: '0 auto', padding: isPhone ? '20px 30px 20px' : isTablet ? '24px 50px 24px' : '25px 4% 20px', boxSizing: 'border-box' }}>
         {/* ========================================================================= */}
         {/* 1. TOP BAR: Breadcrumb Navigation                                        */}
         {/* ========================================================================= */}
@@ -1173,6 +1486,9 @@ const BlogPostPage: React.FC = () => {
                 {postData.imageCaption}
               </div>
             ) : null}
+
+            {/* Font Size Adjuster (- A +): Placed right after featured image / caption */}
+            {renderFontSizeControl()}
           </div>
         </header>
 
@@ -1196,26 +1512,56 @@ const BlogPostPage: React.FC = () => {
           {/* Mobile Order: 1 (Comes immediately after featured image)              */}
           {/* --------------------------------------------------------------------- */}
           <article
+            className="blog-article-content-area"
             style={{
               order: isMobileView ? 1 : 2,
               flex: '1 1 auto',
               minWidth: 0,
               maxWidth: isMobileView ? '100%' : '900px',
-              fontSize: isMobile ? '1.02rem' : '1.14rem',
+              fontSize: `calc(${isMobile ? '1.02rem' : '1.14rem'} * ${fontScale})`,
               lineHeight: isMobile ? 1.75 : 1.9,
               color: isLight ? '#2b2d42' : 'rgba(255,255,255,0.88)',
               fontFamily: "'Lora', serif",
-              padding: isMobile ? '0' : '0 10px',
+              padding: isSmallTab ? '0 80px' : isMobile ? '0' : '0 10px',
               width: isMobileView ? '100%' : 'auto',
               boxSizing: 'border-box'
             }}
           >
+            <style>{`
+              .blog-article-content-area,
+              .blog-article-content-area p,
+              .blog-article-content-area li,
+              .blog-article-content-area td,
+              .blog-article-content-area th,
+              .blog-article-content-area .zw-blog-content,
+              .blog-article-content-area .zw-blog-content p,
+              .blog-article-content-area .zw-blog-content li,
+              .blog-article-content-area .zw-blog-content span:not([class*="icon"]):not(.fa-solid):not(.fa-regular),
+              .blog-article-content-area .zw-blog-content-wrapper p,
+              .blog-article-content-area .zw-blog-content-wrapper li {
+                font-size: calc(${isMobile ? '1.05rem' : '1.18rem'} * ${fontScale}) !important;
+              }
+              .blog-article-content-area blockquote,
+              .blog-article-content-area blockquote p,
+              .blog-article-content-area .zw-blog-content blockquote,
+              .blog-article-content-area .zw-blog-content blockquote p {
+                font-size: calc(${isMobile ? '1.05rem' : '1.35rem'} * ${fontScale}) !important;
+              }
+              .blog-article-content-area h2,
+              .blog-article-content-area .zw-blog-content h2 {
+                font-size: calc(${isMobile ? '1.35rem' : '1.85rem'} * ${1 + (fontScale - 1) * 0.45}) !important;
+              }
+              .blog-article-content-area h3,
+              .blog-article-content-area .zw-blog-content h3 {
+                font-size: calc(${isMobile ? '1.15rem' : '1.45rem'} * ${1 + (fontScale - 1) * 0.45}) !important;
+              }
+            `}</style>
             {post?.content ? (
               <div
                 className={`zw-blog-content zw-blog-content-wrapper ${isLight ? 'light-mode' : 'dark-mode'}`}
                 style={{
                   color: isLight ? '#1e293b' : 'rgba(255,255,255,0.88)',
-                  fontSize: isMobile ? '1.05rem' : '1.18rem',
+                  fontSize: `calc(${isMobile ? '1.05rem' : '1.18rem'} * ${fontScale})`,
                   lineHeight: isMobile ? 1.75 : 1.9,
                   marginBottom: '30px'
                 }}

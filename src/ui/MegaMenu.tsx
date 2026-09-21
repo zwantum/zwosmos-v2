@@ -294,19 +294,15 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
         height: '100vh',
         minHeight: '100vh',
         zIndex: 9999999,
-        backgroundColor: currentIsDark ? '#070512' : '#faf8ff',
+        backgroundColor: currentIsDark ? '#161616' : '#faf8ff',
         backgroundImage: currentIsDark
           ? `
             radial-gradient(ellipse 75% 55% at 85% 25%, rgba(219, 39, 119, 0.20) 0%, transparent 60%),
-            radial-gradient(ellipse 70% 50% at 15% 15%, rgba(147, 51, 234, 0.16) 0%, transparent 60%),
-            linear-gradient(rgba(8, 5, 18, 0.94), rgba(8, 5, 18, 0.94)),
-            url('https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=2400&auto=format&fit=crop')
+            radial-gradient(ellipse 70% 50% at 15% 15%, rgba(147, 51, 234, 0.16) 0%, transparent 60%)
           `
           : `
             radial-gradient(ellipse 75% 55% at 85% 25%, rgba(219, 39, 119, 0.10) 0%, transparent 60%),
-            radial-gradient(ellipse 70% 50% at 15% 15%, rgba(147, 51, 234, 0.10) 0%, transparent 60%),
-            linear-gradient(rgba(252, 250, 255, 0.96), rgba(246, 242, 255, 0.96)),
-            url('https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=2400&auto=format&fit=crop')
+            radial-gradient(ellipse 70% 50% at 15% 15%, rgba(147, 51, 234, 0.10) 0%, transparent 60%)
           `,
         backgroundAttachment: 'fixed',
         backgroundSize: 'cover',

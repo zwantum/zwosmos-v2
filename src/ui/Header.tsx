@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
-import MegaMenu, { MEGA_MENU_ITEMS, ALL_MEGA_MENU_ITEMS, MenuItem } from './MegaMenu';
+import MegaMenu, { ALL_MEGA_MENU_ITEMS, MenuItem } from './MegaMenu';
 import { ALL_BLOG_POSTS } from '../data/blogData';
 import { useBlogPosts } from '@zwantum/blog/react';
 
@@ -9,6 +9,22 @@ export interface HeaderProps {
   isLight?: boolean;
   onThemeToggle?: () => void;
 }
+
+const MEGA_MENU_ITEMS_LIST: MenuItem[] = [
+  ...ALL_MEGA_MENU_ITEMS,
+  {
+    id: 'books-archive',
+    title: 'Books Archive',
+    desc: 'Cosmic library & reading orbit',
+    href: '/books',
+    img: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=300&auto=format&fit=crop'
+  }
+];
+
+const MEGA_MENU_TWO_COLUMNS = {
+  column1: MEGA_MENU_ITEMS_LIST.slice(0, 5),
+  column2: MEGA_MENU_ITEMS_LIST.slice(5, 10)
+};
 
 export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeToggle }) => {
   const navigate = useNavigate();
@@ -25,7 +41,7 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
   // Large tab (>= 800px) and desktop use desktop header
   const isMobileHeader = winWidth < 800;
   const isLargeView = winWidth >= 800;
-  const isLargeTab = winWidth >= 800 && winWidth <= 1180;
+  const isLargeTab = winWidth >= 800 && winWidth <= 1024;
 
   const effectiveIsLight = propIsLight !== undefined ? propIsLight : contextIsLight;
 
@@ -219,16 +235,16 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: winWidth < 600 ? '14px 30px' : '14px 50px',
+            padding: '14px 18px',
             width: '100%',
             boxSizing: 'border-box',
             background: menuOpen
-              ? (currentIsDark ? 'rgba(32, 16, 54, 0.75)' : 'rgba(255, 255, 255, 0.85)')
+              ? (currentIsDark ? 'rgba(15, 8, 25, 0.35)' : 'rgba(255, 255, 255, 0.45)')
               : 'transparent',
-            backdropFilter: menuOpen ? 'blur(16px)' : 'none',
-            WebkitBackdropFilter: menuOpen ? 'blur(16px)' : 'none',
+            backdropFilter: menuOpen ? 'blur(20px) saturate(180%)' : 'none',
+            WebkitBackdropFilter: menuOpen ? 'blur(20px) saturate(180%)' : 'none',
             borderBottom: menuOpen
-              ? (currentIsDark ? '1px solid rgba(168, 85, 247, 0.25)' : '1px solid rgba(147, 51, 234, 0.12)')
+              ? (currentIsDark ? '1px solid rgba(168, 85, 247, 0.20)' : '1px solid rgba(147, 51, 234, 0.12)')
               : 'none',
             transition: 'background 0.2s ease, border-bottom 0.2s ease'
           }}
@@ -642,10 +658,10 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
               bottom: 0,
               zIndex: 99,
               background: currentIsDark
-                ? 'rgba(24, 12, 42, 0.40)'
-                : 'rgba(255, 255, 255, 0.55)',
-              backdropFilter: 'blur(20px) saturate(180%)',
-              WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                ? 'rgba(10, 5, 20, 0.20)'
+                : 'rgba(255, 255, 255, 0.25)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -656,7 +672,7 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
               animation: 'megaOverlayFade 0.22s ease-out'
             }}
           >
-            {/* Glossy Card Container */}
+            {/* Frosted Glass Card Container */}
             <div
               onClick={(e) => e.stopPropagation()}
               style={{
@@ -666,20 +682,20 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
                 padding: '14px 14px 18px',
                 boxSizing: 'border-box',
                 background: currentIsDark
-                  ? 'linear-gradient(145deg, rgba(52, 28, 82, 0.58) 0%, rgba(28, 14, 48, 0.64) 100%)'
-                  : 'linear-gradient(145deg, rgba(255, 255, 255, 0.82) 0%, rgba(248, 242, 255, 0.86) 100%)',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
+                  ? 'linear-gradient(135deg, rgba(42, 18, 68, 0.35) 0%, rgba(20, 10, 36, 0.28) 100%)'
+                  : 'linear-gradient(135deg, rgba(255, 255, 255, 0.55) 0%, rgba(246, 238, 255, 0.40) 100%)',
+                backdropFilter: 'blur(28px) saturate(190%)',
+                WebkitBackdropFilter: 'blur(28px) saturate(190%)',
                 border: currentIsDark
-                  ? '1px solid rgba(168, 85, 247, 0.35)'
-                  : '1px solid rgba(147, 51, 234, 0.20)',
+                  ? '1px solid rgba(216, 180, 254, 0.24)'
+                  : '1px solid rgba(147, 51, 234, 0.18)',
                 boxShadow: currentIsDark
-                  ? '0 8px 28px rgba(0, 0, 0, 0.35), 0 0 20px rgba(147, 51, 234, 0.15)'
-                  : '0 6px 20px rgba(147, 51, 234, 0.07), 0 2px 6px rgba(0, 0, 0, 0.03)'
+                  ? '0 16px 40px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 0 20px rgba(147, 51, 234, 0.12)'
+                  : '0 12px 32px rgba(147, 51, 234, 0.10), inset 0 1px 1px rgba(255, 255, 255, 0.7)'
               }}
             >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {ALL_MEGA_MENU_ITEMS.map((item) => (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                {MEGA_MENU_ITEMS_LIST.map((item) => (
                   <Link
                     key={item.id}
                     to={item.href}
@@ -687,38 +703,53 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '14px',
-                      padding: '10px 12px',
-                      borderRadius: '14px',
+                      gap: '12px',
+                      padding: '8px 10px',
+                      borderRadius: '12px',
                       textDecoration: 'none',
-                      background: currentIsDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.82)',
-                      border: currentIsDark ? '1px solid rgba(255, 255, 255, 0.09)' : '1px solid rgba(147, 51, 234, 0.12)',
-                      boxShadow: currentIsDark ? 'none' : '0 2px 6px rgba(147, 51, 234, 0.04)',
-                      transition: 'all 0.2s ease',
+                      background: 'transparent',
+                      border: '1px solid transparent',
+                      boxShadow: 'none',
+                      transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                       WebkitTapHighlightColor: 'transparent'
                     }}
                     onTouchStart={(e) => {
-                      e.currentTarget.style.background = currentIsDark ? 'rgba(168, 85, 247, 0.25)' : 'rgba(243, 232, 255, 0.95)';
+                      e.currentTarget.style.background = currentIsDark ? 'rgba(168, 85, 247, 0.14)' : 'rgba(147, 51, 234, 0.08)';
                     }}
                     onTouchEnd={(e) => {
-                      e.currentTarget.style.background = currentIsDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.82)';
+                      e.currentTarget.style.background = 'transparent';
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = currentIsDark ? 'rgba(168, 85, 247, 0.12)' : 'rgba(147, 51, 234, 0.06)';
+                      e.currentTarget.style.transform = 'translateX(3px)';
+                      const titleEl = e.currentTarget.querySelector('.mobile-menu-title') as HTMLElement;
+                      if (titleEl) titleEl.style.color = currentIsDark ? '#d8b4fe' : '#7c3aed';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.transform = 'translateX(0)';
+                      const titleEl = e.currentTarget.querySelector('.mobile-menu-title') as HTMLElement;
+                      if (titleEl) titleEl.style.color = currentIsDark ? '#ffffff' : '#111827';
                     }}
                   >
                     <div
                       style={{
-                        width: '46px',
-                        height: '46px',
-                        minWidth: '46px',
-                        borderRadius: '12px',
+                        width: '40px',
+                        height: '40px',
+                        minWidth: '40px',
+                        borderRadius: '10px',
                         overflow: 'hidden',
                         border: currentIsDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(147, 51, 234, 0.18)',
-                        boxShadow: currentIsDark ? '0 2px 8px rgba(0, 0, 0, 0.4)' : '0 2px 8px rgba(147, 51, 234, 0.1)',
+                        boxShadow: currentIsDark ? '0 2px 6px rgba(0, 0, 0, 0.35)' : '0 2px 6px rgba(147, 51, 234, 0.08)',
                         flexShrink: 0
                       }}
                     >
                       <img
                         src={item.img}
                         alt={item.title}
+                        onError={e => {
+                          e.currentTarget.src = 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=300&auto=format&fit=crop';
+                        }}
                         style={{
                           width: '100%',
                           height: '100%',
@@ -729,13 +760,18 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, textAlign: 'left' }}>
                       <span
+                        className="mobile-menu-title"
                         style={{
                           fontFamily: "'Orbitron', sans-serif",
-                          fontSize: '0.88rem',
+                          fontSize: '0.80rem',
                           fontWeight: 700,
-                          color: currentIsDark ? '#ffffff' : '#111827',
                           letterSpacing: '0.3px',
-                          lineHeight: 1.25
+                          color: currentIsDark ? '#ffffff' : '#111827',
+                          lineHeight: 1.25,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          transition: 'color 0.2s ease'
                         }}
                       >
                         {item.title}
@@ -743,26 +779,18 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
                       <span
                         style={{
                           fontFamily: "'Lora', serif",
-                          fontSize: '0.74rem',
-                          color: currentIsDark ? 'rgba(203, 213, 225, 0.72)' : '#64748b',
-                          lineHeight: 1.35,
-                          marginTop: '2px'
+                          fontSize: '0.69rem',
+                          color: currentIsDark ? 'rgba(235, 225, 255, 0.75)' : '#64748b',
+                          lineHeight: 1.3,
+                          marginTop: '2px',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
                         }}
                       >
                         {item.desc}
                       </span>
                     </div>
-                    <span
-                      style={{
-                        color: currentIsDark ? 'rgba(216, 180, 254, 0.75)' : '#9333ea',
-                        fontSize: '1rem',
-                        fontWeight: 500,
-                        flexShrink: 0,
-                        paddingLeft: '4px'
-                      }}
-                    >
-                      →
-                    </span>
                   </Link>
                 ))}
               </div>
@@ -773,6 +801,9 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
     );
   }
 
+  const megaMenuTwoColumns = MEGA_MENU_TWO_COLUMNS;
+  const spotlightPost = allPosts[0];
+
   // ─── Desktop & Large Tab Header (>= 800px) ───────────────────────────────
   const renderMegaMenuItem = (item: MenuItem) => (
     <Link
@@ -782,26 +813,28 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '14px',
-        padding: '12px 14px',
-        borderRadius: '14px',
+        gap: '12px',
+        padding: '8px 10px',
+        borderRadius: '12px',
         textDecoration: 'none',
         background: 'transparent',
         border: '1px solid transparent',
-        transition: 'all 0.2s ease',
-        cursor: 'pointer'
+        boxShadow: 'none',
+        transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+        cursor: 'pointer',
+        boxSizing: 'border-box'
       }}
       onMouseOver={e => {
         e.currentTarget.style.background = currentIsDark
-          ? 'rgba(168, 85, 247, 0.16)'
-          : 'rgba(243, 232, 255, 0.85)';
+          ? 'rgba(168, 85, 247, 0.12)'
+          : 'rgba(243, 232, 255, 0.65)';
         e.currentTarget.style.borderColor = currentIsDark
-          ? 'rgba(168, 85, 247, 0.35)'
-          : 'rgba(147, 51, 234, 0.28)';
+          ? 'rgba(168, 85, 247, 0.25)'
+          : 'rgba(147, 51, 234, 0.2)';
         e.currentTarget.style.transform = 'translateX(3px)';
         const titleEl = e.currentTarget.querySelector('.mega-drop-title') as HTMLElement;
         if (titleEl) {
-          titleEl.style.color = currentIsDark ? '#c084fc' : '#7c3aed';
+          titleEl.style.color = currentIsDark ? '#d8b4fe' : '#7c3aed';
         }
         const imgEl = e.currentTarget.querySelector('.mega-drop-img') as HTMLElement;
         if (imgEl) {
@@ -824,19 +857,22 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
     >
       <div
         style={{
-          width: '52px',
-          height: '52px',
-          minWidth: '52px',
-          borderRadius: '12px',
+          width: '40px',
+          height: '40px',
+          minWidth: '40px',
+          borderRadius: '10px',
           overflow: 'hidden',
-          border: currentIsDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(147, 51, 234, 0.2)',
-          boxShadow: currentIsDark ? '0 2px 8px rgba(0, 0, 0, 0.4)' : '0 2px 8px rgba(147, 51, 234, 0.12)'
+          border: currentIsDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(147, 51, 234, 0.18)',
+          boxShadow: currentIsDark ? '0 2px 6px rgba(0, 0, 0, 0.35)' : '0 2px 6px rgba(147, 51, 234, 0.1)'
         }}
       >
         <img
           className="mega-drop-img"
           src={item.img}
           alt={item.title}
+          onError={e => {
+            e.currentTarget.src = 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=300&auto=format&fit=crop';
+          }}
           style={{
             width: '100%',
             height: '100%',
@@ -846,14 +882,14 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
           }}
         />
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', minWidth: 0 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', minWidth: 0, flex: 1 }}>
         <span
           className="mega-drop-title"
           style={{
             fontFamily: "'Orbitron', sans-serif",
-            fontSize: '0.84rem',
+            fontSize: '0.78rem',
             fontWeight: 700,
-            letterSpacing: '0.4px',
+            letterSpacing: '0.3px',
             color: currentIsDark ? '#ffffff' : '#111827',
             transition: 'color 0.2s ease',
             whiteSpace: 'nowrap',
@@ -866,13 +902,15 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
         <span
           style={{
             fontFamily: "'Lora', serif",
-            fontSize: '0.73rem',
-            color: currentIsDark ? 'rgba(235, 225, 255, 0.85)' : '#64748b',
-            lineHeight: 1.4,
-            marginTop: '3px',
-            display: 'block',
-            whiteSpace: 'normal',
-            wordBreak: 'normal'
+            fontSize: '0.69rem',
+            color: currentIsDark ? 'rgba(235, 225, 255, 0.80)' : '#64748b',
+            lineHeight: 1.3,
+            marginTop: '2px',
+            display: '-webkit-box',
+            WebkitLineClamp: 1,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
           }}
         >
           {item.desc}
@@ -889,7 +927,7 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        padding: isLargeTab ? '32px 50px 20px' : isLargeView ? '32px 20px 20px' : '55px 24px 35px',
+        padding: isLargeView ? '32px 20px 20px' : '55px 24px 35px',
         textAlign: 'center',
         width: '100%',
         boxSizing: 'border-box'
@@ -1422,8 +1460,8 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
           style={{
             position: 'relative',
             width: 'min(980px, 94vw)',
-            borderRadius: '26px',
-            padding: '24px 28px',
+            borderRadius: '24px',
+            padding: '22px 26px 28px',
             background: currentIsDark
               ? 'linear-gradient(135deg, rgba(78, 48, 112, 0.55) 0%, rgba(46, 26, 75, 0.50) 100%)'
               : 'linear-gradient(135deg, rgba(255, 255, 255, 0.88) 0%, rgba(248, 242, 255, 0.92) 100%)',
@@ -1471,8 +1509,8 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                paddingBottom: '16px',
-                marginBottom: '18px',
+                paddingBottom: '14px',
+                marginBottom: '16px',
                 borderBottom: currentIsDark
                   ? '1px solid rgba(255, 255, 255, 0.12)'
                   : '1px solid rgba(147, 51, 234, 0.12)'
@@ -1521,53 +1559,228 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
               </Link>
             </div>
 
-            {/* 3 Columns Grid */}
+            {/* Split Layout: Spotlight on Left + 2-Column Box Menu on Right */}
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: '18px'
+                gridTemplateColumns: '280px minmax(0, 1fr)',
+                gap: '20px',
+                alignItems: 'stretch'
               }}
             >
-              {/* Column 1 */}
+              {/* Left Side: Spotlight / Featured Post (Full Height) */}
               <div
                 style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '14px',
                   borderRight: currentIsDark
                     ? '1px solid rgba(255, 255, 255, 0.10)'
-                    : '1px solid rgba(147, 51, 234, 0.1)',
-                  paddingRight: '16px'
-                }}
-              >
-                {MEGA_MENU_ITEMS.column1.map(item => renderMegaMenuItem(item))}
-              </div>
-
-              {/* Column 2 */}
-              <div
-                style={{
+                    : '1px solid rgba(147, 51, 234, 0.12)',
+                  paddingRight: '18px',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '14px',
-                  borderRight: currentIsDark
-                    ? '1px solid rgba(255, 255, 255, 0.10)'
-                    : '1px solid rgba(147, 51, 234, 0.1)',
-                  paddingRight: '16px'
+                  gap: '8px'
                 }}
               >
-                {MEGA_MENU_ITEMS.column2.map(item => renderMegaMenuItem(item))}
+                {/* Related Section Header */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span
+                    style={{
+                      fontFamily: "'Orbitron', sans-serif",
+                      fontSize: '0.68rem',
+                      fontWeight: 700,
+                      letterSpacing: '1.5px',
+                      color: currentIsDark ? '#c084fc' : '#9333ea',
+                      textTransform: 'uppercase',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <span>✦</span> Spotlight Story
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "'Orbitron', sans-serif",
+                      fontSize: '0.62rem',
+                      letterSpacing: '0.5px',
+                      color: currentIsDark ? 'rgba(216, 180, 254, 0.7)' : '#7c3aed',
+                      textTransform: 'uppercase',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      background: currentIsDark ? 'rgba(168, 85, 247, 0.12)' : 'rgba(147, 51, 234, 0.08)'
+                    }}
+                  >
+                    Featured
+                  </span>
+                </div>
+
+                {/* Single Featured Story - Normal layout: image on top, content below */}
+                {spotlightPost && (
+                  <Link
+                    to={`/blog/${spotlightPost.id}`}
+                    onClick={() => setExploreHovered(false)}
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      textDecoration: 'none',
+                      padding: '6px',
+                      borderRadius: '12px',
+                      background: 'transparent',
+                      transition: 'all 0.2s ease',
+                      cursor: 'pointer'
+                    }}
+                    onMouseOver={e => {
+                      e.currentTarget.style.background = currentIsDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(147, 51, 234, 0.04)';
+                      const img = e.currentTarget.querySelector('.spotlight-img') as HTMLElement;
+                      if (img) img.style.transform = 'scale(1.03)';
+                      const title = e.currentTarget.querySelector('.spotlight-title') as HTMLElement;
+                      if (title) title.style.color = currentIsDark ? '#c084fc' : '#7c3aed';
+                    }}
+                    onMouseOut={e => {
+                      e.currentTarget.style.background = 'transparent';
+                      const img = e.currentTarget.querySelector('.spotlight-img') as HTMLElement;
+                      if (img) img.style.transform = 'scale(1)';
+                      const title = e.currentTarget.querySelector('.spotlight-title') as HTMLElement;
+                      if (title) title.style.color = currentIsDark ? '#ffffff' : '#111827';
+                    }}
+                  >
+                    {/* Thumbnail Image at Top */}
+                    <div
+                      style={{
+                        width: '100%',
+                        height: '135px',
+                        borderRadius: '10px',
+                        overflow: 'hidden',
+                        position: 'relative',
+                        marginBottom: '10px',
+                        flexShrink: 0,
+                        border: currentIsDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(147, 51, 234, 0.15)'
+                      }}
+                    >
+                      <img
+                        className="spotlight-img"
+                        src={spotlightPost.img}
+                        alt={spotlightPost.title}
+                        onError={e => {
+                          e.currentTarget.src = 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=600&auto=format&fit=crop';
+                        }}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          display: 'block',
+                          transition: 'transform 0.35s ease'
+                        }}
+                      />
+                      <span
+                        style={{
+                          position: 'absolute',
+                          top: '8px',
+                          left: '8px',
+                          background: 'rgba(15, 10, 25, 0.8)',
+                          backdropFilter: 'blur(6px)',
+                          WebkitBackdropFilter: 'blur(6px)',
+                          border: '1px solid rgba(216, 180, 254, 0.35)',
+                          padding: '2px 8px',
+                          borderRadius: '6px',
+                          fontSize: '0.62rem',
+                          fontWeight: 700,
+                          fontFamily: "'Orbitron', sans-serif",
+                          color: '#e9d5ff',
+                          letterSpacing: '0.5px',
+                          textTransform: 'uppercase'
+                        }}
+                      >
+                        {spotlightPost.category}
+                      </span>
+                    </div>
+
+                    {/* Content below image: Title, Excerpt, and CTA */}
+                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                      <h4
+                        className="spotlight-title"
+                        style={{
+                          margin: '0 0 6px 0',
+                          fontFamily: "'Orbitron', sans-serif",
+                          fontSize: '0.84rem',
+                          fontWeight: 700,
+                          lineHeight: 1.35,
+                          color: currentIsDark ? '#ffffff' : '#111827',
+                          transition: 'color 0.2s ease',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        {spotlightPost.title}
+                      </h4>
+
+                      {spotlightPost.desc && (
+                        <p
+                          style={{
+                            margin: '0 0 10px 0',
+                            fontFamily: "'Lora', serif",
+                            fontSize: '0.72rem',
+                            lineHeight: 1.45,
+                            color: currentIsDark ? 'rgba(255, 255, 255, 0.65)' : '#4b5563',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 3,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden'
+                          }}
+                        >
+                          {spotlightPost.desc}
+                        </p>
+                      )}
+
+                      <div
+                        style={{
+                          marginTop: 'auto',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          paddingTop: '6px',
+                          borderTop: currentIsDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(0, 0, 0, 0.06)',
+                          fontSize: '0.68rem',
+                          color: currentIsDark ? 'rgba(216, 180, 254, 0.7)' : '#6b7280',
+                          fontFamily: "'Lora', serif"
+                        }}
+                      >
+                        <span>{spotlightPost.readTime}</span>
+                        <span
+                          style={{
+                            fontFamily: "'Orbitron', sans-serif",
+                            fontSize: '0.66rem',
+                            fontWeight: 700,
+                            color: currentIsDark ? '#c084fc' : '#9333ea',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          Read Story →
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                )}
               </div>
 
-              {/* Column 3 */}
+              {/* Right Side: 2 Columns of Box Topics */}
               <div
                 style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '14px'
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gap: '8px'
                 }}
               >
-                {MEGA_MENU_ITEMS.column3.map(item => renderMegaMenuItem(item))}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {megaMenuTwoColumns.column1.map(item => renderMegaMenuItem(item))}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {megaMenuTwoColumns.column2.map(item => renderMegaMenuItem(item))}
+                </div>
               </div>
             </div>
           </div>

@@ -151,108 +151,121 @@ export default function Aurora(props: AuroraProps) {
     if (!ctn) return;
 
     let renderer: Renderer | null = null;
+    let program: Program | undefined;
+    let animateId = 0;
+    let resizeObserver: ResizeObserver | null = null;
+
     try {
       renderer = new Renderer({
         alpha: true,
         premultipliedAlpha: true,
         antialias: true
       });
-    } catch {
-      return;
-    }
 
-    const gl = renderer.gl;
-    gl.clearColor(0, 0, 0, 0);
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-    gl.canvas.style.backgroundColor = 'transparent';
+      const gl = renderer.gl;
+      if (!gl) return;
+      gl.clearColor(0, 0, 0, 0);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      gl.canvas.style.backgroundColor = 'transparent';
 
-    let program: Program | undefined;
-
-    let lastW = 0;
-    let lastH = 0;
-    function resize() {
-      if (!ctn || !renderer) return;
-      const width = ctn.offsetWidth || 300;
-      const height = ctn.offsetHeight || 300;
-      if (width === lastW && height === lastH) return;
-      lastW = width;
-      lastH = height;
-      renderer.setSize(width, height);
-      if (program) {
-        program.uniforms.uResolution.value = [width, height];
+      let lastW = 0;
+      let lastH = 0;
+      function resize() {
+        if (!ctn || !renderer) return;
+        const width = ctn.offsetWidth || 300;
+        const height = ctn.offsetHeight || 300;
+        if (width === lastW && height === lastH) return;
+        lastW = width;
+        lastH = height;
+        renderer.setSize(width, height);
+        if (program) {
+          program.uniforms.uResolution.value = [width, height];
+        }
       }
-    }
 
-    const resizeObserver = new ResizeObserver(() => {
-      resize();
-    });
-    resizeObserver.observe(ctn);
-    window.addEventListener('resize', resize);
+      resizeObserver = new ResizeObserver(() => {
+        resize();
+      });
+      resizeObserver.observe(ctn);
+      window.addEventListener('resize', resize);
 
-    const geometry = new Triangle(gl);
-    if (geometry.attributes.uv) {
-      delete geometry.attributes.uv;
-    }
-
-    const colorStopsArray = colorStops.map(hex => {
-      const c = new Color(hex);
-      return [c.r, c.g, c.b];
-    });
-
-    const initW = ctn.offsetWidth || 300;
-    const initH = ctn.offsetHeight || 300;
-
-    program = new Program(gl, {
-      vertex: VERT,
-      fragment: FRAG,
-      uniforms: {
-        uTime: { value: 0 },
-        uAmplitude: { value: amplitude },
-        uColorStops: { value: colorStopsArray },
-        uResolution: { value: [initW, initH] },
-        uBlend: { value: blend },
-        uLightMode: { value: lightMode ? 1 : 0 },
-        uInverted: { value: inverted ? 1 : 0 },
-        uFrequency: { value: frequency }
+      const geometry = new Triangle(gl);
+      if (geometry.attributes.uv) {
+        delete geometry.attributes.uv;
       }
-    });
 
-    const mesh = new Mesh(gl, { geometry, program });
-    ctn.appendChild(gl.canvas);
+      const colorStopsArray = colorStops.map(hex => {
+        const c = new Color(hex);
+        return [c.r, c.g, c.b];
+      });
 
-    let animateId = 0;
-    const update = (t: number) => {
+      const initW = ctn.offsetWidth || 300;
+      const initH = ctn.offsetHeight || 300;
+
+      program = new Program(gl, {
+        vertex: VERT,
+        fragment: FRAG,
+        uniforms: {
+          uTime: { value: 0 },
+          uAmplitude: { value: amplitude },
+          uColorStops: { value: colorStopsArray },
+          uResolution: { value: [initW, initH] },
+          uBlend: { value: blend },
+          uLightMode: { value: lightMode ? 1 : 0 },
+          uInverted: { value: inverted ? 1 : 0 },
+          uFrequency: { value: frequency }
+        }
+      });
+
+      const mesh = new Mesh(gl, { geometry, program });
+      ctn.appendChild(gl.canvas);
+
+      const update = (t: number) => {
+        animateId = requestAnimationFrame(update);
+        const { time = t * 0.01, speed = 1.0 } = propsRef.current;
+        if (program && renderer) {
+          try {
+            program.uniforms.uTime.value = time * speed * 0.1;
+            program.uniforms.uAmplitude.value = propsRef.current.amplitude ?? 1.0;
+            program.uniforms.uBlend.value = propsRef.current.blend ?? blend;
+            program.uniforms.uLightMode.value = (propsRef.current.lightMode ?? lightMode) ? 1 : 0;
+            program.uniforms.uInverted.value = (propsRef.current.inverted ?? inverted) ? 1 : 0;
+            program.uniforms.uFrequency.value = propsRef.current.frequency ?? 2.0;
+            const stops = propsRef.current.colorStops ?? colorStops;
+            program.uniforms.uColorStops.value = stops.map((hex: string) => {
+              const c = new Color(hex);
+              return [c.r, c.g, c.b];
+            });
+            renderer.render({ scene: mesh });
+          } catch {
+            // Ignore transient render errors
+          }
+        }
+      };
       animateId = requestAnimationFrame(update);
-      const { time = t * 0.01, speed = 1.0 } = propsRef.current;
-      if (program && renderer) {
-        program.uniforms.uTime.value = time * speed * 0.1;
-        program.uniforms.uAmplitude.value = propsRef.current.amplitude ?? 1.0;
-        program.uniforms.uBlend.value = propsRef.current.blend ?? blend;
-        program.uniforms.uLightMode.value = (propsRef.current.lightMode ?? lightMode) ? 1 : 0;
-        program.uniforms.uInverted.value = (propsRef.current.inverted ?? inverted) ? 1 : 0;
-        program.uniforms.uFrequency.value = propsRef.current.frequency ?? 2.0;
-        const stops = propsRef.current.colorStops ?? colorStops;
-        program.uniforms.uColorStops.value = stops.map((hex: string) => {
-          const c = new Color(hex);
-          return [c.r, c.g, c.b];
-        });
-        renderer.render({ scene: mesh });
-      }
-    };
-    animateId = requestAnimationFrame(update);
 
-    resize();
+      resize();
 
-    return () => {
-      cancelAnimationFrame(animateId);
-      resizeObserver.disconnect();
-      window.removeEventListener('resize', resize);
-      if (ctn && renderer && renderer.gl.canvas.parentNode === ctn) {
-        ctn.removeChild(renderer.gl.canvas);
-      }
-      gl.getExtension('WEBGL_lose_context')?.loseContext();
-    };
+      return () => {
+        if (animateId) cancelAnimationFrame(animateId);
+        if (resizeObserver) resizeObserver.disconnect();
+        window.removeEventListener('resize', resize);
+        if (ctn && renderer && renderer.gl?.canvas?.parentNode === ctn) {
+          ctn.removeChild(renderer.gl.canvas);
+        }
+        try {
+          renderer?.gl?.getExtension('WEBGL_lose_context')?.loseContext();
+        } catch {
+          // ignore
+        }
+      };
+    } catch (err) {
+      console.warn('Aurora WebGL2 initialization safely bypassed:', err);
+      return () => {
+        if (animateId) cancelAnimationFrame(animateId);
+      };
+    }
   }, [amplitude, inverted, frequency]);
 
   return <div ref={ctnDom} className="aurora-container" />;

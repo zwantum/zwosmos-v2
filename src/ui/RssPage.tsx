@@ -14,17 +14,6 @@ export default function RssPage() {
   const [copied, setCopied] = useState(false);
   const [showRawXml, setShowRawXml] = useState(false);
 
-  const [winWidth, setWinWidth] = useState<number>(() => (typeof window !== 'undefined' ? window.innerWidth : 1200));
-
-  useEffect(() => {
-    const handleResize = () => setWinWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const isPhone = winWidth < 600;
-  const isTablet = winWidth >= 600 && winWidth <= 1180;
-
   useEffect(() => {
     settingsService.getSettings().then(setSettings);
   }, []);
@@ -65,9 +54,9 @@ export default function RssPage() {
     <div
       style={{
         minHeight: '100vh',
-        background: isLight ? '#f8fafc' : '#080712',
+        background: isLight ? '#f8fafc' : '#161616',
         color: isLight ? '#0f172a' : '#ffffff',
-        padding: isPhone ? '40px 30px 80px' : isTablet ? '50px 50px 90px' : '60px 20px 100px',
+        padding: '60px 20px 100px',
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
       }}
     >
