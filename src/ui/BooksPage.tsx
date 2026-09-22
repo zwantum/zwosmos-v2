@@ -17,11 +17,14 @@ const CATEGORIES: { label: string; value: string }[] = [
 
 export const BooksPage: React.FC = () => {
   const { isMobile } = useMobile();
-  const { isLight, toggleTheme } = useTheme();
+  const { theme, isDark, toggleTheme } = useTheme();
+  const isLight = !isDark;
+  const isSepia = theme === 'sepia';
   const [books, setBooks] = useState<BookItem[]>(INITIAL_BOOKS);
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeModalBook, setActiveModalBook] = useState<BookItem | null>(null);
+  const [failedImages, setFailedImages] = useState<Record<string | number, boolean>>({});
 
   useSEO({
     title: 'Cosmic Library & Books Archive',
@@ -73,9 +76,9 @@ export const BooksPage: React.FC = () => {
       style={{
         minHeight: '100vh',
         background: isLight
-          ? '#ffffff'
+          ? (isSepia ? '#fff3e0' : '#ffffff')
           : 'radial-gradient(ellipse at top center, rgba(147, 51, 234, 0.25) 0%, var(--bg-main) 60%)',
-        backgroundColor: isLight ? '#ffffff' : 'var(--bg-main)',
+        backgroundColor: isSepia ? '#fff3e0' : (isLight ? '#ffffff' : 'var(--bg-main)'),
         color: isLight ? '#1f2937' : 'white',
         boxSizing: 'border-box',
         transition: 'background 0.3s ease, color 0.3s ease'
@@ -152,14 +155,24 @@ export const BooksPage: React.FC = () => {
                 width: '100%',
                 padding: '14px 20px 14px 44px',
                 borderRadius: '30px',
-                border: isLight ? '1px solid #d1d5db' : '1px solid rgba(147, 51, 234, 0.45)',
-                background: isLight ? '#ffffff' : 'rgba(20, 15, 35, 0.7)',
+                border: isDark
+                  ? '1px solid rgba(147, 51, 234, 0.45)'
+                  : isSepia
+                  ? '1px solid rgba(217, 119, 6, 0.35)'
+                  : '1px solid #d1d5db',
+                background: isDark
+                  ? 'rgba(20, 15, 35, 0.7)'
+                  : isSepia
+                  ? '#fef6ea'
+                  : '#ffffff',
                 color: isLight ? '#111827' : '#ffffff',
                 fontSize: '0.94rem',
                 fontFamily: "'Lora', serif",
                 outline: 'none',
                 boxSizing: 'border-box',
-                boxShadow: isLight
+                boxShadow: isSepia
+                  ? '0 4px 14px rgba(217, 119, 6, 0.08)'
+                  : isLight
                   ? '0 4px 14px rgba(0,0,0,0.06)'
                   : '0 4px 20px rgba(0, 0, 0, 0.5), 0 0 15px rgba(147, 51, 234, 0.15)'
               }}
@@ -300,9 +313,17 @@ export const BooksPage: React.FC = () => {
             style={{
               textAlign: 'center',
               padding: '70px 20px',
-              background: isLight ? '#ffffff' : 'rgba(255,255,255,0.02)',
+              background: isDark
+                ? 'rgba(255,255,255,0.02)'
+                : isSepia
+                ? '#fef6ea'
+                : '#ffffff',
               borderRadius: '16px',
-              border: isLight ? '1px solid #e5e7eb' : '1px solid rgba(255,255,255,0.08)'
+              border: isDark
+                ? '1px solid rgba(255,255,255,0.08)'
+                : isSepia
+                ? '1px solid rgba(217, 119, 6, 0.28)'
+                : '1px solid #e5e7eb'
             }}
           >
             <div style={{ fontSize: '3rem', marginBottom: '14px' }}>🌌</div>
@@ -318,7 +339,7 @@ export const BooksPage: React.FC = () => {
                 setSelectedCategory('ALL');
               }}
               style={{
-                background: 'var(--brand-purple)',
+                background: isSepia ? '#d97706' : 'var(--brand-purple)',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '20px',
@@ -346,8 +367,16 @@ export const BooksPage: React.FC = () => {
               <div
                 key={book.id}
                 style={{
-                  background: isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.02)',
-                  border: isLight ? '1px solid #e5e7eb' : '1px solid rgba(147, 51, 234, 0.22)',
+                  background: isDark
+                    ? 'rgba(255, 255, 255, 0.02)'
+                    : isSepia
+                    ? '#fef6ea'
+                    : '#ffffff',
+                  border: isDark
+                    ? '1px solid rgba(147, 51, 234, 0.22)'
+                    : isSepia
+                    ? '1px solid rgba(217, 119, 6, 0.28)'
+                    : '1px solid #e5e7eb',
                   borderRadius: '14px',
                   padding: isMobile ? '20px 16px' : '24px 22px',
                   boxSizing: 'border-box',
@@ -355,12 +384,15 @@ export const BooksPage: React.FC = () => {
                   gap: '20px',
                   alignItems: 'stretch',
                   transition: 'transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  boxShadow: isSepia ? '0 4px 18px rgba(217, 119, 6, 0.06)' : 'none'
                 }}
                 onMouseOver={e => {
                   e.currentTarget.style.transform = 'translateY(-4px)';
-                  e.currentTarget.style.borderColor = 'var(--brand-purple)';
-                  e.currentTarget.style.boxShadow = isLight
+                  e.currentTarget.style.borderColor = isSepia ? '#d97706' : 'var(--brand-purple)';
+                  e.currentTarget.style.boxShadow = isSepia
+                    ? '0 12px 28px rgba(217, 119, 6, 0.18)'
+                    : isLight
                     ? '0 12px 28px rgba(147, 51, 234, 0.12)'
                     : '0 12px 30px rgba(0,0,0,0.6), 0 0 20px rgba(147, 51, 234, 0.2)';
                   const bookCover = e.currentTarget.querySelector('.book-spine-cover') as HTMLElement;
@@ -371,8 +403,12 @@ export const BooksPage: React.FC = () => {
                 }}
                 onMouseOut={e => {
                   e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.borderColor = isLight ? '#e5e7eb' : 'rgba(147, 51, 234, 0.22)';
-                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.borderColor = isDark
+                    ? 'rgba(147, 51, 234, 0.22)'
+                    : isSepia
+                    ? 'rgba(217, 119, 6, 0.28)'
+                    : '#e5e7eb';
+                  e.currentTarget.style.boxShadow = isSepia ? '0 4px 18px rgba(217, 119, 6, 0.06)' : 'none';
                   const bookCover = e.currentTarget.querySelector('.book-spine-cover') as HTMLElement;
                   if (bookCover) {
                     bookCover.style.transform = 'rotateY(0deg)';
@@ -390,11 +426,15 @@ export const BooksPage: React.FC = () => {
                     alignItems: 'center'
                   }}
                 >
-                  {book.coverImage ? (
+                  {book.coverImage && !failedImages[book.id] ? (
                     <img
                       src={book.coverImage}
                       alt={book.title}
+                      referrerPolicy="no-referrer"
                       className="book-spine-cover"
+                      onError={() => {
+                        setFailedImages(prev => ({ ...prev, [book.id]: true }));
+                      }}
                       style={{
                         width: isMobile ? '105px' : '115px',
                         height: isMobile ? '160px' : '175px',
@@ -412,10 +452,12 @@ export const BooksPage: React.FC = () => {
                       style={{
                         width: isMobile ? '105px' : '115px',
                         height: isMobile ? '160px' : '175px',
-                        background: book.gradient,
+                        background: isSepia
+                          ? 'linear-gradient(145deg, #78350f 0%, #451a03 100%)'
+                          : book.gradient,
                         borderRadius: '2px 6px 6px 2px',
                         boxShadow: '8px 8px 18px rgba(0,0,0,0.4), inset -2px 0 4px rgba(255,255,255,0.1)',
-                        borderLeft: `4px solid ${book.spineColor}`,
+                        borderLeft: isSepia ? '4px solid #b45309' : `4px solid ${book.spineColor}`,
                         display: 'flex',
                         flexDirection: 'column',
                         padding: '16px 10px',
@@ -529,7 +571,11 @@ export const BooksPage: React.FC = () => {
                       justifyContent: 'flex-end',
                       marginTop: 'auto',
                       paddingTop: '10px',
-                      borderTop: isLight ? '1px solid #f3f4f6' : '1px solid rgba(255,255,255,0.06)'
+                      borderTop: isDark
+                        ? '1px solid rgba(255,255,255,0.06)'
+                        : isSepia
+                        ? '1px solid rgba(217, 119, 6, 0.16)'
+                        : '1px solid #f3f4f6'
                     }}
                   >
 
@@ -544,8 +590,8 @@ export const BooksPage: React.FC = () => {
                       }}
                       style={{
                         background: 'transparent',
-                        border: '1px solid var(--brand-purple)',
-                        color: isLight ? 'var(--brand-purple)' : '#ffffff',
+                        border: isSepia ? '1px solid #d97706' : '1px solid var(--brand-purple)',
+                        color: isSepia ? '#92400e' : (isLight ? 'var(--brand-purple)' : '#ffffff'),
                         padding: '7px 18px',
                         borderRadius: '22px',
                         fontSize: '0.84rem',
@@ -563,7 +609,7 @@ export const BooksPage: React.FC = () => {
                       }}
                       onMouseOut={e => {
                         e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color = isLight ? 'var(--brand-purple)' : '#ffffff';
+                        e.currentTarget.style.color = isSepia ? '#92400e' : (isLight ? 'var(--brand-purple)' : '#ffffff');
                       }}
                     >
                       <span>Buy Now</span>
@@ -602,15 +648,17 @@ export const BooksPage: React.FC = () => {
           <div
             onClick={e => e.stopPropagation()}
             style={{
-              background: isLight ? '#ffffff' : '#0e0e18',
-              border: '1px solid var(--brand-purple)',
+              background: isDark ? '#0e0e18' : (isSepia ? '#fef6ea' : '#ffffff'),
+              border: isSepia ? '1px solid rgba(217, 119, 6, 0.4)' : '1px solid var(--brand-purple)',
               borderRadius: '16px',
               maxWidth: '650px',
               width: '100%',
               padding: isMobile ? '24px 20px' : '36px 36px',
               boxSizing: 'border-box',
               position: 'relative',
-              boxShadow: '0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(147, 51, 234, 0.35)',
+              boxShadow: isSepia
+                ? '0 20px 50px rgba(0,0,0,0.5), 0 0 30px rgba(217, 119, 6, 0.2)'
+                : '0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(147, 51, 234, 0.35)',
               maxHeight: '90vh',
               overflowY: 'auto'
             }}
@@ -624,7 +672,7 @@ export const BooksPage: React.FC = () => {
                 right: '18px',
                 background: 'none',
                 border: 'none',
-                color: isLight ? '#6b7280' : 'rgba(255,255,255,0.7)',
+                color: isSepia ? '#78350f' : (isLight ? '#6b7280' : 'rgba(255,255,255,0.7)'),
                 fontSize: '1.2rem',
                 cursor: 'pointer'
               }}
@@ -634,10 +682,14 @@ export const BooksPage: React.FC = () => {
 
             <div style={{ display: 'flex', gap: isMobile ? '16px' : '26px', alignItems: 'flex-start', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
               {/* Cover in Modal */}
-              {activeModalBook.coverImage ? (
+              {activeModalBook.coverImage && !failedImages[activeModalBook.id] ? (
                 <img
                   src={activeModalBook.coverImage}
                   alt={activeModalBook.title}
+                  referrerPolicy="no-referrer"
+                  onError={() => {
+                    setFailedImages(prev => ({ ...prev, [activeModalBook.id]: true }));
+                  }}
                   style={{
                     width: '130px',
                     height: '195px',
@@ -653,9 +705,11 @@ export const BooksPage: React.FC = () => {
                   style={{
                     width: '130px',
                     height: '195px',
-                    background: activeModalBook.gradient,
+                    background: isSepia
+                      ? 'linear-gradient(145deg, #78350f 0%, #451a03 100%)'
+                      : activeModalBook.gradient,
                     borderRadius: '2px 6px 6px 2px',
-                    borderLeft: `4px solid ${activeModalBook.spineColor}`,
+                    borderLeft: isSepia ? '4px solid #b45309' : `4px solid ${activeModalBook.spineColor}`,
                     boxShadow: '10px 10px 22px rgba(0,0,0,0.5)',
                     flexShrink: 0,
                     display: 'flex',
@@ -762,8 +816,16 @@ export const BooksPage: React.FC = () => {
                     <span
                       key={t}
                       style={{
-                        background: isLight ? '#f3f4f6' : 'rgba(255,255,255,0.06)',
-                        color: isLight ? '#4b5563' : 'rgba(255,255,255,0.7)',
+                        background: isSepia
+                          ? '#fde8c8'
+                          : isLight
+                          ? '#f3f4f6'
+                          : 'rgba(255,255,255,0.06)',
+                        color: isSepia
+                          ? '#78350f'
+                          : isLight
+                          ? '#4b5563'
+                          : 'rgba(255,255,255,0.7)',
                         borderRadius: '12px',
                         padding: '3px 10px',
                         fontSize: '0.74rem'

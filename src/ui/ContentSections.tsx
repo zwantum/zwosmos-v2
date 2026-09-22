@@ -11,7 +11,7 @@ export interface ContentSectionsProps {
 }
 
 const ContentSections: React.FC<ContentSectionsProps> = () => {
-  const { isLight } = useTheme();
+  const { isLight, isSepia } = useTheme();
   const { posts: livePosts } = useBlogPosts();
   const [orbitBooks, setOrbitBooks] = useState<BookItem[]>(() => getDailyOrbitBooks(INITIAL_BOOKS, 3));
 
@@ -577,7 +577,9 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
                       width: '140px',
                       flexShrink: 0,
                       height: '210px',
-                      background: book.gradient || 'linear-gradient(to bottom, #111, #1a1a1a)',
+                      background: isSepia
+                        ? 'linear-gradient(145deg, #78350f 0%, #451a03 100%)'
+                        : (book.gradient || 'linear-gradient(to bottom, #111, #1a1a1a)'),
                       borderRadius: '2px 6px 6px 2px',
                       boxShadow: isLight
                         ? '8px 8px 18px rgba(0,0,0,0.15), inset -2px 0 5px rgba(255,255,255,0.2)'
@@ -586,7 +588,7 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
                       flexDirection: 'column',
                       padding: '20px 10px',
                       boxSizing: 'border-box',
-                      borderLeft: `4px solid ${book.spineColor || 'rgba(255,255,255,0.15)'}`,
+                      borderLeft: `4px solid ${isSepia ? '#b45309' : (book.spineColor || 'rgba(255,255,255,0.15)')}`,
                       position: 'relative',
                       transformOrigin: 'left center',
                       transition: 'transform 0.45s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.45s ease'
@@ -647,8 +649,8 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
                         rel="noopener noreferrer"
                         style={{
                           background: 'transparent',
-                          border: '1px solid var(--brand-purple)',
-                          color: isLight ? '#111827' : 'white',
+                          border: isSepia ? '1px solid #d97706' : '1px solid var(--brand-purple)',
+                          color: isSepia ? '#92400e' : (isLight ? '#111827' : 'white'),
                           padding: '8px 18px',
                           borderRadius: '22px',
                           fontFamily: "'Playfair Display', serif",
@@ -660,18 +662,24 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
                           alignItems: 'center',
                           gap: '6px',
                           transition: 'all 0.25s ease',
-                          boxShadow: isLight ? '0 2px 8px rgba(147, 51, 234, 0.15)' : '0 4px 12px rgba(147, 51, 234, 0.2)'
+                          boxShadow: isSepia
+                            ? '0 2px 8px rgba(217, 119, 6, 0.15)'
+                            : (isLight ? '0 2px 8px rgba(147, 51, 234, 0.15)' : '0 4px 12px rgba(147, 51, 234, 0.2)')
                         }}
                         onMouseOver={e => {
                           e.currentTarget.style.background = 'var(--brand-purple)';
+                          e.currentTarget.style.borderColor = 'var(--brand-purple)';
                           e.currentTarget.style.color = '#ffffff';
                           e.currentTarget.style.boxShadow = '0 0 16px rgba(147, 51, 234, 0.6)';
                           e.currentTarget.style.transform = 'translateY(-2px)';
                         }}
                         onMouseOut={e => {
                           e.currentTarget.style.background = 'transparent';
-                          e.currentTarget.style.color = isLight ? '#111827' : 'white';
-                          e.currentTarget.style.boxShadow = isLight ? '0 2px 8px rgba(147, 51, 234, 0.15)' : '0 4px 12px rgba(147, 51, 234, 0.2)';
+                          e.currentTarget.style.borderColor = isSepia ? '#d97706' : 'var(--brand-purple)';
+                          e.currentTarget.style.color = isSepia ? '#92400e' : (isLight ? '#111827' : 'white');
+                          e.currentTarget.style.boxShadow = isSepia
+                            ? '0 2px 8px rgba(217, 119, 6, 0.15)'
+                            : (isLight ? '0 2px 8px rgba(147, 51, 234, 0.15)' : '0 4px 12px rgba(147, 51, 234, 0.2)');
                           e.currentTarget.style.transform = 'translateY(0)';
                         }}
                       >
@@ -683,8 +691,8 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
                         to="/books"
                         style={{
                           background: 'transparent',
-                          border: '1px solid var(--brand-purple)',
-                          color: isLight ? '#111827' : 'white',
+                          border: isSepia ? '1px solid #d97706' : '1px solid var(--brand-purple)',
+                          color: isSepia ? '#92400e' : (isLight ? '#111827' : 'white'),
                           padding: '8px 18px',
                           borderRadius: '22px',
                           fontFamily: "'Playfair Display', serif",
@@ -696,18 +704,24 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
                           alignItems: 'center',
                           gap: '6px',
                           transition: 'all 0.25s ease',
-                          boxShadow: isLight ? '0 2px 8px rgba(147, 51, 234, 0.15)' : '0 4px 12px rgba(147, 51, 234, 0.2)'
+                          boxShadow: isSepia
+                            ? '0 2px 8px rgba(217, 119, 6, 0.15)'
+                            : (isLight ? '0 2px 8px rgba(147, 51, 234, 0.15)' : '0 4px 12px rgba(147, 51, 234, 0.2)')
                         }}
                         onMouseOver={e => {
                           e.currentTarget.style.background = 'var(--brand-purple)';
+                          e.currentTarget.style.borderColor = 'var(--brand-purple)';
                           e.currentTarget.style.color = '#ffffff';
                           e.currentTarget.style.boxShadow = '0 0 16px rgba(147, 51, 234, 0.6)';
                           e.currentTarget.style.transform = 'translateY(-2px)';
                         }}
                         onMouseOut={e => {
                           e.currentTarget.style.background = 'transparent';
-                          e.currentTarget.style.color = isLight ? '#111827' : 'white';
-                          e.currentTarget.style.boxShadow = isLight ? '0 2px 8px rgba(147, 51, 234, 0.15)' : '0 4px 12px rgba(147, 51, 234, 0.2)';
+                          e.currentTarget.style.borderColor = isSepia ? '#d97706' : 'var(--brand-purple)';
+                          e.currentTarget.style.color = isSepia ? '#92400e' : (isLight ? '#111827' : 'white');
+                          e.currentTarget.style.boxShadow = isSepia
+                            ? '0 2px 8px rgba(217, 119, 6, 0.15)'
+                            : (isLight ? '0 2px 8px rgba(147, 51, 234, 0.15)' : '0 4px 12px rgba(147, 51, 234, 0.2)');
                           e.currentTarget.style.transform = 'translateY(0)';
                         }}
                       >
@@ -720,19 +734,6 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Quote Section */}
-      <section className="content-section" style={{ textAlign: 'center', padding: isLargeView ? '28px 20px 0px' : isSmallPhone ? '50px 20px 0px' : isSmallTab ? '20px 20px 0px' : '50px 20px 0px', fontFamily: "'Playfair Display', serif" }}>
-        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-          <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--brand-purple)', margin: isSmallTab ? '0 auto 16px' : '0 auto 30px' }}></div>
-          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 'clamp(1.5rem, 1.1rem + 2vw, 2.5rem)', margin: '0 0 20px 0', fontWeight: 600, letterSpacing: '-0.5px', color: isLight ? '#111827' : '#ffffff' }}>
-            Zwosmos is a home for curious minds.
-          </h2>
-          <p style={{ fontFamily: "'Playfair Display', serif", color: isLight ? '#4b5563' : 'rgba(255,255,255,0.7)', fontSize: '1.1rem', letterSpacing: '2px', textTransform: 'uppercase', lineHeight: 1.7 }}>
-            We explore the universe through stories,<br />tools, and ideas that inspire wonder.
-          </p>
         </div>
       </section>
 

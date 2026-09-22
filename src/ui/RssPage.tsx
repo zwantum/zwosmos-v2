@@ -8,7 +8,9 @@ import { ALL_BLOG_POSTS } from '../data/blogData';
 import { Rss, Copy, Check, Download, ExternalLink, ArrowLeft, Globe } from 'lucide-react';
 
 export default function RssPage() {
-  const { isLight } = useTheme();
+  const { theme, isDark } = useTheme();
+  const isLight = !isDark;
+  const isSepia = theme === 'sepia';
   const { posts: livePosts } = useBlogPosts();
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SITE_SETTINGS);
   const [copied, setCopied] = useState(false);
@@ -54,7 +56,7 @@ export default function RssPage() {
     <div
       style={{
         minHeight: '100vh',
-        background: isLight ? '#f8fafc' : '#161616',
+        background: isLight ? (isSepia ? '#fff3e0' : '#f8fafc') : '#161616',
         color: isLight ? '#0f172a' : '#ffffff',
         padding: '60px 20px 100px',
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"

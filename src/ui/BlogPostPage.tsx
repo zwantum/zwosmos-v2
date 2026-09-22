@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useMobile } from '../contexts/MobileContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -14,7 +14,9 @@ const BlogPostPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { isMobile } = useMobile();
   const [copied, setCopied] = useState(false);
-  const { isLight } = useTheme();
+  const { theme, isDark } = useTheme();
+  const isLight = !isDark;
+  const isSepia = theme === 'sepia';
 
   // Window width tracking for accurate tablet (both small & large tab) detection
   const [winWidth, setWinWidth] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1200));
@@ -28,13 +30,18 @@ const BlogPostPage: React.FC = () => {
   const isLargeTab = winWidth > 800 && winWidth <= 1280;
   const isTablet = isSmallTab || isLargeTab;
   const isPhone = winWidth < 600;
-  const isMobileView = isMobile || winWidth <= 800;
+  const isDesktop = winWidth > 1280;
+  const isMobileView = isMobile || winWidth <= 960;
   // Fetch live article and all published posts from Supabase via @zwantum/blog
   const { post } = useBlogPost(id || '');
   const { posts: allLivePosts } = useBlogPosts();
 
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    const rootEl = document.getElementById('root');
+    if (rootEl) rootEl.scrollTop = 0;
   }, [id]);
 
   // Transform live posts to unified interface or fallback to curated mocks
@@ -229,9 +236,19 @@ const BlogPostPage: React.FC = () => {
           gap: isMobile ? '10px' : '14px',
           padding: isMobile ? '5px 14px' : '6px 18px',
           borderRadius: '24px',
-          background: isLight ? 'rgba(255, 255, 255, 0.88)' : 'rgba(255, 255, 255, 0.04)',
-          border: isLight ? '1px solid rgba(0, 0, 0, 0.1)' : '1px solid rgba(255, 255, 255, 0.12)',
-          boxShadow: isLight
+          background: isDark
+            ? 'rgba(255, 255, 255, 0.04)'
+            : isSepia
+            ? 'rgba(254, 246, 234, 0.94)'
+            : 'rgba(255, 255, 255, 0.88)',
+          border: isDark
+            ? '1px solid rgba(255, 255, 255, 0.12)'
+            : isSepia
+            ? '1px solid rgba(217, 119, 6, 0.35)'
+            : '1px solid rgba(0, 0, 0, 0.1)',
+          boxShadow: isSepia
+            ? '0 4px 16px rgba(217, 119, 6, 0.1)'
+            : isLight
             ? '0 4px 16px rgba(0, 0, 0, 0.06)'
             : '0 8px 32px rgba(0, 0, 0, 0.45), 0 0 20px rgba(147, 51, 234, 0.12)',
           backdropFilter: 'blur(16px)',
@@ -251,10 +268,14 @@ const BlogPostPage: React.FC = () => {
             letterSpacing: '0.6px',
             color: isLight ? '#111827' : '#ffffff',
             paddingRight: isMobile ? '8px' : '12px',
-            borderRight: isLight ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.12)'
+            borderRight: isDark
+              ? '1px solid rgba(255,255,255,0.12)'
+              : isSepia
+              ? '1px solid rgba(217, 119, 6, 0.25)'
+              : '1px solid rgba(0,0,0,0.1)'
           }}
         >
-          <span style={{ color: 'var(--brand-purple)', fontSize: '0.8rem' }}>✦</span>
+          <span style={{ color: isSepia ? '#d97706' : 'var(--brand-purple)', fontSize: '0.8rem' }}>✦</span>
           <span>Text Size</span>
         </div>
 
@@ -270,11 +291,19 @@ const BlogPostPage: React.FC = () => {
               width: isMobile ? '26px' : '28px',
               height: isMobile ? '26px' : '28px',
               borderRadius: '50%',
-              border: isLight ? '1px solid rgba(0,0,0,0.12)' : '1px solid rgba(255,255,255,0.18)',
-              background: isLight ? '#f3f4f6' : 'rgba(255, 255, 255, 0.08)',
+              border: isDark
+                ? '1px solid rgba(255,255,255,0.18)'
+                : isSepia
+                ? '1px solid rgba(217, 119, 6, 0.35)'
+                : '1px solid rgba(0,0,0,0.12)',
+              background: isDark
+                ? 'rgba(255, 255, 255, 0.08)'
+                : isSepia
+                ? '#fde8c8'
+                : '#f3f4f6',
               color: fontLevel === -3
                 ? (isLight ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.25)')
-                : (isLight ? '#111827' : '#ffffff'),
+                : (isSepia ? '#78350f' : isLight ? '#111827' : '#ffffff'),
               fontSize: '1.1rem',
               fontWeight: 700,
               cursor: fontLevel === -3 ? 'not-allowed' : 'pointer',
@@ -294,11 +323,19 @@ const BlogPostPage: React.FC = () => {
               }
             }}
             onMouseOut={e => {
-              e.currentTarget.style.background = isLight ? '#f3f4f6' : 'rgba(255, 255, 255, 0.08)';
-              e.currentTarget.style.borderColor = isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.18)';
+              e.currentTarget.style.background = isDark
+                ? 'rgba(255, 255, 255, 0.08)'
+                : isSepia
+                ? '#fde8c8'
+                : '#f3f4f6';
+              e.currentTarget.style.borderColor = isDark
+                ? 'rgba(255,255,255,0.18)'
+                : isSepia
+                ? 'rgba(217, 119, 6, 0.35)'
+                : 'rgba(0,0,0,0.12)';
               e.currentTarget.style.color = fontLevel === -3
                 ? (isLight ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.25)')
-                : (isLight ? '#111827' : '#ffffff');
+                : (isSepia ? '#78350f' : isLight ? '#111827' : '#ffffff');
               e.currentTarget.style.transform = 'scale(1)';
             }}
           >
@@ -451,11 +488,19 @@ const BlogPostPage: React.FC = () => {
               width: isMobile ? '26px' : '28px',
               height: isMobile ? '26px' : '28px',
               borderRadius: '50%',
-              border: isLight ? '1px solid rgba(0,0,0,0.12)' : '1px solid rgba(255,255,255,0.18)',
-              background: isLight ? '#f3f4f6' : 'rgba(255, 255, 255, 0.08)',
+              border: isDark
+                ? '1px solid rgba(255,255,255,0.18)'
+                : isSepia
+                ? '1px solid rgba(217, 119, 6, 0.35)'
+                : '1px solid rgba(0,0,0,0.12)',
+              background: isDark
+                ? 'rgba(255, 255, 255, 0.08)'
+                : isSepia
+                ? '#fde8c8'
+                : '#f3f4f6',
               color: fontLevel === 3
                 ? (isLight ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.25)')
-                : (isLight ? '#111827' : '#ffffff'),
+                : (isSepia ? '#78350f' : isLight ? '#111827' : '#ffffff'),
               fontSize: '1.1rem',
               fontWeight: 700,
               cursor: fontLevel === 3 ? 'not-allowed' : 'pointer',
@@ -475,11 +520,19 @@ const BlogPostPage: React.FC = () => {
               }
             }}
             onMouseOut={e => {
-              e.currentTarget.style.background = isLight ? '#f3f4f6' : 'rgba(255, 255, 255, 0.08)';
-              e.currentTarget.style.borderColor = isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.18)';
+              e.currentTarget.style.background = isDark
+                ? 'rgba(255, 255, 255, 0.08)'
+                : isSepia
+                ? '#fde8c8'
+                : '#f3f4f6';
+              e.currentTarget.style.borderColor = isDark
+                ? 'rgba(255,255,255,0.18)'
+                : isSepia
+                ? 'rgba(217, 119, 6, 0.35)'
+                : 'rgba(0,0,0,0.12)';
               e.currentTarget.style.color = fontLevel === 3
                 ? (isLight ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.25)')
-                : (isLight ? '#111827' : '#ffffff');
+                : (isSepia ? '#78350f' : isLight ? '#111827' : '#ffffff');
               e.currentTarget.style.transform = 'scale(1)';
             }}
           >
@@ -499,7 +552,11 @@ const BlogPostPage: React.FC = () => {
         padding: '4px 2px 10px 2px',
         width: '100%',
         boxSizing: 'border-box',
-        borderBottom: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.08)',
+        borderBottom: isDark
+          ? '1px solid rgba(255,255,255,0.08)'
+          : isSepia
+          ? '1px solid rgba(217, 119, 6, 0.2)'
+          : '1px solid rgba(0,0,0,0.08)',
         marginBottom: '2px'
       }}
     >
@@ -515,7 +572,7 @@ const BlogPostPage: React.FC = () => {
           gap: '5px'
         }}
       >
-        <span style={{ color: 'var(--brand-purple)', fontSize: '0.8rem' }}>✦</span> Share:
+        <span style={{ color: isSepia ? '#d97706' : 'var(--brand-purple)', fontSize: '0.8rem' }}>✦</span> Share:
       </span>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -559,7 +616,7 @@ const BlogPostPage: React.FC = () => {
             height: '32px',
             borderRadius: '50%',
             border: isLight ? '1px solid rgba(0,0,0,0.12)' : '1px solid rgba(255,255,255,0.15)',
-            background: '#1877F2',
+            background: '#1877f2',
             color: 'white',
             display: 'flex',
             alignItems: 'center',
@@ -567,7 +624,7 @@ const BlogPostPage: React.FC = () => {
             cursor: 'pointer',
             fontSize: '0.82rem',
             transition: 'transform 0.2s',
-            boxShadow: '0 2px 6px rgba(24, 119, 242, 0.25)'
+            boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
           }}
         >
           <i className="fa-brands fa-facebook-f"></i>
@@ -586,7 +643,7 @@ const BlogPostPage: React.FC = () => {
             height: '32px',
             borderRadius: '50%',
             border: isLight ? '1px solid rgba(0,0,0,0.12)' : '1px solid rgba(255,255,255,0.15)',
-            background: '#0A66C2',
+            background: '#0a66c2',
             color: 'white',
             display: 'flex',
             alignItems: 'center',
@@ -594,33 +651,37 @@ const BlogPostPage: React.FC = () => {
             cursor: 'pointer',
             fontSize: '0.82rem',
             transition: 'transform 0.2s',
-            boxShadow: '0 2px 6px rgba(10, 102, 194, 0.25)'
+            boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
           }}
         >
           <i className="fa-brands fa-linkedin-in"></i>
         </button>
 
         <button
-          onClick={handleCopyLink}
-          title={copied ? 'Copied!' : 'Copy Link'}
+          onClick={() => {
+            navigator.clipboard.writeText(window.location.href);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+          }}
+          title={copied ? 'Link copied!' : 'Copy Link'}
           style={{
             width: '32px',
             height: '32px',
             borderRadius: '50%',
-            border: '1px solid var(--brand-purple)',
+            border: copied
+              ? '1px solid #10b981'
+              : (isDark ? '1px solid rgba(255,255,255,0.2)' : (isSepia ? '1px solid rgba(217, 119, 6, 0.4)' : (isLight ? '1px solid var(--brand-purple)' : '1px solid var(--brand-purple)'))),
             background: copied
-              ? 'var(--brand-purple)'
-              : isLight
-                ? 'rgba(147, 51, 234, 0.1)'
-                : 'rgba(147, 51, 234, 0.22)',
-            color: copied ? '#ffffff' : 'var(--brand-purple)',
+              ? '#10b981'
+              : (isDark ? 'rgba(255, 255, 255, 0.08)' : (isSepia ? '#fde8c8' : 'rgba(147, 51, 234, 0.12)')),
+            color: copied ? 'white' : (isSepia ? '#78350f' : (isLight ? 'var(--brand-purple)' : '#c084fc')),
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
             fontSize: '0.82rem',
             transition: 'all 0.2s ease',
-            boxShadow: '0 2px 6px rgba(147, 51, 234, 0.2)'
+            boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
           }}
         >
           <i className={copied ? 'fa-solid fa-check' : 'fa-solid fa-link'}></i>
@@ -641,7 +702,11 @@ const BlogPostPage: React.FC = () => {
           padding: '4px 2px 12px 2px',
           width: '100%',
           boxSizing: 'border-box',
-          borderBottom: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.08)',
+          borderBottom: isDark
+            ? '1px solid rgba(255,255,255,0.08)'
+            : isSepia
+            ? '1px solid rgba(217, 119, 6, 0.2)'
+            : '1px solid rgba(0,0,0,0.08)',
           marginBottom: '6px'
         }}
       >
@@ -658,7 +723,7 @@ const BlogPostPage: React.FC = () => {
             flexShrink: 0
           }}
         >
-          <span style={{ color: 'var(--brand-purple)', fontSize: '0.8rem' }}>✦</span> Tags:
+          <span style={{ color: isSepia ? '#d97706' : 'var(--brand-purple)', fontSize: '0.8rem' }}>✦</span> Tags:
         </span>
 
         <div
@@ -679,17 +744,17 @@ const BlogPostPage: React.FC = () => {
                 fontSize: '0.78rem',
                 padding: '4px 6px',
                 borderRadius: '16px',
-                color: isLight ? '#1f2937' : 'rgba(255,255,255,0.9)',
+                color: isSepia ? '#78350f' : (isLight ? '#1f2937' : 'rgba(255,255,255,0.9)'),
                 fontFamily: "'Lora', serif",
                 cursor: 'pointer',
                 textDecoration: 'none',
                 transition: 'all 0.2s ease'
               }}
               onMouseOver={e => {
-                e.currentTarget.style.color = 'var(--brand-purple)';
+                e.currentTarget.style.color = isSepia ? '#d97706' : 'var(--brand-purple)';
               }}
               onMouseOut={e => {
-                e.currentTarget.style.color = isLight ? '#1f2937' : 'rgba(255,255,255,0.9)';
+                e.currentTarget.style.color = isSepia ? '#78350f' : (isLight ? '#1f2937' : 'rgba(255,255,255,0.9)');
               }}
             >
               {tag.name}
@@ -720,7 +785,7 @@ const BlogPostPage: React.FC = () => {
           left: 0,
           width: '100%',
           height: '100%',
-          border: '1px solid var(--brand-purple)',
+          border: isSepia ? '1px solid rgba(217, 119, 6, 0.45)' : '1px solid var(--brand-purple)',
           borderRadius: '12px',
           zIndex: 3,
           pointerEvents: 'none',
@@ -736,9 +801,21 @@ const BlogPostPage: React.FC = () => {
             alignItems: 'center',
             justifyContent: 'center',
             padding: '12px 5px',
-            border: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.08)',
-            borderRight: isLight ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.1)',
-            background: isLight ? '#f3f4f6' : 'var(--bg-main)',
+            border: isDark
+              ? '1px solid rgba(255,255,255,0.08)'
+              : isSepia
+              ? '1px solid rgba(217, 119, 6, 0.28)'
+              : '1px solid rgba(0,0,0,0.08)',
+            borderRight: isDark
+              ? '1px solid rgba(255,255,255,0.1)'
+              : isSepia
+              ? '1px solid rgba(217, 119, 6, 0.28)'
+              : '1px solid rgba(0,0,0,0.1)',
+            background: isDark
+              ? 'var(--bg-main)'
+              : isSepia
+              ? '#fde8c8'
+              : '#f3f4f6',
             borderRadius: '12px 0 0 12px',
             flexShrink: 0
           }}
@@ -756,7 +833,7 @@ const BlogPostPage: React.FC = () => {
               whiteSpace: 'nowrap'
             }}
           >
-            <span style={{ color: 'var(--brand-purple)', marginRight: '5px' }}>✦</span> Author
+            <span style={{ color: isSepia ? '#d97706' : 'var(--brand-purple)', marginRight: '5px' }}>✦</span> Author
           </span>
         </div>
 
@@ -764,8 +841,16 @@ const BlogPostPage: React.FC = () => {
         <div
           style={{
             flex: 1,
-            background: isLight ? '#fdfdfd' : 'rgba(255,255,255,0.03)',
-            border: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.08)',
+            background: isDark
+              ? 'rgba(255,255,255,0.03)'
+              : isSepia
+              ? '#fef6ea'
+              : '#fdfdfd',
+            border: isDark
+              ? '1px solid rgba(255,255,255,0.08)'
+              : isSepia
+              ? '1px solid rgba(217, 119, 6, 0.28)'
+              : '1px solid rgba(0,0,0,0.08)',
             borderLeft: 'none',
             borderRadius: '0 12px 12px 0',
             padding: '14px 12px',
@@ -783,8 +868,8 @@ const BlogPostPage: React.FC = () => {
                   borderRadius: '50%',
                   overflow: 'hidden',
                   marginBottom: '8px',
-                  border: '2px solid var(--brand-purple)',
-                  boxShadow: '0 0 12px rgba(147, 51, 234, 0.45)'
+                  border: isSepia ? '2px solid #d97706' : '2px solid var(--brand-purple)',
+                  boxShadow: isSepia ? '0 0 12px rgba(217, 119, 6, 0.35)' : '0 0 12px rgba(147, 51, 234, 0.45)'
                 }}
               >
                 <img
@@ -807,7 +892,7 @@ const BlogPostPage: React.FC = () => {
               <Link
                 to={`/author/${postData.author.slug}`}
                 style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }}
-                onMouseOver={e => (e.currentTarget.style.color = 'var(--brand-purple)')}
+                onMouseOver={e => (e.currentTarget.style.color = isSepia ? '#d97706' : 'var(--brand-purple)')}
                 onMouseOut={e => (e.currentTarget.style.color = isLight ? '#111827' : 'white')}
               >
                 {postData.author.name}
@@ -817,7 +902,7 @@ const BlogPostPage: React.FC = () => {
             {postData.author.role && (
               <div
                 style={{
-                  color: 'var(--brand-purple)',
+                  color: isSepia ? '#b45309' : 'var(--brand-purple)',
                   fontSize: '0.7rem',
                   fontFamily: "'Lora', serif",
                   fontWeight: 600
@@ -845,7 +930,11 @@ const BlogPostPage: React.FC = () => {
 
           <div
             style={{
-              borderTop: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.08)',
+              borderTop: isDark
+                ? '1px solid rgba(255,255,255,0.08)'
+                : isSepia
+                ? '1px solid rgba(217, 119, 6, 0.18)'
+                : '1px solid rgba(0,0,0,0.08)',
               paddingTop: '8px',
               textAlign: 'left',
               fontSize: '0.7rem',
@@ -881,7 +970,7 @@ const BlogPostPage: React.FC = () => {
           left: 0,
           width: '100%',
           height: '100%',
-          border: '1px solid var(--brand-purple)',
+          border: isSepia ? '1px solid rgba(217, 119, 6, 0.45)' : '1px solid var(--brand-purple)',
           borderRadius: '12px',
           zIndex: 3,
           pointerEvents: 'none',
@@ -897,9 +986,21 @@ const BlogPostPage: React.FC = () => {
             alignItems: 'center',
             justifyContent: 'center',
             padding: '12px 5px',
-            border: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.08)',
-            borderRight: isLight ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.1)',
-            background: isLight ? '#f3f4f6' : 'var(--bg-main)',
+            border: isDark
+              ? '1px solid rgba(255,255,255,0.08)'
+              : isSepia
+              ? '1px solid rgba(217, 119, 6, 0.28)'
+              : '1px solid rgba(0,0,0,0.08)',
+            borderRight: isDark
+              ? '1px solid rgba(255,255,255,0.1)'
+              : isSepia
+              ? '1px solid rgba(217, 119, 6, 0.28)'
+              : '1px solid rgba(0,0,0,0.1)',
+            background: isDark
+              ? 'var(--bg-main)'
+              : isSepia
+              ? '#fde8c8'
+              : '#f3f4f6',
             borderRadius: '12px 0 0 12px',
             flexShrink: 0
           }}
@@ -917,7 +1018,7 @@ const BlogPostPage: React.FC = () => {
               whiteSpace: 'nowrap'
             }}
           >
-            <span style={{ color: 'var(--brand-purple)', marginRight: '5px' }}>✦</span> Latest
+            <span style={{ color: isSepia ? '#d97706' : 'var(--brand-purple)', marginRight: '5px' }}>✦</span> Latest
           </span>
         </div>
 
@@ -925,8 +1026,16 @@ const BlogPostPage: React.FC = () => {
         <div
           style={{
             flex: 1,
-            background: isLight ? '#fdfdfd' : 'rgba(255,255,255,0.03)',
-            border: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.08)',
+            background: isDark
+              ? 'rgba(255,255,255,0.03)'
+              : isSepia
+              ? '#fef6ea'
+              : '#fdfdfd',
+            border: isDark
+              ? '1px solid rgba(255,255,255,0.08)'
+              : isSepia
+              ? '1px solid rgba(217, 119, 6, 0.28)'
+              : '1px solid rgba(0,0,0,0.08)',
             borderLeft: 'none',
             borderRadius: '0 12px 12px 0',
             padding: '14px 10px',
@@ -959,7 +1068,11 @@ const BlogPostPage: React.FC = () => {
                   borderRadius: '6px',
                   overflow: 'hidden',
                   flexShrink: 0,
-                  border: isLight ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.1)'
+                  border: isDark
+                    ? '1px solid rgba(255,255,255,0.1)'
+                    : isSepia
+                    ? '1px solid rgba(217, 119, 6, 0.2)'
+                    : '1px solid rgba(0,0,0,0.1)'
                 }}
               >
                 <img
@@ -1014,7 +1127,7 @@ const BlogPostPage: React.FC = () => {
             left: 0,
             width: '100%',
             height: '100%',
-            border: '1px solid var(--brand-purple)',
+            border: isSepia ? '1px solid rgba(217, 119, 6, 0.45)' : '1px solid var(--brand-purple)',
             borderRadius: '12px',
             zIndex: 3,
             pointerEvents: 'none',
@@ -1030,9 +1143,21 @@ const BlogPostPage: React.FC = () => {
               alignItems: 'center',
               justifyContent: 'center',
               padding: '12px 5px',
-              border: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.08)',
-              borderRight: isLight ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.1)',
-              background: isLight ? '#f3f4f6' : 'var(--bg-main)',
+              border: isDark
+                ? '1px solid rgba(255,255,255,0.08)'
+                : isSepia
+                ? '1px solid rgba(217, 119, 6, 0.28)'
+                : '1px solid rgba(0,0,0,0.08)',
+              borderRight: isDark
+                ? '1px solid rgba(255,255,255,0.1)'
+                : isSepia
+                ? '1px solid rgba(217, 119, 6, 0.28)'
+                : '1px solid rgba(0,0,0,0.1)',
+              background: isDark
+                ? 'var(--bg-main)'
+                : isSepia
+                ? '#fde8c8'
+                : '#f3f4f6',
               borderRadius: '12px 0 0 12px',
               flexShrink: 0
             }}
@@ -1050,7 +1175,7 @@ const BlogPostPage: React.FC = () => {
                 whiteSpace: 'nowrap'
               }}
             >
-              <span style={{ color: 'var(--brand-purple)', marginRight: '5px' }}>✦</span> Tags
+              <span style={{ color: isSepia ? '#d97706' : 'var(--brand-purple)', marginRight: '5px' }}>✦</span> Tags
             </span>
           </div>
 
@@ -1058,8 +1183,16 @@ const BlogPostPage: React.FC = () => {
           <div
             style={{
               flex: 1,
-              background: isLight ? '#fdfdfd' : 'rgba(255,255,255,0.03)',
-              border: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.08)',
+              background: isDark
+                ? 'rgba(255,255,255,0.03)'
+                : isSepia
+                ? '#fef6ea'
+                : '#fdfdfd',
+              border: isDark
+                ? '1px solid rgba(255,255,255,0.08)'
+                : isSepia
+                ? '1px solid rgba(217, 119, 6, 0.28)'
+                : '1px solid rgba(0,0,0,0.08)',
               borderLeft: 'none',
               borderRadius: '0 12px 12px 0',
               padding: '12px 10px',
@@ -1077,9 +1210,17 @@ const BlogPostPage: React.FC = () => {
                   fontSize: '0.7rem',
                   padding: '3px 8px',
                   borderRadius: '14px',
-                  background: isLight ? '#f3f4f6' : 'rgba(255,255,255,0.04)',
-                  border: isLight ? '1px solid rgba(0,0,0,0.12)' : '1px solid rgba(255,255,255,0.12)',
-                  color: isLight ? '#1f2937' : 'rgba(255,255,255,0.85)',
+                  background: isDark
+                    ? 'rgba(255,255,255,0.04)'
+                    : isSepia
+                    ? '#fde8c8'
+                    : '#f3f4f6',
+                  border: isDark
+                    ? '1px solid rgba(255,255,255,0.12)'
+                    : isSepia
+                    ? '1px solid rgba(217, 119, 6, 0.3)'
+                    : '1px solid rgba(0,0,0,0.12)',
+                  color: isSepia ? '#78350f' : (isLight ? '#1f2937' : 'rgba(255,255,255,0.85)'),
                   fontFamily: "'Lora', serif",
                   cursor: 'pointer',
                   textDecoration: 'none',
@@ -1087,14 +1228,22 @@ const BlogPostPage: React.FC = () => {
                 }}
                 onMouseOver={e => {
                   e.currentTarget.style.borderColor = 'var(--brand-purple)';
-                  e.currentTarget.style.background = 'rgba(147, 51, 234, 0.2)';
+                  e.currentTarget.style.background = 'rgba(147, 51, 234, 0.15)';
                   e.currentTarget.style.color = isLight ? '#9333ea' : '#fff';
                   e.currentTarget.style.transform = 'translateY(-1px)';
                 }}
                 onMouseOut={e => {
-                  e.currentTarget.style.borderColor = isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.12)';
-                  e.currentTarget.style.background = isLight ? '#f3f4f6' : 'rgba(255,255,255,0.04)';
-                  e.currentTarget.style.color = isLight ? '#1f2937' : 'rgba(255,255,255,0.85)';
+                  e.currentTarget.style.borderColor = isDark
+                    ? 'rgba(255,255,255,0.12)'
+                    : isSepia
+                    ? 'rgba(217, 119, 6, 0.3)'
+                    : 'rgba(0,0,0,0.12)';
+                  e.currentTarget.style.background = isDark
+                    ? 'rgba(255,255,255,0.04)'
+                    : isSepia
+                    ? '#fde8c8'
+                    : '#f3f4f6';
+                  e.currentTarget.style.color = isSepia ? '#78350f' : (isLight ? '#1f2937' : 'rgba(255,255,255,0.85)');
                   e.currentTarget.style.transform = 'translateY(0)';
                 }}
               >
@@ -1118,7 +1267,11 @@ const BlogPostPage: React.FC = () => {
         padding: '4px 2px 14px 2px',
         width: '100%',
         boxSizing: 'border-box',
-        borderBottom: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.08)',
+        borderBottom: isDark
+          ? '1px solid rgba(255,255,255,0.08)'
+          : isSepia
+          ? '1px solid rgba(217, 119, 6, 0.2)'
+          : '1px solid rgba(0,0,0,0.08)',
         marginBottom: '4px'
       }}
     >
@@ -1134,7 +1287,7 @@ const BlogPostPage: React.FC = () => {
           gap: '5px'
         }}
       >
-        <span style={{ color: 'var(--brand-purple)', fontSize: '0.8rem' }}>✦</span> Share:
+        <span style={{ color: isSepia ? '#d97706' : 'var(--brand-purple)', fontSize: '0.8rem' }}>✦</span> Share:
       </span>
 
       {/* Circular Icon-Only Buttons */}
@@ -1245,13 +1398,13 @@ const BlogPostPage: React.FC = () => {
             width: '32px',
             height: '32px',
             borderRadius: '50%',
-            border: '1px solid var(--brand-purple)',
+            border: copied
+              ? '1px solid #10b981'
+              : (isDark ? '1px solid rgba(255,255,255,0.2)' : (isSepia ? '1px solid rgba(217, 119, 6, 0.4)' : '1px solid var(--brand-purple)')),
             background: copied
-              ? 'var(--brand-purple)'
-              : isLight
-                ? 'rgba(147, 51, 234, 0.1)'
-                : 'rgba(147, 51, 234, 0.22)',
-            color: copied ? '#ffffff' : 'var(--brand-purple)',
+              ? '#10b981'
+              : (isDark ? 'rgba(255, 255, 255, 0.08)' : (isSepia ? '#fde8c8' : (isLight ? 'rgba(147, 51, 234, 0.1)' : 'rgba(147, 51, 234, 0.22)'))),
+            color: copied ? '#ffffff' : (isSepia ? '#78350f' : 'var(--brand-purple)'),
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -1278,13 +1431,13 @@ const BlogPostPage: React.FC = () => {
       style={{
         width: '100%',
         minHeight: '100vh',
-        background: isLight
-          ? '#ffffff'
-          : 'radial-gradient(ellipse at top center, rgba(147, 51, 234, 0.25) 0%, var(--bg-main) 60%)',
-        backgroundColor: isLight ? '#ffffff' : 'var(--bg-main)',
-        color: isLight ? '#111827' : 'white',
+        background: isDark
+          ? 'radial-gradient(ellipse at top center, rgba(147, 51, 234, 0.25) 0%, var(--bg-main) 60%)'
+          : (isSepia ? '#fff3e0' : '#ffffff'),
+        backgroundColor: isDark ? 'var(--bg-main)' : (isSepia ? '#fff3e0' : '#ffffff'),
+        color: isDark ? 'white' : '#111827',
         boxSizing: 'border-box',
-        transition: 'background 0.3s ease'
+        transition: 'background 0.3s ease, background-color 0.3s ease, color 0.3s ease'
       }}
     >
       {/* Global Shared Header */}
@@ -1301,7 +1454,10 @@ const BlogPostPage: React.FC = () => {
             justifyContent: 'space-between',
             flexWrap: 'wrap',
             gap: '12px',
-            marginBottom: isMobile ? '20px' : '30px'
+            marginBottom: isMobile ? '20px' : '30px',
+            paddingLeft: isDesktop ? '200px' : !isPhone ? '80px' : undefined,
+            paddingRight: isDesktop ? '200px' : !isPhone ? '80px' : undefined,
+            boxSizing: 'border-box'
           }}
         >
           {/* Breadcrumbs */}
@@ -1362,75 +1518,84 @@ const BlogPostPage: React.FC = () => {
         {/* FULL WIDTH HEADER: Post Title, Excerpt, Details, and Featured Image     */}
         {/* ----------------------------------------------------------------------- */}
         <header style={{ width: '100%', marginBottom: isMobile ? '30px' : '45px' }}>
-          {/* Post Title */}
-          <h1
-            style={{
-              fontFamily: "'Playfair Display', serif",
-              fontSize: isMobile ? '1.65rem' : '2.65rem',
-              lineHeight: isMobile ? 1.25 : 1.2,
-              margin: isMobile ? '0 0 14px 0' : '0 0 18px 0',
-              fontWeight: 700,
-              color: isLight ? '#111827' : 'white',
-              letterSpacing: isMobile ? '-0.2px' : '-0.4px'
-            }}
-          >
-            {postData.title}
-          </h1>
-
-          {/* Excerpt */}
+          {/* Post Title, Excerpt, and Details Container (compacted on desktop and tablet views) */}
           <div
             style={{
-              fontSize: isMobile ? '1rem' : '1.3rem',
-              lineHeight: isMobile ? 1.6 : 1.65,
-              color: isLight ? '#2b2d42' : 'rgba(255,255,255,0.9)',
-              fontFamily: "'Lora', serif",
-              fontStyle: 'italic',
-              margin: isMobile ? '0 0 18px 0' : '0 0 24px 0',
-              paddingLeft: isMobile ? '12px' : '18px',
-              borderLeft: '3px solid var(--brand-purple)'
+              paddingLeft: isDesktop ? '200px' : !isPhone ? '80px' : undefined,
+              paddingRight: isDesktop ? '200px' : !isPhone ? '80px' : undefined,
+              boxSizing: 'border-box'
             }}
           >
-            {postData.excerpt}
-          </div>
+            {/* Post Title */}
+            <h1
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontSize: isMobile ? '1.65rem' : '2.65rem',
+                lineHeight: isMobile ? 1.25 : 1.2,
+                margin: isMobile ? '0 0 14px 0' : '0 0 18px 0',
+                fontWeight: 700,
+                color: isLight ? '#111827' : 'white',
+                letterSpacing: isMobile ? '-0.2px' : '-0.4px'
+              }}
+            >
+              {postData.title}
+            </h1>
 
-          {/* Details Bar (Date, Read Time, Category, Views) */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: isMobile ? '8px 12px' : '18px',
-              marginBottom: isMobile ? '24px' : '35px',
-              fontSize: isMobile ? '0.8rem' : '0.9rem',
-              fontFamily: "'Lora', serif",
-              color: isLight ? '#4b5563' : 'rgba(255,255,255,0.72)'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ color: 'var(--brand-purple)' }}>✦</span>
-              <span style={{ color: isLight ? '#111827' : 'white', fontWeight: 600 }}>
-                {postData.publishedDate}
-              </span>
+            {/* Excerpt */}
+            <div
+              style={{
+                fontSize: isMobile ? '1rem' : '1.3rem',
+                lineHeight: isMobile ? 1.6 : 1.65,
+                color: isLight ? '#2b2d42' : 'rgba(255,255,255,0.9)',
+                fontFamily: "'Lora', serif",
+                fontStyle: 'italic',
+                margin: isMobile ? '0 0 18px 0' : '0 0 24px 0',
+                paddingLeft: isMobile ? '12px' : '18px',
+                borderLeft: '3px solid var(--brand-purple)'
+              }}
+            >
+              {postData.excerpt}
             </div>
-            <span style={{ color: isLight ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)' }}>•</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ color: isLight ? '#4b5563' : 'rgba(255,255,255,0.5)' }}>Read Time:</span>
-              <span style={{ color: isLight ? '#111827' : 'white', fontWeight: 600 }}>
-                {postData.readTime}
-              </span>
-            </div>
-            <span style={{ color: isLight ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)' }}>•</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ color: isLight ? '#4b5563' : 'rgba(255,255,255,0.5)' }}>Category:</span>
-              <span
-                style={{
-                  color: 'var(--brand-purple)',
-                  fontWeight: 700,
-                  letterSpacing: '0.5px'
-                }}
-              >
-                {postData.category}
-              </span>
+
+            {/* Details Bar (Date, Read Time, Category, Views) */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: isMobile ? '8px 12px' : '18px',
+                marginBottom: isMobile ? '24px' : '35px',
+                fontSize: isMobile ? '0.8rem' : '0.9rem',
+                fontFamily: "'Lora', serif",
+                color: isLight ? '#4b5563' : 'rgba(255,255,255,0.72)'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ color: 'var(--brand-purple)' }}>✦</span>
+                <span style={{ color: isLight ? '#111827' : 'white', fontWeight: 600 }}>
+                  {postData.publishedDate}
+                </span>
+              </div>
+              <span style={{ color: isLight ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)' }}>•</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ color: isLight ? '#4b5563' : 'rgba(255,255,255,0.5)' }}>Read Time:</span>
+                <span style={{ color: isLight ? '#111827' : 'white', fontWeight: 600 }}>
+                  {postData.readTime}
+                </span>
+              </div>
+              <span style={{ color: isLight ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)' }}>•</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ color: isLight ? '#4b5563' : 'rgba(255,255,255,0.5)' }}>Category:</span>
+                <span
+                  style={{
+                    color: 'var(--brand-purple)',
+                    fontWeight: 700,
+                    letterSpacing: '0.5px'
+                  }}
+                >
+                  {postData.category}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -1444,9 +1609,9 @@ const BlogPostPage: React.FC = () => {
             <div
               style={{
                 width: '100%',
-                aspectRatio: isTablet ? 'auto' : (isMobile ? '16/10' : '21/9'),
-                maxHeight: isTablet ? 'none' : (isMobile ? '360px' : '540px'),
-                height: isTablet ? 'auto' : undefined,
+                aspectRatio: 'auto',
+                maxHeight: 'none',
+                height: 'auto',
                 borderRadius: isMobile ? '10px' : '14px',
                 overflow: 'hidden',
                 border: isLight ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255, 255, 255, 0.12)',
@@ -1460,9 +1625,9 @@ const BlogPostPage: React.FC = () => {
                 alt={postData.title}
                 style={{
                   width: '100%',
-                  height: isTablet ? 'auto' : '100%',
+                  height: 'auto',
                   display: 'block',
-                  objectFit: isTablet ? 'contain' : 'cover'
+                  objectFit: 'contain'
                 }}
               />
             </div>
@@ -1522,12 +1687,34 @@ const BlogPostPage: React.FC = () => {
               lineHeight: isMobile ? 1.75 : 1.9,
               color: isLight ? '#2b2d42' : 'rgba(255,255,255,0.88)',
               fontFamily: "'Lora', serif",
-              padding: isSmallTab ? '0 80px' : isMobile ? '0' : '0 10px',
+              padding: isMobileView
+                ? (isDesktop ? '0 200px' : (isTablet || isSmallTab) ? '0 80px' : '0')
+                : '0 10px',
               width: isMobileView ? '100%' : 'auto',
               boxSizing: 'border-box'
             }}
           >
             <style>{`
+              .blog-article-content-area,
+              .blog-article-content-area p,
+              .blog-article-content-area li,
+              .blog-article-content-area td,
+              .blog-article-content-area th,
+              .blog-article-content-area .zw-blog-content,
+              .blog-article-content-area .zw-blog-content *,
+              .blog-article-content-area .zw-blog-content p,
+              .blog-article-content-area .zw-blog-content li,
+              .blog-article-content-area .zw-blog-content span:not([class*="icon"]):not(.fa-solid):not(.fa-regular),
+              .blog-article-content-area .zw-blog-content-wrapper,
+              .blog-article-content-area .zw-blog-content-wrapper *,
+              .blog-article-content-area .zw-blog-content-wrapper p,
+              .blog-article-content-area .zw-blog-content-wrapper li,
+              .blog-article-content-area .ProseMirror,
+              .blog-article-content-area .ProseMirror *,
+              .blog-article-content-area .tiptap,
+              .blog-article-content-area .tiptap * {
+                font-family: 'Lora', Georgia, serif !important;
+              }
               .blog-article-content-area,
               .blog-article-content-area p,
               .blog-article-content-area li,
@@ -1546,14 +1733,24 @@ const BlogPostPage: React.FC = () => {
               .blog-article-content-area .zw-blog-content blockquote,
               .blog-article-content-area .zw-blog-content blockquote p {
                 font-size: calc(${isMobile ? '1.05rem' : '1.35rem'} * ${fontScale}) !important;
+                font-family: 'Lora', Georgia, serif !important;
               }
               .blog-article-content-area h2,
               .blog-article-content-area .zw-blog-content h2 {
                 font-size: calc(${isMobile ? '1.35rem' : '1.85rem'} * ${1 + (fontScale - 1) * 0.45}) !important;
+                font-family: 'Lora', Georgia, serif !important;
               }
               .blog-article-content-area h3,
               .blog-article-content-area .zw-blog-content h3 {
                 font-size: calc(${isMobile ? '1.15rem' : '1.45rem'} * ${1 + (fontScale - 1) * 0.45}) !important;
+                font-family: 'Lora', Georgia, serif !important;
+              }
+              .blog-article-content-area pre,
+              .blog-article-content-area code,
+              .blog-article-content-area kbd,
+              .blog-article-content-area .zw-blog-content pre,
+              .blog-article-content-area .zw-blog-content code {
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace !important;
               }
             `}</style>
             {post?.content ? (
@@ -1944,7 +2141,7 @@ const BlogPostPage: React.FC = () => {
             </aside>
           )}
 
-          {/* Mobile & Small Tab Post-Content Section: Share -> Tags -> Author & Latest */}
+          {/* Mobile & Tablet Post-Content Section: Share -> Tags -> Author & Latest (Full width) */}
           {isMobileView && (
             <div
               style={{
@@ -1963,8 +2160,8 @@ const BlogPostPage: React.FC = () => {
               {/* 2. Tags Row (JUST AFTER SHARE) */}
               {renderMobileTags()}
 
-              {/* 3. Author and Latest: side by side in small tab view only, stacked on phone */}
-              {isSmallTab ? (
+              {/* 3. Author and Latest: side by side in tablet / small tab views, stacked on phone */}
+              {!isPhone ? (
                 <div
                   style={{
                     display: 'flex',
@@ -2009,7 +2206,7 @@ const BlogPostPage: React.FC = () => {
               width: '100%',
               marginTop: isMobile ? '28px' : '40px',
               paddingTop: isMobile ? '20px' : '28px',
-              borderTop: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.1)',
+              borderTop: isDark ? '1px solid rgba(255,255,255,0.1)' : (isSepia ? '1px solid rgba(217, 119, 6, 0.2)' : '1px solid rgba(0,0,0,0.08)'),
               display: 'flex',
               flexDirection: 'row',
               justifyContent: 'space-between',
@@ -2028,8 +2225,9 @@ const BlogPostPage: React.FC = () => {
                   gap: (isMobile || isTablet) ? '8px' : '14px',
                   padding: (isMobile || isTablet) ? '10px 16px' : '11px 18px',
                   borderRadius: '12px',
-                  background: isLight ? '#f9fafb' : 'rgba(255, 255, 255, 0.025)',
-                  border: isLight ? '1px solid #e5e7eb' : '1px solid rgba(255, 255, 255, 0.1)',
+                  background: isDark ? 'rgba(255, 255, 255, 0.025)' : (isSepia ? '#fef6ea' : '#f9fafb'),
+                  border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : (isSepia ? '1px solid rgba(217, 119, 6, 0.28)' : '1px solid #e5e7eb'),
+                  boxShadow: isSepia ? '0 4px 14px rgba(217, 119, 6, 0.06)' : 'none',
                   textDecoration: 'none',
                   color: 'inherit',
                   transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -2043,14 +2241,16 @@ const BlogPostPage: React.FC = () => {
                 onMouseOver={e => {
                   e.currentTarget.style.borderColor = 'var(--brand-purple)';
                   e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = isLight
+                  e.currentTarget.style.boxShadow = isSepia
+                    ? '0 8px 20px rgba(217, 119, 6, 0.15)'
+                    : isLight
                     ? '0 8px 20px rgba(147, 51, 234, 0.1)'
                     : '0 10px 24px rgba(0, 0, 0, 0.4), 0 0 16px rgba(147, 51, 234, 0.2)';
                 }}
                 onMouseOut={e => {
-                  e.currentTarget.style.borderColor = isLight ? '#e5e7eb' : 'rgba(255, 255, 255, 0.1)';
+                  e.currentTarget.style.borderColor = isDark ? 'rgba(255, 255, 255, 0.1)' : (isSepia ? 'rgba(217, 119, 6, 0.28)' : '#e5e7eb');
                   e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.boxShadow = isSepia ? '0 4px 14px rgba(217, 119, 6, 0.06)' : 'none';
                 }}
               >
                 {/* Direction Arrow */}
@@ -2059,12 +2259,12 @@ const BlogPostPage: React.FC = () => {
                     width: (isMobile || isTablet) ? '28px' : '36px',
                     height: (isMobile || isTablet) ? '28px' : '36px',
                     borderRadius: '50%',
-                    background: isLight ? 'rgba(147, 51, 234, 0.08)' : 'rgba(147, 51, 234, 0.2)',
-                    border: '1px solid var(--brand-purple)',
+                    background: isDark ? 'rgba(147, 51, 234, 0.2)' : (isSepia ? '#fde8c8' : 'rgba(147, 51, 234, 0.08)'),
+                    border: isSepia ? '1px solid #d97706' : '1px solid var(--brand-purple)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: 'var(--brand-purple)',
+                    color: isSepia ? '#b45309' : 'var(--brand-purple)',
                     fontSize: (isMobile || isTablet) ? '0.85rem' : '1.05rem',
                     fontWeight: 700,
                     flexShrink: 0
@@ -2091,7 +2291,7 @@ const BlogPostPage: React.FC = () => {
                       fontSize: (isMobile || isTablet) ? '0.66rem' : '0.62rem',
                       fontWeight: 700,
                       letterSpacing: (isMobile || isTablet) ? '0.6px' : '1.2px',
-                      color: 'var(--brand-purple)',
+                      color: isSepia ? '#b45309' : 'var(--brand-purple)',
                       textTransform: 'uppercase',
                       marginBottom: (isMobile || isTablet) ? '0px' : '3px',
                       textAlign: 'left',
@@ -2107,7 +2307,7 @@ const BlogPostPage: React.FC = () => {
                         fontFamily: "'Playfair Display', serif",
                         fontSize: '0.92rem',
                         fontWeight: 600,
-                        color: isLight ? '#111827' : '#ffffff',
+                        color: isDark ? '#ffffff' : (isSepia ? '#2a1a08' : '#111827'),
                         lineHeight: 1.35,
                         whiteSpace: 'normal',
                         wordBreak: 'break-word',
@@ -2135,8 +2335,9 @@ const BlogPostPage: React.FC = () => {
                   gap: (isMobile || isTablet) ? '8px' : '14px',
                   padding: (isMobile || isTablet) ? '10px 16px' : '11px 18px',
                   borderRadius: '12px',
-                  background: isLight ? '#f9fafb' : 'rgba(255, 255, 255, 0.025)',
-                  border: isLight ? '1px solid #e5e7eb' : '1px solid rgba(255, 255, 255, 0.1)',
+                  background: isDark ? 'rgba(255, 255, 255, 0.025)' : (isSepia ? '#fef6ea' : '#f9fafb'),
+                  border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : (isSepia ? '1px solid rgba(217, 119, 6, 0.28)' : '1px solid #e5e7eb'),
+                  boxShadow: isSepia ? '0 4px 14px rgba(217, 119, 6, 0.06)' : 'none',
                   textDecoration: 'none',
                   color: 'inherit',
                   transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -2151,14 +2352,16 @@ const BlogPostPage: React.FC = () => {
                 onMouseOver={e => {
                   e.currentTarget.style.borderColor = 'var(--brand-purple)';
                   e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = isLight
+                  e.currentTarget.style.boxShadow = isSepia
+                    ? '0 8px 20px rgba(217, 119, 6, 0.15)'
+                    : isLight
                     ? '0 8px 20px rgba(147, 51, 234, 0.1)'
                     : '0 10px 24px rgba(0, 0, 0, 0.4), 0 0 16px rgba(147, 51, 234, 0.2)';
                 }}
                 onMouseOut={e => {
-                  e.currentTarget.style.borderColor = isLight ? '#e5e7eb' : 'rgba(255, 255, 255, 0.1)';
+                  e.currentTarget.style.borderColor = isDark ? 'rgba(255, 255, 255, 0.1)' : (isSepia ? 'rgba(217, 119, 6, 0.28)' : '#e5e7eb');
                   e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.boxShadow = isSepia ? '0 4px 14px rgba(217, 119, 6, 0.06)' : 'none';
                 }}
               >
                 {/* Content (Aligned Right, No extra empty space before text) */}
@@ -2179,7 +2382,7 @@ const BlogPostPage: React.FC = () => {
                       fontSize: (isMobile || isTablet) ? '0.66rem' : '0.62rem',
                       fontWeight: 700,
                       letterSpacing: (isMobile || isTablet) ? '0.6px' : '1.2px',
-                      color: 'var(--brand-purple)',
+                      color: isSepia ? '#b45309' : 'var(--brand-purple)',
                       textTransform: 'uppercase',
                       marginBottom: (isMobile || isTablet) ? '0px' : '3px',
                       textAlign: 'right',
@@ -2195,7 +2398,7 @@ const BlogPostPage: React.FC = () => {
                         fontFamily: "'Playfair Display', serif",
                         fontSize: '0.92rem',
                         fontWeight: 600,
-                        color: isLight ? '#111827' : '#ffffff',
+                        color: isDark ? '#ffffff' : (isSepia ? '#2a1a08' : '#111827'),
                         lineHeight: 1.35,
                         whiteSpace: 'normal',
                         wordBreak: 'break-word',
@@ -2214,12 +2417,12 @@ const BlogPostPage: React.FC = () => {
                     width: (isMobile || isTablet) ? '28px' : '36px',
                     height: (isMobile || isTablet) ? '28px' : '36px',
                     borderRadius: '50%',
-                    background: isLight ? 'rgba(147, 51, 234, 0.08)' : 'rgba(147, 51, 234, 0.2)',
-                    border: '1px solid var(--brand-purple)',
+                    background: isDark ? 'rgba(147, 51, 234, 0.2)' : (isSepia ? '#fde8c8' : 'rgba(147, 51, 234, 0.08)'),
+                    border: isSepia ? '1px solid #d97706' : '1px solid var(--brand-purple)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: 'var(--brand-purple)',
+                    color: isSepia ? '#b45309' : 'var(--brand-purple)',
                     fontSize: (isMobile || isTablet) ? '0.85rem' : '1.05rem',
                     fontWeight: 700,
                     flexShrink: 0
@@ -2253,7 +2456,7 @@ const BlogPostPage: React.FC = () => {
               width: '100%',
               marginTop: isMobile ? '36px' : '55px',
               paddingTop: isMobile ? '24px' : '36px',
-              borderTop: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.1)',
+              borderTop: isDark ? '1px solid rgba(255,255,255,0.1)' : (isSepia ? '1px solid rgba(217, 119, 6, 0.2)' : '1px solid rgba(0,0,0,0.08)'),
               boxSizing: 'border-box'
             }}
           >
@@ -2275,7 +2478,7 @@ const BlogPostPage: React.FC = () => {
                     fontSize: '0.68rem',
                     fontWeight: 600,
                     letterSpacing: '2px',
-                    color: 'var(--brand-purple)',
+                    color: isSepia ? '#b45309' : 'var(--brand-purple)',
                     textTransform: 'uppercase',
                     marginBottom: '4px'
                   }}
@@ -2288,7 +2491,7 @@ const BlogPostPage: React.FC = () => {
                     fontFamily: "'Playfair Display', serif",
                     fontSize: isMobile ? '1.45rem' : '1.85rem',
                     fontWeight: 700,
-                    color: isLight ? '#111827' : '#ffffff',
+                    color: isDark ? '#ffffff' : (isSepia ? '#2a1a08' : '#111827'),
                     lineHeight: 1.25,
                     display: 'flex',
                     alignItems: 'center',
@@ -2296,7 +2499,7 @@ const BlogPostPage: React.FC = () => {
                   }}
                 >
                   Related Posts
-                  <span style={{ fontSize: '0.95rem', color: 'var(--brand-purple)' }}>✦</span>
+                  <span style={{ fontSize: '0.95rem', color: isSepia ? '#d97706' : 'var(--brand-purple)' }}>✦</span>
                 </h3>
               </div>
 
@@ -2307,7 +2510,7 @@ const BlogPostPage: React.FC = () => {
                   fontSize: '0.74rem',
                   fontWeight: 600,
                   letterSpacing: '1px',
-                  color: 'var(--brand-purple)',
+                  color: isSepia ? '#b45309' : 'var(--brand-purple)',
                   textDecoration: 'none',
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -2351,7 +2554,7 @@ const BlogPostPage: React.FC = () => {
           </section>
         )}
       </div>
-      <Footer />
+      <Footer isLight={isLight} />
     </div>
   );
 };

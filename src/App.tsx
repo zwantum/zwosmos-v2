@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useLayoutEffect } from 'react';
 import { MobileProvider } from './contexts/MobileContext';
 import HeroSection from './ui/HeroSection';
 import DailyCosmicSection from './ui/DailyCosmicSection';
@@ -17,29 +17,32 @@ import ErrorBoundary from './ui/ErrorBoundary';
 // import GalaxyScene from './scenes/Galaxy/GalaxyScene';
 
 function AppContent() {
-  const { isLight } = useTheme();
+  const { isLight, isSepia, isDark } = useTheme();
 
   // Initialize Global Open Graph and Site SEO
   useSEO();
+
+  const isLightOrSepia = !isDark;
+  const bgColor = isSepia ? '#fff3e0' : (isLight ? '#ffffff' : '#161616');
 
   return (
     <div
       style={{
         width: '100%',
         minHeight: '100vh',
-        backgroundColor: isLight ? '#ffffff' : '#161616',
-        backgroundImage: isLight
-          ? 'none'
-          : `
+        backgroundColor: bgColor,
+        backgroundImage: isDark
+          ? `
             radial-gradient(ellipse 75% 45% at 50% 15%, rgba(219, 39, 119, 0.09) 0%, rgba(147, 51, 234, 0.08) 38%, transparent 75%),
             radial-gradient(ellipse 80% 45% at 50% 45%, rgba(147, 51, 234, 0.08) 0%, rgba(219, 39, 119, 0.05) 38%, transparent 75%),
             radial-gradient(ellipse 80% 45% at 50% 75%, rgba(147, 51, 234, 0.08) 0%, rgba(219, 39, 119, 0.05) 38%, transparent 75%),
             radial-gradient(circle at 50% 50%, rgba(88, 28, 135, 0.06) 0%, transparent 80%)
-          `,
-        backgroundAttachment: isLight ? 'initial' : 'fixed',
-        backgroundSize: isLight ? 'auto' : 'cover',
-        backgroundPosition: isLight ? 'initial' : 'center center',
-        color: isLight ? '#111827' : '#ffffff',
+          `
+          : 'none',
+        backgroundAttachment: isDark ? 'fixed' : 'initial',
+        backgroundSize: isDark ? 'cover' : 'auto',
+        backgroundPosition: isDark ? 'center center' : 'initial',
+        color: isLightOrSepia ? '#111827' : '#ffffff',
         transition: 'background-color 0.3s ease, color 0.3s ease'
       }}
     >
@@ -123,10 +126,29 @@ import { useSEO } from './lib/seoService';
 
 // Scrolls to the top of the page on every route change
 function ScrollToTop() {
-  const { pathname } = useLocation();
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
-  }, [pathname]);
+  const { pathname, search, hash } = useLocation();
+
+  useLayoutEffect(() => {
+    if (!hash) {
+      const resetScroll = () => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+        const rootEl = document.getElementById('root');
+        if (rootEl) rootEl.scrollTop = 0;
+      };
+
+      resetScroll();
+      const rId = requestAnimationFrame(resetScroll);
+      const timer = setTimeout(resetScroll, 50);
+
+      return () => {
+        cancelAnimationFrame(rId);
+        clearTimeout(timer);
+      };
+    }
+  }, [pathname, search, hash]);
+
   return null;
 }
 

@@ -98,8 +98,8 @@ export const ALL_MEGA_MENU_ITEMS: MenuItem[] = [
 
 export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
   const { isMobile } = useMobile();
-  const { isLight } = useTheme();
-  const currentIsDark = !isLight;
+  const { isSepia, isDark } = useTheme();
+  const currentIsDark = isDark;
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SITE_SETTINGS);
 
   useEffect(() => {
@@ -151,7 +151,7 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
         flexDirection: 'column',
         gap: isMobile ? '14px' : '52px',
         borderRight: (!isMobile && hasRightBorder)
-          ? (currentIsDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(0, 0, 0, 0.08)')
+          ? (currentIsDark ? '1px solid rgba(255, 255, 255, 0.08)' : (isSepia ? '1px solid rgba(217, 119, 6, 0.18)' : '1px solid rgba(0, 0, 0, 0.08)'))
           : 'none',
         paddingRight: (!isMobile && hasRightBorder) ? '48px' : '0px',
         paddingLeft: (!isMobile && hasLeftPadding) ? '48px' : '0px',
@@ -178,10 +178,10 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
             const title = e.currentTarget.querySelector('.item-title') as HTMLElement;
             const desc = e.currentTarget.querySelector('.item-desc') as HTMLElement;
             const arrow = e.currentTarget.querySelector('.item-arrow') as HTMLElement;
-            if (title) title.style.color = currentIsDark ? '#c084fc' : '#9333ea';
-            if (desc) desc.style.color = currentIsDark ? '#e2e8f0' : '#334155';
+            if (title) title.style.color = currentIsDark ? '#c084fc' : (isSepia ? '#d97706' : '#9333ea');
+            if (desc) desc.style.color = currentIsDark ? '#e2e8f0' : (isSepia ? '#78350f' : '#334155');
             if (arrow) {
-              arrow.style.color = currentIsDark ? '#ffffff' : '#9333ea';
+              arrow.style.color = currentIsDark ? '#ffffff' : (isSepia ? '#d97706' : '#9333ea');
               arrow.style.transform = 'translateX(5px)';
             }
           }}
@@ -190,9 +190,9 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
             const desc = e.currentTarget.querySelector('.item-desc') as HTMLElement;
             const arrow = e.currentTarget.querySelector('.item-arrow') as HTMLElement;
             if (title) title.style.color = currentIsDark ? '#ffffff' : '#111827';
-            if (desc) desc.style.color = currentIsDark ? '#94a3b8' : '#64748b';
+            if (desc) desc.style.color = currentIsDark ? '#94a3b8' : (isSepia ? '#57534e' : '#64748b');
             if (arrow) {
-              arrow.style.color = currentIsDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.35)';
+              arrow.style.color = currentIsDark ? 'rgba(255, 255, 255, 0.4)' : (isSepia ? 'rgba(217, 119, 6, 0.45)' : 'rgba(0, 0, 0, 0.35)');
               arrow.style.transform = 'translateX(0)';
             }
           }}
@@ -252,7 +252,7 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
                 margin: 0,
                 fontFamily: "'Lora', serif",
                 fontSize: isMobile ? '0.72rem' : '0.86rem',
-                color: currentIsDark ? '#94a3b8' : '#64748b',
+                color: currentIsDark ? '#94a3b8' : (isSepia ? '#57534e' : '#64748b'),
                 lineHeight: 1.42,
                 transition: 'color 0.2s ease'
               }}
@@ -265,7 +265,7 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
           <span
             className="item-arrow"
             style={{
-              color: currentIsDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.35)',
+              color: currentIsDark ? 'rgba(255, 255, 255, 0.4)' : (isSepia ? 'rgba(217, 119, 6, 0.45)' : 'rgba(0, 0, 0, 0.35)'),
               fontSize: '1.25rem',
               transition: 'all 0.2s ease',
               display: 'inline-block',
@@ -294,16 +294,23 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
         height: '100vh',
         minHeight: '100vh',
         zIndex: 9999999,
-        backgroundColor: currentIsDark ? '#161616' : '#faf8ff',
+        backgroundColor: currentIsDark
+          ? '#161616'
+          : (isSepia ? '#fff3e0' : '#faf8ff'),
         backgroundImage: currentIsDark
           ? `
             radial-gradient(ellipse 75% 55% at 85% 25%, rgba(219, 39, 119, 0.20) 0%, transparent 60%),
             radial-gradient(ellipse 70% 50% at 15% 15%, rgba(147, 51, 234, 0.16) 0%, transparent 60%)
           `
-          : `
-            radial-gradient(ellipse 75% 55% at 85% 25%, rgba(219, 39, 119, 0.10) 0%, transparent 60%),
-            radial-gradient(ellipse 70% 50% at 15% 15%, rgba(147, 51, 234, 0.10) 0%, transparent 60%)
-          `,
+          : (isSepia
+            ? `
+              radial-gradient(ellipse 75% 55% at 85% 25%, rgba(217, 119, 6, 0.08) 0%, transparent 60%),
+              radial-gradient(ellipse 70% 50% at 15% 15%, rgba(180, 83, 9, 0.06) 0%, transparent 60%)
+            `
+            : `
+              radial-gradient(ellipse 75% 55% at 85% 25%, rgba(219, 39, 119, 0.10) 0%, transparent 60%),
+              radial-gradient(ellipse 70% 50% at 15% 15%, rgba(147, 51, 234, 0.10) 0%, transparent 60%)
+            `),
         backgroundAttachment: 'fixed',
         backgroundSize: 'cover',
         backgroundPosition: 'center center',
@@ -370,8 +377,12 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
             right: '0px',
             top: isMobile ? 'auto' : '50%',
             transform: isMobile ? 'none' : 'translateY(-50%)',
-            background: currentIsDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
-            border: currentIsDark ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid rgba(0, 0, 0, 0.12)',
+            background: currentIsDark
+              ? 'rgba(255, 255, 255, 0.08)'
+              : (isSepia ? '#fde8c8' : 'rgba(0, 0, 0, 0.05)'),
+            border: currentIsDark
+              ? '1px solid rgba(255, 255, 255, 0.2)'
+              : (isSepia ? '1px solid rgba(217, 119, 6, 0.4)' : '1px solid rgba(0, 0, 0, 0.12)'),
             borderRadius: '50%',
             width: isMobile ? '38px' : '44px',
             height: isMobile ? '38px' : '44px',
@@ -379,19 +390,25 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: currentIsDark ? '#ffffff' : '#111827',
+            color: isSepia ? '#78350f' : (currentIsDark ? '#ffffff' : '#111827'),
             transition: 'all 0.2s ease',
-            boxShadow: currentIsDark ? '0 4px 16px rgba(0, 0, 0, 0.4)' : '0 4px 12px rgba(0, 0, 0, 0.1)'
+            boxShadow: isSepia
+              ? '0 2px 8px rgba(217, 119, 6, 0.15)'
+              : (currentIsDark ? '0 4px 16px rgba(0, 0, 0, 0.4)' : '0 4px 12px rgba(0, 0, 0, 0.1)')
           }}
           onMouseOver={e => {
-            e.currentTarget.style.background = 'rgba(219, 39, 119, 0.25)';
-            e.currentTarget.style.borderColor = 'rgba(219, 39, 119, 0.6)';
+            e.currentTarget.style.background = isSepia ? '#d97706' : 'rgba(219, 39, 119, 0.25)';
+            e.currentTarget.style.borderColor = isSepia ? '#b45309' : 'rgba(219, 39, 119, 0.6)';
             e.currentTarget.style.transform = isMobile ? 'scale(1.1)' : 'translateY(-50%) scale(1.1)';
+            const svg = e.currentTarget.querySelector('svg');
+            if (svg && isSepia) svg.setAttribute('stroke', '#ffffff');
           }}
           onMouseOut={e => {
-            e.currentTarget.style.background = currentIsDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)';
-            e.currentTarget.style.borderColor = currentIsDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.12)';
+            e.currentTarget.style.background = currentIsDark ? 'rgba(255, 255, 255, 0.08)' : (isSepia ? '#fde8c8' : 'rgba(0, 0, 0, 0.05)');
+            e.currentTarget.style.borderColor = currentIsDark ? 'rgba(255, 255, 255, 0.2)' : (isSepia ? 'rgba(217, 119, 6, 0.4)' : 'rgba(0, 0, 0, 0.12)');
             e.currentTarget.style.transform = isMobile ? 'scale(1)' : 'translateY(-50%) scale(1)';
+            const svg = e.currentTarget.querySelector('svg');
+            if (svg) svg.setAttribute('stroke', isSepia ? '#78350f' : (currentIsDark ? '#ffffff' : '#111827'));
           }}
         >
           <svg
@@ -399,7 +416,7 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
             height={isMobile ? "18" : "22"}
             viewBox="0 0 24 24"
             fill="none"
-            stroke={currentIsDark ? "#ffffff" : "#111827"}
+            stroke={isSepia ? "#78350f" : (currentIsDark ? "#ffffff" : "#111827")}
             strokeWidth="2.2"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -453,7 +470,7 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
           margin: '0 auto',
           paddingTop: '20px',
           boxSizing: 'border-box',
-          borderTop: currentIsDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(0, 0, 0, 0.08)',
+          borderTop: currentIsDark ? '1px solid rgba(255, 255, 255, 0.08)' : (isSepia ? '1px solid rgba(217, 119, 6, 0.18)' : '1px solid rgba(0, 0, 0, 0.08)'),
           display: 'flex',
           flexDirection: isMobile ? 'column' : 'row',
           alignItems: isMobile ? 'flex-start' : 'center',
@@ -469,7 +486,7 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
               fontSize: '0.68rem',
               fontWeight: 700,
               letterSpacing: '2.5px',
-              color: currentIsDark ? '#64748b' : '#94a3b8',
+              color: currentIsDark ? '#64748b' : (isSepia ? '#b45309' : '#94a3b8'),
               textTransform: 'uppercase',
               marginBottom: '4px'
             }}
@@ -480,7 +497,7 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
             style={{
               fontFamily: "'Lora', serif",
               fontSize: '0.82rem',
-              color: currentIsDark ? '#94a3b8' : '#475569'
+              color: currentIsDark ? '#94a3b8' : (isSepia ? '#78350f' : '#475569')
             }}
           >
             Explore. Learn. Be Inspired.
@@ -553,7 +570,7 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
                 title={social.name}
                 aria-label={social.name}
                 style={{
-                  color: currentIsDark ? '#ffffff' : '#374151',
+                  color: currentIsDark ? '#ffffff' : (isSepia ? '#78350f' : '#374151'),
                   transition: 'all 0.2s ease',
                   display: 'flex',
                   alignItems: 'center',
@@ -561,11 +578,11 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
                   textDecoration: 'none'
                 }}
                 onMouseOver={e => {
-                  e.currentTarget.style.color = '#c084fc';
+                  e.currentTarget.style.color = isSepia ? '#d97706' : '#c084fc';
                   e.currentTarget.style.transform = 'translateY(-2px)';
                 }}
                 onMouseOut={e => {
-                  e.currentTarget.style.color = currentIsDark ? '#ffffff' : '#374151';
+                  e.currentTarget.style.color = currentIsDark ? '#ffffff' : (isSepia ? '#78350f' : '#374151');
                   e.currentTarget.style.transform = 'translateY(0)';
                 }}
               >

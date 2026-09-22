@@ -147,6 +147,20 @@
   scrollbar-width: thin !important;
   scrollbar-color: #cbd5e1 #f8fafc !important;
   scroll-behavior: smooth !important;
+  font-family: 'Lora', Georgia, serif !important;
+}
+
+.zw-blog-editor-content .ProseMirror,
+.zw-blog-editor-content .ProseMirror *,
+.zw-blog-editor-content .tiptap,
+.zw-blog-editor-content .tiptap * {
+  font-family: 'Lora', Georgia, serif !important;
+}
+
+.zw-blog-editor-content pre,
+.zw-blog-editor-content code,
+.zw-blog-editor-content kbd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace !important;
 }
 
 .zw-blog-editor-content::-webkit-scrollbar {

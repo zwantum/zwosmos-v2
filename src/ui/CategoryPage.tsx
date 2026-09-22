@@ -20,7 +20,9 @@ const POSTS_PER_PAGE = 12;
 
 export const CategoryPage: React.FC<CategoryPageProps> = ({ slug: propSlug }) => {
   const { isMobile } = useMobile();
-  const { isLight } = useTheme();
+  const { theme, isDark } = useTheme();
+  const isLight = !isDark;
+  const isSepia = theme === 'sepia';
   const { categorySlug } = useParams<{ categorySlug?: string }>();
   const activeSlug = propSlug || categorySlug || 'space-news';
 
@@ -100,12 +102,13 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ slug: propSlug }) =>
     <div
       style={{
         minHeight: '100vh',
-        background: isLight
-          ? '#ffffff'
-          : 'radial-gradient(ellipse at top center, rgba(147, 51, 234, 0.25) 0%, var(--bg-main) 60%)',
-        backgroundColor: isLight ? '#ffffff' : 'var(--bg-main)',
-        color: isLight ? '#111827' : 'white',
-        boxSizing: 'border-box'
+        background: isDark
+          ? 'radial-gradient(ellipse at top center, rgba(147, 51, 234, 0.25) 0%, var(--bg-main) 60%)'
+          : (isSepia ? '#fff3e0' : '#ffffff'),
+        backgroundColor: isDark ? 'var(--bg-main)' : (isSepia ? '#fff3e0' : '#ffffff'),
+        color: isDark ? 'white' : '#111827',
+        boxSizing: 'border-box',
+        transition: 'background 0.3s ease, background-color 0.3s ease, color 0.3s ease'
       }}
     >
       {/* Global Shared Header */}

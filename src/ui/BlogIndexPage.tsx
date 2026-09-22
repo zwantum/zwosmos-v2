@@ -27,7 +27,9 @@ const POSTS_PER_PAGE = 12;
 
 const BlogIndexPage: React.FC = () => {
   const { isMobile } = useMobile();
-  const { isLight } = useTheme();
+  const { theme, isDark } = useTheme();
+  const isLight = !isDark;
+  const isSepia = theme === 'sepia';
   const { posts: livePosts } = useBlogPosts();
   const [searchParams, setSearchParams] = useSearchParams();
   const urlSearch = searchParams.get('search') || '';
@@ -121,12 +123,13 @@ const BlogIndexPage: React.FC = () => {
     <div
       style={{
         minHeight: '100vh',
-        background: isLight
-          ? '#ffffff'
-          : 'radial-gradient(ellipse at top center, rgba(147, 51, 234, 0.25) 0%, var(--bg-main) 60%)',
-        backgroundColor: isLight ? '#ffffff' : 'var(--bg-main)',
-        color: isLight ? '#111827' : 'white',
-        boxSizing: 'border-box'
+        background: isDark
+          ? 'radial-gradient(ellipse at top center, rgba(147, 51, 234, 0.25) 0%, var(--bg-main) 60%)'
+          : (isSepia ? '#fff3e0' : '#ffffff'),
+        backgroundColor: isDark ? 'var(--bg-main)' : (isSepia ? '#fff3e0' : '#ffffff'),
+        color: isDark ? 'white' : '#111827',
+        boxSizing: 'border-box',
+        transition: 'background 0.3s ease, background-color 0.3s ease, color 0.3s ease'
       }}
     >
       {/* Global Shared Header */}
@@ -182,10 +185,10 @@ const BlogIndexPage: React.FC = () => {
             Dive into the latest discoveries, observational dispatches, and cosmological treatises from across the universe.
           </p>
 
-          {/* Search Bar with Minimal Outline Icon */}
+          {/* Search Bar */}
           <div
             style={{
-              maxWidth: '540px',
+              maxWidth: '560px',
               margin: '0 auto',
               position: 'relative'
             }}
@@ -197,27 +200,36 @@ const BlogIndexPage: React.FC = () => {
               placeholder="Search stories by topic, title, or author..."
               style={{
                 width: '100%',
-                padding: '13px 20px 13px 44px',
+                padding: '14px 20px 14px 44px',
                 borderRadius: '30px',
-                border: isLight ? '1px solid #d1d5db' : '1px solid rgba(147, 51, 234, 0.45)',
-                background: isLight ? '#ffffff' : 'rgba(20, 15, 35, 0.7)',
+                border: isDark
+                  ? '1px solid rgba(147, 51, 234, 0.45)'
+                  : isSepia
+                  ? '1px solid rgba(217, 119, 6, 0.35)'
+                  : '1px solid #d1d5db',
+                background: isDark
+                  ? 'rgba(20, 15, 35, 0.7)'
+                  : isSepia
+                  ? '#fef6ea'
+                  : '#ffffff',
                 color: isLight ? '#111827' : '#ffffff',
-                fontSize: '0.92rem',
+                fontSize: '0.94rem',
                 fontFamily: "'Lora', serif",
                 outline: 'none',
                 boxSizing: 'border-box',
-                boxShadow: isLight
-                  ? '0 4px 20px rgba(0, 0, 0, 0.06), 0 0 10px rgba(147, 51, 234, 0.1)'
+                boxShadow: isSepia
+                  ? '0 4px 14px rgba(217, 119, 6, 0.08)'
+                  : isLight
+                  ? '0 4px 14px rgba(0,0,0,0.06)'
                   : '0 4px 20px rgba(0, 0, 0, 0.5), 0 0 15px rgba(147, 51, 234, 0.15)'
               }}
             />
-            {/* Minimal Outline Search Icon */}
             <svg
               width="18"
               height="18"
               viewBox="0 0 24 24"
               fill="none"
-              stroke={isLight ? 'var(--brand-purple)' : 'rgba(216, 180, 254, 0.75)'}
+              stroke={isSepia ? '#b45309' : (isLight ? '#6b7280' : 'rgba(216, 180, 254, 0.75)')}
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -243,7 +255,7 @@ const BlogIndexPage: React.FC = () => {
                   transform: 'translateY(-50%)',
                   background: 'none',
                   border: 'none',
-                  color: isLight ? '#9ca3af' : 'rgba(255,255,255,0.5)',
+                  color: isSepia ? '#78350f' : (isLight ? '#9ca3af' : 'rgba(255,255,255,0.5)'),
                   cursor: 'pointer',
                   fontSize: '0.9rem'
                 }}
@@ -348,13 +360,25 @@ const BlogIndexPage: React.FC = () => {
             style={{
               textAlign: 'center',
               padding: '70px 20px',
-              background: isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.02)',
+              background: isDark
+                ? 'rgba(255, 255, 255, 0.02)'
+                : isSepia
+                ? '#fef6ea'
+                : '#ffffff',
               borderRadius: '16px',
-              border: isLight ? '1px solid #e5e7eb' : '1px solid rgba(255, 255, 255, 0.08)',
-              boxShadow: isLight ? '0 4px 20px rgba(0,0,0,0.05)' : 'none'
+              border: isDark
+                ? '1px solid rgba(255, 255, 255, 0.08)'
+                : isSepia
+                ? '1px solid rgba(217, 119, 6, 0.28)'
+                : '1px solid #e5e7eb',
+              boxShadow: isSepia
+                ? '0 4px 20px rgba(217, 119, 6, 0.08)'
+                : isLight
+                ? '0 4px 20px rgba(0,0,0,0.05)'
+                : 'none'
             }}
           >
-            <div style={{ fontSize: '2rem', marginBottom: '14px', color: 'var(--brand-purple)' }}>✦</div>
+            <div style={{ fontSize: '2rem', marginBottom: '14px', color: isSepia ? '#d97706' : 'var(--brand-purple)' }}>✦</div>
             <h3
               style={{
                 fontFamily: "'Playfair Display', serif",
@@ -382,7 +406,7 @@ const BlogIndexPage: React.FC = () => {
                 handleClearSearch();
               }}
               style={{
-                background: 'var(--brand-purple)',
+                background: isSepia ? '#d97706' : 'var(--brand-purple)',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '20px',
@@ -391,7 +415,7 @@ const BlogIndexPage: React.FC = () => {
                 fontFamily: "'Orbitron', sans-serif",
                 fontSize: '0.8rem',
                 letterSpacing: '1px',
-                boxShadow: '0 0 14px rgba(147, 51, 234, 0.4)'
+                boxShadow: isSepia ? '0 0 14px rgba(217, 119, 6, 0.4)' : '0 0 14px rgba(147, 51, 234, 0.4)'
               }}
             >
               RESET FILTERS
@@ -446,11 +470,11 @@ const BlogIndexPage: React.FC = () => {
               }}
               disabled={currentPage === 1}
               style={{
-                background: isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.04)',
-                border: isLight ? '1px solid #d1d5db' : '1px solid rgba(255, 255, 255, 0.12)',
+                background: isDark ? 'rgba(255, 255, 255, 0.04)' : (isSepia ? '#fef6ea' : '#ffffff'),
+                border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : (isSepia ? '1px solid rgba(217, 119, 6, 0.3)' : '1px solid #d1d5db'),
                 color: currentPage === 1
                   ? (isLight ? '#9ca3af' : 'rgba(255, 255, 255, 0.25)')
-                  : (isLight ? '#374151' : '#ffffff'),
+                  : (isSepia ? '#78350f' : isLight ? '#374151' : '#ffffff'),
                 borderRadius: '24px',
                 padding: '8px 18px',
                 fontFamily: "'Orbitron', sans-serif",
@@ -461,18 +485,20 @@ const BlogIndexPage: React.FC = () => {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
-                boxShadow: isLight && currentPage !== 1 ? '0 2px 6px rgba(0,0,0,0.05)' : 'none'
+                boxShadow: isSepia && currentPage !== 1
+                  ? '0 2px 6px rgba(217, 119, 6, 0.08)'
+                  : (isLight && currentPage !== 1 ? '0 2px 6px rgba(0,0,0,0.05)' : 'none')
               }}
               onMouseOver={e => {
                 if (currentPage > 1) {
-                  e.currentTarget.style.borderColor = 'var(--brand-purple)';
-                  e.currentTarget.style.background = isLight ? 'rgba(147, 51, 234, 0.08)' : 'rgba(147, 51, 234, 0.15)';
+                  e.currentTarget.style.borderColor = isSepia ? '#d97706' : 'var(--brand-purple)';
+                  e.currentTarget.style.background = isSepia ? '#fde8c8' : (isLight ? 'rgba(147, 51, 234, 0.08)' : 'rgba(147, 51, 234, 0.15)');
                 }
               }}
               onMouseOut={e => {
                 if (currentPage > 1) {
-                  e.currentTarget.style.borderColor = isLight ? '#d1d5db' : 'rgba(255, 255, 255, 0.12)';
-                  e.currentTarget.style.background = isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.04)';
+                  e.currentTarget.style.borderColor = isDark ? 'rgba(255, 255, 255, 0.12)' : (isSepia ? 'rgba(217, 119, 6, 0.3)' : '#d1d5db');
+                  e.currentTarget.style.background = isDark ? 'rgba(255, 255, 255, 0.04)' : (isSepia ? '#fef6ea' : '#ffffff');
                 }
               }}
             >
@@ -494,14 +520,14 @@ const BlogIndexPage: React.FC = () => {
                     height: '38px',
                     borderRadius: '50%',
                     background: isActive
-                      ? 'var(--brand-purple)'
-                      : (isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.04)'),
+                      ? (isSepia ? '#d97706' : 'var(--brand-purple)')
+                      : (isDark ? 'rgba(255, 255, 255, 0.04)' : (isSepia ? '#fef6ea' : '#ffffff')),
                     border: isActive
-                      ? '1px solid var(--brand-purple)'
-                      : (isLight ? '1px solid #d1d5db' : '1px solid rgba(255, 255, 255, 0.12)'),
+                      ? (isSepia ? '1px solid #d97706' : '1px solid var(--brand-purple)')
+                      : (isDark ? '1px solid rgba(255, 255, 255, 0.12)' : (isSepia ? '1px solid rgba(217, 119, 6, 0.3)' : '1px solid #d1d5db')),
                     color: isActive
                       ? '#ffffff'
-                      : (isLight ? '#374151' : 'rgba(255, 255, 255, 0.75)'),
+                      : (isSepia ? '#78350f' : isLight ? '#374151' : 'rgba(255, 255, 255, 0.75)'),
                     fontFamily: "'Orbitron', sans-serif",
                     fontSize: '0.82rem',
                     fontWeight: 600,
@@ -509,21 +535,23 @@ const BlogIndexPage: React.FC = () => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: isActive ? '0 0 16px rgba(147, 51, 234, 0.6)' : (isLight ? '0 2px 6px rgba(0,0,0,0.05)' : 'none'),
+                    boxShadow: isActive
+                      ? (isSepia ? '0 0 16px rgba(217, 119, 6, 0.6)' : '0 0 16px rgba(147, 51, 234, 0.6)')
+                      : (isSepia ? '0 2px 6px rgba(217, 119, 6, 0.08)' : (isLight ? '0 2px 6px rgba(0,0,0,0.05)' : 'none')),
                     transition: 'all 0.2s ease'
                   }}
                   onMouseOver={e => {
                     if (!isActive) {
-                      e.currentTarget.style.borderColor = 'var(--brand-purple)';
-                      e.currentTarget.style.color = 'var(--brand-purple)';
-                      e.currentTarget.style.background = isLight ? 'rgba(147, 51, 234, 0.08)' : 'rgba(147, 51, 234, 0.15)';
+                      e.currentTarget.style.borderColor = isSepia ? '#d97706' : 'var(--brand-purple)';
+                      e.currentTarget.style.color = isSepia ? '#d97706' : 'var(--brand-purple)';
+                      e.currentTarget.style.background = isSepia ? '#fde8c8' : (isLight ? 'rgba(147, 51, 234, 0.08)' : 'rgba(147, 51, 234, 0.15)');
                     }
                   }}
                   onMouseOut={e => {
                     if (!isActive) {
-                      e.currentTarget.style.borderColor = isLight ? '#d1d5db' : 'rgba(255, 255, 255, 0.12)';
-                      e.currentTarget.style.color = isLight ? '#374151' : 'rgba(255, 255, 255, 0.75)';
-                      e.currentTarget.style.background = isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.04)';
+                      e.currentTarget.style.borderColor = isDark ? 'rgba(255, 255, 255, 0.12)' : (isSepia ? 'rgba(217, 119, 6, 0.3)' : '#d1d5db');
+                      e.currentTarget.style.color = isSepia ? '#78350f' : isLight ? '#374151' : 'rgba(255, 255, 255, 0.75)';
+                      e.currentTarget.style.background = isDark ? 'rgba(255, 255, 255, 0.04)' : (isSepia ? '#fef6ea' : '#ffffff');
                     }
                   }}
                 >
@@ -542,11 +570,11 @@ const BlogIndexPage: React.FC = () => {
               }}
               disabled={currentPage === totalPages}
               style={{
-                background: isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.04)',
-                border: isLight ? '1px solid #d1d5db' : '1px solid rgba(255, 255, 255, 0.12)',
+                background: isDark ? 'rgba(255, 255, 255, 0.04)' : (isSepia ? '#fef6ea' : '#ffffff'),
+                border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : (isSepia ? '1px solid rgba(217, 119, 6, 0.3)' : '1px solid #d1d5db'),
                 color: currentPage === totalPages
                   ? (isLight ? '#9ca3af' : 'rgba(255, 255, 255, 0.25)')
-                  : (isLight ? '#374151' : '#ffffff'),
+                  : (isSepia ? '#78350f' : isLight ? '#374151' : '#ffffff'),
                 borderRadius: '24px',
                 padding: '8px 18px',
                 fontFamily: "'Orbitron', sans-serif",
@@ -557,18 +585,20 @@ const BlogIndexPage: React.FC = () => {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
-                boxShadow: isLight && currentPage !== totalPages ? '0 2px 6px rgba(0,0,0,0.05)' : 'none'
+                boxShadow: isSepia && currentPage !== totalPages
+                  ? '0 2px 6px rgba(217, 119, 6, 0.08)'
+                  : (isLight && currentPage !== totalPages ? '0 2px 6px rgba(0,0,0,0.05)' : 'none')
               }}
               onMouseOver={e => {
                 if (currentPage < totalPages) {
-                  e.currentTarget.style.borderColor = 'var(--brand-purple)';
-                  e.currentTarget.style.background = isLight ? 'rgba(147, 51, 234, 0.08)' : 'rgba(147, 51, 234, 0.15)';
+                  e.currentTarget.style.borderColor = isSepia ? '#d97706' : 'var(--brand-purple)';
+                  e.currentTarget.style.background = isSepia ? '#fde8c8' : (isLight ? 'rgba(147, 51, 234, 0.08)' : 'rgba(147, 51, 234, 0.15)');
                 }
               }}
               onMouseOut={e => {
                 if (currentPage < totalPages) {
-                  e.currentTarget.style.borderColor = isLight ? '#d1d5db' : 'rgba(255, 255, 255, 0.12)';
-                  e.currentTarget.style.background = isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.04)';
+                  e.currentTarget.style.borderColor = isDark ? 'rgba(255, 255, 255, 0.12)' : (isSepia ? 'rgba(217, 119, 6, 0.3)' : '#d1d5db');
+                  e.currentTarget.style.background = isDark ? 'rgba(255, 255, 255, 0.04)' : (isSepia ? '#fef6ea' : '#ffffff');
                 }
               }}
             >
@@ -578,7 +608,7 @@ const BlogIndexPage: React.FC = () => {
         )}
       </div>
 
-      <Footer />
+      <Footer isLight={isLight} />
     </div>
   );
 };

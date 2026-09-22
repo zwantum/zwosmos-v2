@@ -7,7 +7,9 @@ import Footer from './Footer';
 import { Compass, BookOpen, Sparkles } from 'lucide-react';
 
 export const NotFoundPage: React.FC = () => {
-  const { isLight } = useTheme();
+  const { theme, isDark } = useTheme();
+  const isLight = !isDark;
+  const isSepia = theme === 'sepia';
   const { isMobile } = useMobile();
 
   useEffect(() => {
@@ -21,7 +23,7 @@ export const NotFoundPage: React.FC = () => {
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        backgroundColor: isLight ? '#f8fafc' : '#161616',
+        backgroundColor: isLight ? (isSepia ? '#fff3e0' : '#f8fafc') : '#161616',
         backgroundImage: isLight
           ? 'radial-gradient(ellipse at 50% 15%, rgba(147, 51, 234, 0.08) 0%, transparent 60%)'
           : `

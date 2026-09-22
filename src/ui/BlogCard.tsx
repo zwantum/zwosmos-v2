@@ -28,7 +28,7 @@ export const BlogCard = ({
   showExcerpt = true
 }: BlogCardProps) => {
   const { isMobile } = useMobile();
-  const { isLight } = useTheme();
+  const { isLight, isSepia, isDark } = useTheme();
 
   // Detect tablet width (641–900px) — iPad Mini sits here but is flagged isMobile=true
   const [winWidth, setWinWidth] = useState(() => window.innerWidth);
@@ -88,9 +88,13 @@ export const BlogCard = ({
             cursor: 'pointer',
             height: '100%',
             flex: 1,
-            background: isHorizontal ? (isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.02)') : 'transparent',
+            background: isHorizontal
+              ? (isDark ? 'rgba(255, 255, 255, 0.02)' : (isSepia ? '#fef6ea' : '#ffffff'))
+              : 'transparent',
             borderRadius: '12px',
-            border: isHorizontal ? (isLight ? '1px solid #e5e7eb' : '1px solid rgba(147, 51, 234, 0.22)') : 'none',
+            border: isHorizontal
+              ? (isDark ? '1px solid rgba(147, 51, 234, 0.22)' : (isSepia ? '1px solid rgba(217, 119, 6, 0.28)' : '1px solid #e5e7eb'))
+              : 'none',
             padding: isHorizontal
               ? '12px 14px'
               : isFeatured
@@ -110,7 +114,9 @@ export const BlogCard = ({
             if (t) t.style.transform = 'translate(-50%, 0)';
             if (isHorizontal) {
               e.currentTarget.style.borderColor = 'var(--brand-purple)';
-              e.currentTarget.style.background = isLight ? 'rgba(147, 51, 234, 0.06)' : 'rgba(147, 51, 234, 0.08)';
+              e.currentTarget.style.background = isDark
+                ? 'rgba(147, 51, 234, 0.08)'
+                : (isSepia ? 'rgba(253, 232, 200, 0.85)' : 'rgba(147, 51, 234, 0.06)');
             }
           }}
           onMouseOut={e => {
@@ -119,8 +125,8 @@ export const BlogCard = ({
             if (w) w.style.transform = 'translate(-12px, 12px)';
             if (t) t.style.transform = 'translate(calc(-50% - 12px), 12px)';
             if (isHorizontal) {
-              e.currentTarget.style.borderColor = isLight ? '#e5e7eb' : 'rgba(147, 51, 234, 0.2)';
-              e.currentTarget.style.background = isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.015)';
+              e.currentTarget.style.borderColor = isDark ? 'rgba(147, 51, 234, 0.2)' : (isSepia ? 'rgba(217, 119, 6, 0.28)' : '#e5e7eb');
+              e.currentTarget.style.background = isDark ? 'rgba(255, 255, 255, 0.02)' : (isSepia ? '#fef6ea' : '#ffffff');
             }
           }}
         >
@@ -144,7 +150,7 @@ export const BlogCard = ({
                 left: 0,
                 width: '100%',
                 height: '100%',
-                border: '1px solid var(--brand-purple)',
+                border: isSepia ? '1px solid rgba(217, 119, 6, 0.45)' : '1px solid var(--brand-purple)',
                 borderRadius: '10px',
                 zIndex: 3,
                 pointerEvents: 'none',
@@ -171,8 +177,8 @@ export const BlogCard = ({
             >
               <div
                 style={{
-                  background: isLight ? '#ffffff' : 'var(--bg-main)',
-                  border: '1px solid var(--brand-purple)',
+                  background: isDark ? 'var(--bg-main)' : (isSepia ? '#fde8c8' : '#ffffff'),
+                  border: isSepia ? '1px solid rgba(217, 119, 6, 0.45)' : '1px solid var(--brand-purple)',
                   borderRadius: '20px',
                   padding: isHorizontal ? '10px 4px' : '15px 5px',
                   display: 'flex',
@@ -180,11 +186,11 @@ export const BlogCard = ({
                   alignItems: 'center',
                   writingMode: 'vertical-rl',
                   transform: 'rotate(180deg)',
-                  color: isLight ? '#111827' : 'white',
+                  color: isSepia ? '#78350f' : (isLight ? '#111827' : 'white'),
                   fontSize: isHorizontal ? '0.72rem' : '0.8rem',
                   fontWeight: 'bold',
                   letterSpacing: '1px',
-                  boxShadow: isLight ? '0 2px 8px rgba(0,0,0,0.1)' : '0 4px 10px rgba(0,0,0,0.5)'
+                  boxShadow: isSepia ? '0 2px 8px rgba(217, 119, 6, 0.15)' : (isLight ? '0 2px 8px rgba(0,0,0,0.1)' : '0 4px 10px rgba(0,0,0,0.5)')
                 }}
               >
                 {category}
@@ -197,13 +203,13 @@ export const BlogCard = ({
                     width: '32px',
                     height: '32px',
                     borderRadius: '50%',
-                    background: isLight ? '#ffffff' : 'var(--bg-main)',
-                    border: '1px solid var(--brand-purple)',
+                    background: isDark ? 'var(--bg-main)' : (isSepia ? '#fde8c8' : '#ffffff'),
+                    border: isSepia ? '1px solid rgba(217, 119, 6, 0.45)' : '1px solid var(--brand-purple)',
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    color: isLight ? '#374151' : 'white',
-                    boxShadow: isLight ? '0 2px 8px rgba(0,0,0,0.1)' : '0 4px 10px rgba(0,0,0,0.5)',
+                    color: isSepia ? '#78350f' : (isLight ? '#374151' : 'white'),
+                    boxShadow: isSepia ? '0 2px 8px rgba(217, 119, 6, 0.15)' : (isLight ? '0 2px 8px rgba(0,0,0,0.1)' : '0 4px 10px rgba(0,0,0,0.5)'),
                     transition: 'background 0.2s, color 0.2s, transform 0.2s'
                   }}
                   onMouseOver={e => {
@@ -212,8 +218,8 @@ export const BlogCard = ({
                     e.currentTarget.style.transform = 'scale(1.1)';
                   }}
                   onMouseOut={e => {
-                    e.currentTarget.style.background = isLight ? '#ffffff' : 'var(--bg-main)';
-                    e.currentTarget.style.color = isLight ? '#374151' : 'white';
+                    e.currentTarget.style.background = isDark ? 'var(--bg-main)' : (isSepia ? '#fde8c8' : '#ffffff');
+                    e.currentTarget.style.color = isSepia ? '#78350f' : (isLight ? '#374151' : 'white');
                     e.currentTarget.style.transform = 'scale(1)';
                   }}
                   onClick={e => {
@@ -343,8 +349,8 @@ export const BlogCard = ({
               <button
                 style={{
                   background: 'transparent',
-                  border: isLight ? '1px solid #d1d5db' : '1px solid rgba(255,255,255,0.2)',
-                  color: isLight ? '#374151' : 'white',
+                  border: isDark ? '1px solid rgba(255,255,255,0.2)' : (isSepia ? '1px solid rgba(217, 119, 6, 0.4)' : '1px solid #d1d5db'),
+                  color: isDark ? 'white' : (isSepia ? '#78350f' : '#374151'),
                   padding: isHorizontal ? '5px 14px' : '9px 18px',
                   borderRadius: isHorizontal ? '20px' : '30px',
                   fontFamily: "'Playfair Display', serif",
@@ -361,8 +367,8 @@ export const BlogCard = ({
                 }}
                 onMouseOut={e => {
                   e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.borderColor = isLight ? '#d1d5db' : 'rgba(255,255,255,0.2)';
-                  e.currentTarget.style.color = isLight ? '#374151' : 'white';
+                  e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.2)' : (isSepia ? 'rgba(217, 119, 6, 0.4)' : '#d1d5db');
+                  e.currentTarget.style.color = isDark ? 'white' : (isSepia ? '#78350f' : '#374151');
                   e.currentTarget.style.transform = 'translateY(0)';
                 }}
               >

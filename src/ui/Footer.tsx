@@ -9,7 +9,7 @@ export interface FooterProps {
 }
 
 const Footer: React.FC<FooterProps> = ({ isLight: propIsLight }) => {
-  const { isLight: contextIsLight } = useTheme();
+  const { isLight: contextIsLight, isSepia, isDark } = useTheme();
   const isLight = propIsLight ?? contextIsLight;
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SITE_SETTINGS);
 
@@ -39,7 +39,8 @@ const Footer: React.FC<FooterProps> = ({ isLight: propIsLight }) => {
   // Layout purely based on width (ignores isMobile touch emulation)
   const isSmallPhone = winWidth < 641;
   const isSmallTab = winWidth >= 641 && winWidth <= 800; // small tab view (641px–800px, e.g. iPad Mini 768px)
-  const isLargeTablet = winWidth > 800 && winWidth <= 1180; // large tab view (810px, 820px, 912px, 1024px, 1180px)
+  const isLargeTablet = winWidth > 800 && winWidth <= 1280; // large tab view (810px, 820px, 912px, 1024px, 1180px, 1280px)
+  const isTablet = isSmallTab || isLargeTablet;
 
   // Earth bottom offset per breakpoint
   const earthBottom = isSmallTab
@@ -62,12 +63,12 @@ const Footer: React.FC<FooterProps> = ({ isLight: propIsLight }) => {
       style={{
         position: 'relative',
         width: '100%',
-        minHeight: isSmallPhone ? '420px' : isSmallTab ? '380px' : '520px',
+        minHeight: isSmallPhone ? '520px' : isSmallTab ? '480px' : '620px',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: isSmallPhone ? '40px 20px 70px' : isSmallTab ? '20px 20px 50px' : '60px 20px 90px',
+        padding: isSmallPhone ? '45px 20px 75px' : isSmallTab ? '40px 20px 65px' : '60px 20px 95px',
         boxSizing: 'border-box',
         overflow: 'hidden',
         textAlign: 'center',
@@ -79,22 +80,22 @@ const Footer: React.FC<FooterProps> = ({ isLight: propIsLight }) => {
       <div
         style={{
           position: 'absolute',
-          top: isSmallPhone ? 'auto' : 0,
+          top: (isSmallPhone || isTablet) ? 'auto' : 0,
           bottom: 0,
           left: 0,
           width: '100%',
-          height: isSmallPhone ? '325px' : '100%',
+          height: isSmallPhone ? '225px' : isSmallTab ? '310px' : isLargeTablet ? '410px' : '100%',
           zIndex: 1,
           pointerEvents: 'none',
           overflow: 'hidden'
         }}
       >
         <Aurora
-          key={isSmallPhone ? 'mobile-aurora' : 'desktop-aurora'}
+          key={isSmallPhone ? 'mobile-aurora' : isTablet ? 'tablet-aurora' : 'desktop-aurora'}
           colorStops={["#5227FF", "#7cff67", "#5227FF"]}
-          amplitude={isSmallPhone ? 1.0 : 1.2}
-          blend={isSmallPhone ? 0.5 : 0.6}
-          frequency={isSmallPhone ? 0.95 : 2.0}
+          amplitude={isSmallPhone ? 1.0 : isTablet ? 1.1 : 1.2}
+          blend={isSmallPhone ? 0.5 : isTablet ? 0.55 : 0.6}
+          frequency={isSmallPhone ? 0.95 : isTablet ? 1.7 : 2.0}
           inverted={true}
           lightMode={isLight}
         />
@@ -135,8 +136,45 @@ const Footer: React.FC<FooterProps> = ({ isLight: propIsLight }) => {
         />
       </div>
 
-      {/* 3. Foreground Content Layer (Favicon, Tagline, Socials, Copyright) */}
-      <div style={{ position: 'relative', zIndex: 3, width: '100%', maxWidth: '650px', margin: '0 auto' }}>
+      {/* 3. Foreground Content Layer (Mission Quote, Favicon, Tagline, Socials, Copyright) */}
+      <div style={{ position: 'relative', zIndex: 3, width: '100%', maxWidth: '820px', margin: '0 auto' }}>
+        {/* Quote / Mission Section */}
+        <div style={{ textAlign: 'center', marginBottom: isSmallPhone ? '46px' : isSmallTab ? '56px' : '90px' }}>
+          <div
+            style={{
+              width: '40px',
+              height: '2px',
+              backgroundColor: isSepia ? '#d97706' : 'var(--brand-purple)',
+              margin: '0 auto 16px auto'
+            }}
+          />
+          <h2
+            style={{
+              fontFamily: "'Playfair Display', serif",
+              fontSize: 'clamp(1.5rem, 1.1rem + 2vw, 2.35rem)',
+              margin: '0 0 12px 0',
+              fontWeight: 600,
+              letterSpacing: '-0.5px',
+              color: isDark ? '#ffffff' : (isSepia ? '#2a1a08' : '#111827')
+            }}
+          >
+            Zwosmos is a home for curious minds.
+          </h2>
+          <p
+            style={{
+              fontFamily: "'Playfair Display', serif",
+              color: isDark ? 'rgba(255, 255, 255, 0.75)' : (isSepia ? '#5c3d18' : '#4b5563'),
+              fontSize: isSmallPhone ? '0.86rem' : '1.02rem',
+              letterSpacing: '2px',
+              textTransform: 'uppercase',
+              lineHeight: 1.6,
+              margin: 0
+            }}
+          >
+            We explore the universe through stories,<br />tools, and ideas that inspire wonder.
+          </p>
+        </div>
+
         {/* Centered Zwosmos Favicon */}
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '18px' }}>
           <Link
@@ -241,12 +279,12 @@ const Footer: React.FC<FooterProps> = ({ isLight: propIsLight }) => {
               width: '36px',
               height: '36px',
               borderRadius: '50%',
-              background: isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.08)',
-              border: isLight ? '1px solid #d1d5db' : '1px solid rgba(255, 255, 255, 0.18)',
+              background: isDark ? 'rgba(255, 255, 255, 0.08)' : (isSepia ? '#fde8c8' : '#ffffff'),
+              border: isDark ? '1px solid rgba(255, 255, 255, 0.18)' : (isSepia ? '1px solid rgba(217, 119, 6, 0.35)' : '1px solid #d1d5db'),
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: isLight ? '#1f2937' : 'rgba(255, 255, 255, 0.9)',
+              color: isSepia ? '#78350f' : (isLight ? '#1f2937' : 'rgba(255, 255, 255, 0.9)'),
               textDecoration: 'none',
               transition: 'all 0.25s ease',
               cursor: 'pointer',
@@ -262,9 +300,9 @@ const Footer: React.FC<FooterProps> = ({ isLight: propIsLight }) => {
             };
 
             const handleOut = (e: React.MouseEvent<HTMLElement>) => {
-              e.currentTarget.style.background = isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.08)';
-              e.currentTarget.style.borderColor = isLight ? '#d1d5db' : 'rgba(255, 255, 255, 0.18)';
-              e.currentTarget.style.color = isLight ? '#1f2937' : 'rgba(255, 255, 255, 0.9)';
+              e.currentTarget.style.background = isDark ? 'rgba(255, 255, 255, 0.08)' : (isSepia ? '#fde8c8' : '#ffffff');
+              e.currentTarget.style.borderColor = isDark ? '1px solid rgba(255, 255, 255, 0.18)' : (isSepia ? '1px solid rgba(217, 119, 6, 0.35)' : '#d1d5db');
+              e.currentTarget.style.color = isSepia ? '#78350f' : (isLight ? '#1f2937' : 'rgba(255, 255, 255, 0.9)');
               e.currentTarget.style.transform = 'translateY(0)';
               e.currentTarget.style.boxShadow = isLight ? '0 2px 6px rgba(0,0,0,0.06)' : 'none';
             };

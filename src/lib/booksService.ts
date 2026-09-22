@@ -97,7 +97,7 @@ export const INITIAL_BOOKS: BookItem[] = [
     tags: ['Evolution', 'Humanity', 'Planetary Astronomy', 'Philosophy'],
     featured: true,
     buyUrl: 'https://amazon.com',
-    coverImage: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1388620932i/55030.jpg'
+    coverImage: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&auto=format&fit=crop&q=80'
   },
   {
     id: 5,
@@ -116,7 +116,7 @@ export const INITIAL_BOOKS: BookItem[] = [
     accentColor: '#fbbf24',
     tags: ['Quantum Realm', 'Dark Matter', 'Stellar Evolution', 'General Relativity'],
     buyUrl: 'https://amazon.com',
-    coverImage: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1562761669i/33413909.jpg'
+    coverImage: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=600&auto=format&fit=crop&q=80'
   },
   {
     id: 6,
@@ -135,7 +135,7 @@ export const INITIAL_BOOKS: BookItem[] = [
     accentColor: '#34d399',
     tags: ['Spacetime', 'Light Cones', 'Thermodynamics', 'Unified Theory'],
     buyUrl: 'https://amazon.com',
-    coverImage: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1384403886i/3869.jpg'
+    coverImage: 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=600&auto=format&fit=crop&q=80'
   },
   {
     id: 7,
@@ -154,7 +154,7 @@ export const INITIAL_BOOKS: BookItem[] = [
     accentColor: '#60a5fa',
     tags: ['Earth', 'Voyager 1', 'Future Colonization', 'Cosmic Perspective'],
     buyUrl: 'https://amazon.com',
-    coverImage: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1392791656i/61663.jpg'
+    coverImage: 'https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?w=600&auto=format&fit=crop&q=80'
   },
   {
     id: 8,
@@ -173,7 +173,7 @@ export const INITIAL_BOOKS: BookItem[] = [
     accentColor: '#a5b4fc',
     tags: ['String Theory', 'Dimensions', 'Calabi-Yau', 'Quantum Mechanics'],
     buyUrl: 'https://amazon.com',
-    coverImage: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1388180424i/8049273.jpg'
+    coverImage: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80'
   },
   {
     id: 9,
@@ -192,7 +192,7 @@ export const INITIAL_BOOKS: BookItem[] = [
     accentColor: '#f472b6',
     tags: ['Solar System', 'Planetary Geology', 'Moons', 'Planetary Science'],
     buyUrl: 'https://bookshop.org',
-    coverImage: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1388274154i/3133.jpg'
+    coverImage: 'https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?w=600&auto=format&fit=crop&q=80'
   },
   {
     id: 10,
@@ -211,7 +211,7 @@ export const INITIAL_BOOKS: BookItem[] = [
     accentColor: '#fb7185',
     tags: ['Entropy', 'Consciousness', 'Deep Future', 'Meaning'],
     buyUrl: 'https://amazon.com',
-    coverImage: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1563223053i/43886331.jpg'
+    coverImage: 'https://images.unsplash.com/photo-1502134249126-9f3755a50d78?w=600&auto=format&fit=crop&q=80'
   },
   {
     id: 11,
@@ -230,7 +230,7 @@ export const INITIAL_BOOKS: BookItem[] = [
     accentColor: '#fde047',
     tags: ['Human Spaceflight', 'Mars', 'Microgravity', 'Astronautics'],
     buyUrl: 'https://bookshop.org',
-    coverImage: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1320473957i/7237456.jpg'
+    coverImage: 'https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?w=600&auto=format&fit=crop&q=80'
   },
   {
     id: 12,
@@ -249,7 +249,7 @@ export const INITIAL_BOOKS: BookItem[] = [
     accentColor: '#e0e7ff',
     tags: ['Spaghettification', 'Astrophysics', 'Cosmic Hazards', 'Tidal Forces'],
     buyUrl: 'https://amazon.com',
-    coverImage: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1320499692i/206637.jpg'
+    coverImage: 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=600&auto=format&fit=crop&q=80'
   }
 ];
 

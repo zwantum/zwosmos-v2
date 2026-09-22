@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useLayoutEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useMobile } from '../contexts/MobileContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -12,7 +12,9 @@ const POSTS_PER_PAGE = 12;
 const AuthorPage: React.FC = () => {
   const { authorSlug } = useParams<{ authorSlug: string }>();
   const { isMobile } = useMobile();
-  const { isLight } = useTheme();
+  const { theme, isDark } = useTheme();
+  const isLight = !isDark;
+  const isSepia = theme === 'sepia';
   const [currentPage, setCurrentPage] = useState(1);
 
   // Use built-in authorSlug filter from useBlogPosts
@@ -20,8 +22,12 @@ const AuthorPage: React.FC = () => {
     authorSlug ? { authorSlug } : undefined
   );
 
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    const rootEl = document.getElementById('root');
+    if (rootEl) rootEl.scrollTop = 0;
     setCurrentPage(1);
   }, [authorSlug]);
 
@@ -67,7 +73,7 @@ const AuthorPage: React.FC = () => {
   const divider = isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.08)';
 
   return (
-    <div style={{ minHeight: '100vh', background: isLight ? '#ffffff' : 'radial-gradient(ellipse at top center, rgba(147, 51, 234, 0.25) 0%, var(--bg-main) 60%)', backgroundColor: isLight ? '#ffffff' : 'var(--bg-main)', color: isLight ? '#111827' : 'white', boxSizing: 'border-box' }}>
+    <div style={{ minHeight: '100vh', background: isLight ? (isSepia ? '#fff3e0' : '#ffffff') : 'radial-gradient(ellipse at top center, rgba(147, 51, 234, 0.25) 0%, var(--bg-main) 60%)', backgroundColor: isSepia ? '#fff3e0' : (isLight ? '#ffffff' : 'var(--bg-main)'), color: isLight ? '#111827' : 'white', boxSizing: 'border-box' }}>
       <Header />
       <div style={{ maxWidth: '1260px', margin: '0 auto', padding: isMobile ? '20px 16px 60px' : '35px 24px 80px', boxSizing: 'border-box' }}>
 

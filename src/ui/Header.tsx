@@ -7,6 +7,7 @@ import { useBlogPosts } from '@zwantum/blog/react';
 
 export interface HeaderProps {
   isLight?: boolean;
+  theme?: 'dark' | 'sepia' | 'light';
   onThemeToggle?: () => void;
 }
 
@@ -26,9 +27,9 @@ const MEGA_MENU_TWO_COLUMNS = {
   column2: MEGA_MENU_ITEMS_LIST.slice(5, 10)
 };
 
-export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeToggle }) => {
+export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, theme: propTheme, onThemeToggle }) => {
   const navigate = useNavigate();
-  const { isLight: contextIsLight, toggleTheme: contextToggleTheme } = useTheme();
+  const { theme: contextTheme, toggleTheme: contextToggleTheme } = useTheme();
 
   // Width tracking for pure responsive layout independent of DevTools touch emulation
   const [winWidth, setWinWidth] = useState(() => window.innerWidth);
@@ -43,7 +44,7 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
   const isLargeView = winWidth >= 800;
   const isLargeTab = winWidth >= 800 && winWidth <= 1024;
 
-  const effectiveIsLight = propIsLight !== undefined ? propIsLight : contextIsLight;
+  const activeTheme: 'dark' | 'sepia' | 'light' = propTheme || contextTheme || (propIsLight !== undefined ? (propIsLight ? 'light' : 'dark') : 'dark');
 
   // Search state
   const [searchVal, setSearchVal] = useState('');
@@ -220,7 +221,8 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
     }
   };
 
-  const currentIsDark = !effectiveIsLight;
+  const currentIsDark = activeTheme === 'dark';
+  const currentIsSepia = activeTheme === 'sepia';
 
   // ─── Mobile Header (< 800px) ─────────────────────────────────────────────
   if (isMobileHeader) {
@@ -272,23 +274,25 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
           {/* Right: Controls */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
 
-            {/* Theme Toggle */}
+            {/* Theme Toggle: 3-position pill (Dark -> Sepia -> Light -> Sepia -> Dark) */}
             <button
               type="button"
               onClick={handleToggle}
-              title={`Switch to ${currentIsDark ? 'Light' : 'Dark'} Tone`}
+              title={`Theme: ${activeTheme.charAt(0).toUpperCase() + activeTheme.slice(1)} (Click to switch)`}
+              aria-label="Toggle theme (Dark, Sepia, Light)"
               style={{
-                width: '38px',
+                width: '54px',
                 height: '22px',
                 borderRadius: '9999px',
-                border: currentIsDark ? '1px solid rgba(255,255,255,0.3)' : '1px solid #d1d5db',
-                background: currentIsDark ? 'rgba(255,255,255,0.15)' : '#ffffff',
+                border: currentIsDark ? '1px solid rgba(255,255,255,0.3)' : (currentIsSepia ? '1px solid rgba(217, 119, 6, 0.4)' : '1px solid #d1d5db'),
+                background: currentIsDark ? 'rgba(255,255,255,0.15)' : (currentIsSepia ? '#fde8c8' : '#ffffff'),
                 display: 'inline-flex',
                 alignItems: 'center',
                 padding: '2px',
                 cursor: 'pointer',
                 transition: 'all 0.25s ease',
-                flexShrink: 0
+                flexShrink: 0,
+                position: 'relative'
               }}
             >
               <span
@@ -296,9 +300,13 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
                   width: '16px',
                   height: '16px',
                   borderRadius: '50%',
-                  background: currentIsDark ? 'var(--brand-purple)' : '#111827',
-                  transform: currentIsDark ? 'translateX(0px)' : 'translateX(16px)',
-                  transition: 'transform 0.25s cubic-bezier(0.4,0,0.2,1)',
+                  background: currentIsDark
+                    ? 'var(--brand-purple)'
+                    : (currentIsSepia ? '#d97706' : '#111827'),
+                  transform: currentIsDark
+                    ? 'translateX(0px)'
+                    : (currentIsSepia ? 'translateX(17px)' : 'translateX(34px)'),
+                  transition: 'transform 0.25s cubic-bezier(0.4,0,0.2,1), background 0.25s ease',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -306,7 +314,26 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
                   color: '#ffffff'
                 }}
               >
-                {currentIsDark ? '☾' : '☼'}
+                {currentIsDark ? (
+                  '☾'
+                ) : currentIsSepia ? (
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#ffffff"
+                    strokeWidth="2.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{ display: 'block' }}
+                  >
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 1 3-3H2z" />
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                  </svg>
+                ) : (
+                  '☼'
+                )}
               </span>
             </button>
 
@@ -408,7 +435,7 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
               style={{
                 background: currentIsDark
                   ? 'linear-gradient(135deg, rgba(18,10,35,0.98) 0%, rgba(30,15,55,0.98) 100%)'
-                  : 'rgba(255,255,255,0.98)',
+                  : (currentIsSepia ? 'rgba(255, 248, 238, 0.98)' : 'rgba(255,255,255,0.98)'),
                 backdropFilter: 'blur(20px)',
                 borderBottom: currentIsDark
                   ? '1px solid rgba(147,51,234,0.3)'
@@ -977,15 +1004,21 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
             gap: '22px',
           background: currentIsDark
             ? 'linear-gradient(135deg, rgba(68, 42, 96, 0.42) 0%, rgba(38, 22, 58, 0.35) 100%)'
-            : 'linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(243, 232, 255, 0.75) 100%)',
+            : (currentIsSepia
+              ? 'linear-gradient(135deg, rgba(255, 248, 238, 0.94) 0%, rgba(254, 237, 213, 0.90) 100%)'
+              : 'linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(243, 232, 255, 0.75) 100%)'),
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
-          border: currentIsDark ? '1px solid rgba(255, 255, 255, 0.22)' : '1px solid rgba(147, 51, 234, 0.25)',
+          border: currentIsDark
+            ? '1px solid rgba(255, 255, 255, 0.22)'
+            : (currentIsSepia ? '1px solid rgba(217, 119, 6, 0.3)' : '1px solid rgba(147, 51, 234, 0.25)'),
           borderRadius: '9999px',
           padding: '9px 24px',
           boxShadow: currentIsDark
             ? '0 8px 32px rgba(0, 0, 0, 0.25), 0 0 24px rgba(168, 85, 247, 0.16), inset 0 1px 1px rgba(255, 255, 255, 0.25)'
-            : '0 8px 24px rgba(147, 51, 234, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.8)'
+            : (currentIsSepia
+              ? '0 8px 24px rgba(217, 119, 6, 0.10), inset 0 1px 1px rgba(255, 255, 255, 0.9)'
+              : '0 8px 24px rgba(147, 51, 234, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.8)')
         }}
       >
         {/* Menu Items */}
@@ -1071,17 +1104,18 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
           </div>
         )}
 
-        {/* Dark & Light Tone Toggle Pill */}
+        {/* Dark, Sepia & Light Tone Toggle Pill */}
         <button
           type="button"
           onClick={handleToggle}
-          title={`Switch to ${currentIsDark ? 'Light' : 'Dark'} Tone`}
+          title={`Theme: ${activeTheme.charAt(0).toUpperCase() + activeTheme.slice(1)} (Click to switch)`}
+          aria-label="Toggle theme (Dark, Sepia, Light)"
           style={{
-            width: '42px',
-            height: '24px',
+            width: '64px',
+            height: '26px',
             borderRadius: '9999px',
-            border: currentIsDark ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid #d1d5db',
-            background: currentIsDark ? 'rgba(255, 255, 255, 0.15)' : '#ffffff',
+            border: currentIsDark ? '1px solid rgba(255, 255, 255, 0.3)' : (currentIsSepia ? '1px solid rgba(217, 119, 6, 0.4)' : '1px solid #d1d5db'),
+            background: currentIsDark ? 'rgba(255, 255, 255, 0.15)' : (currentIsSepia ? '#fde8c8' : '#ffffff'),
             display: 'inline-flex',
             alignItems: 'center',
             padding: '2px',
@@ -1092,20 +1126,44 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
         >
           <span
             style={{
-              width: '18px',
-              height: '18px',
+              width: '20px',
+              height: '20px',
               borderRadius: '50%',
-              background: currentIsDark ? 'var(--brand-purple)' : '#111827',
-              transform: currentIsDark ? 'translateX(0px)' : 'translateX(18px)',
-              transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+              background: currentIsDark
+                ? 'var(--brand-purple)'
+                : (currentIsSepia ? '#d97706' : '#111827'),
+              transform: currentIsDark
+                ? 'translateX(0px)'
+                : (currentIsSepia ? 'translateX(20px)' : 'translateX(40px)'),
+              transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), background 0.25s ease',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '0.62rem',
-              color: '#ffffff'
+              fontSize: '0.68rem',
+              color: '#ffffff',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.2)'
             }}
           >
-            {currentIsDark ? '☾' : '☼'}
+            {currentIsDark ? (
+              '☾'
+            ) : currentIsSepia ? (
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#ffffff"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ display: 'block' }}
+              >
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 1 3-3H2z" />
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+              </svg>
+            ) : (
+              '☼'
+            )}
           </span>
         </button>
 
@@ -1160,8 +1218,12 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
                 style={{
                   width: (isSearchFocused || (showLiveResults && searchVal.trim().length >= 2)) ? '190px' : '135px',
                   height: '30px',
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(246,243,255,0.92) 100%)',
-                  border: (isSearchFocused || (showLiveResults && searchVal.trim().length >= 2)) ? '1px solid #9333ea' : '1px solid rgba(255,255,255,0.6)',
+                  background: currentIsSepia
+                    ? 'linear-gradient(135deg, rgba(255, 248, 238, 0.96) 0%, rgba(254, 239, 215, 0.92) 100%)'
+                    : 'linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(246,243,255,0.92) 100%)',
+                  border: (isSearchFocused || (showLiveResults && searchVal.trim().length >= 2))
+                    ? (currentIsSepia ? '1px solid #d97706' : '1px solid #9333ea')
+                    : (currentIsSepia ? '1px solid rgba(217, 119, 6, 0.35)' : '1px solid rgba(255,255,255,0.6)'),
                   borderRadius: '9999px',
                   padding: searchVal ? '0 28px 0 32px' : '0 18px 0 32px',
                   fontSize: '0.78rem',
@@ -1220,12 +1282,14 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
                 maxWidth: 'calc(100vw - 32px)',
                 background: currentIsDark
                   ? 'linear-gradient(145deg, rgba(22, 11, 38, 0.98) 0%, rgba(13, 6, 24, 0.99) 100%)'
-                  : 'linear-gradient(145deg, rgba(255, 255, 255, 0.99) 0%, rgba(249, 246, 255, 0.99) 100%)',
+                  : (currentIsSepia
+                    ? 'linear-gradient(145deg, rgba(255, 248, 238, 0.99) 0%, rgba(254, 239, 215, 0.99) 100%)'
+                    : 'linear-gradient(145deg, rgba(255, 255, 255, 0.99) 0%, rgba(249, 246, 255, 0.99) 100%)'),
                 backdropFilter: 'blur(24px)',
                 WebkitBackdropFilter: 'blur(24px)',
                 border: currentIsDark
                   ? '1px solid rgba(168, 85, 247, 0.35)'
-                  : '1px solid rgba(147, 51, 234, 0.25)',
+                  : (currentIsSepia ? '1px solid rgba(217, 119, 6, 0.35)' : '1px solid rgba(147, 51, 234, 0.25)'),
                 borderRadius: '16px',
                 boxShadow: currentIsDark
                   ? '0 20px 50px rgba(0,0,0,0.75), 0 0 24px rgba(168,85,247,0.2)'
@@ -1464,12 +1528,14 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, onThemeTog
             padding: '22px 26px 28px',
             background: currentIsDark
               ? 'linear-gradient(135deg, rgba(78, 48, 112, 0.55) 0%, rgba(46, 26, 75, 0.50) 100%)'
-              : 'linear-gradient(135deg, rgba(255, 255, 255, 0.88) 0%, rgba(248, 242, 255, 0.92) 100%)',
+              : (currentIsSepia
+                ? 'linear-gradient(135deg, rgba(255, 248, 238, 0.94) 0%, rgba(254, 237, 213, 0.90) 100%)'
+                : 'linear-gradient(135deg, rgba(255, 255, 255, 0.88) 0%, rgba(248, 242, 255, 0.92) 100%)'),
             backdropFilter: 'blur(28px) saturate(190%)',
             WebkitBackdropFilter: 'blur(28px) saturate(190%)',
             border: currentIsDark
               ? '1px solid rgba(216, 180, 254, 0.35)'
-              : '1px solid rgba(147, 51, 234, 0.22)',
+              : (currentIsSepia ? '1px solid rgba(217, 119, 6, 0.3)' : '1px solid rgba(147, 51, 234, 0.22)'),
             boxShadow: currentIsDark
               ? '0 16px 48px rgba(0, 0, 0, 0.32), 0 0 32px rgba(168, 85, 247, 0.18), inset 0 1px 1px rgba(255, 255, 255, 0.25)'
               : '0 20px 50px rgba(109, 40, 217, 0.12), 0 4px 16px rgba(0, 0, 0, 0.04), inset 0 1px 1px rgba(255, 255, 255, 0.95)',

@@ -5,7 +5,7 @@ import { getCosmicData, DailyCosmicData, DEFAULT_COSMIC_DATA } from '../lib/cosm
 
 export const DailyCosmicSection: React.FC = () => {
   const { isMobile } = useMobile();
-  const { isLight } = useTheme();
+  const { isLight, isSepia, isDark } = useTheme();
 
   const [winWidth, setWinWidth] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1200));
   const [cosmic, setCosmic] = useState<DailyCosmicData>(DEFAULT_COSMIC_DATA);
@@ -166,24 +166,24 @@ export const DailyCosmicSection: React.FC = () => {
           <div
             style={{
               position: 'relative',
-              border: '1.5px solid var(--brand-purple)',
+              border: isSepia ? '1.5px solid rgba(217, 119, 6, 0.4)' : '1.5px solid var(--brand-purple)',
               borderRadius: '16px',
               padding: isMobile ? '26px 20px 24px 28px' : '34px 30px 32px 36px',
-              background: isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.015)',
+              background: isDark ? 'rgba(255, 255, 255, 0.015)' : (isSepia ? '#fef6ea' : '#ffffff'),
               boxShadow: isLight
-                ? '0 4px 20px rgba(0, 0, 0, 0.06)'
+                ? (isSepia ? '0 4px 20px rgba(217, 119, 6, 0.08)' : '0 4px 20px rgba(0, 0, 0, 0.06)')
                 : '0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(147, 51, 234, 0.2)',
               boxSizing: 'border-box',
               transition: 'all 0.3s ease'
             }}
             onMouseOver={e => {
               e.currentTarget.style.boxShadow = isLight
-                ? '0 8px 24px rgba(147, 51, 234, 0.15)'
+                ? (isSepia ? '0 8px 24px rgba(217, 119, 6, 0.16)' : '0 8px 24px rgba(147, 51, 234, 0.15)')
                 : '0 12px 36px rgba(0, 0, 0, 0.6), 0 0 28px rgba(147, 51, 234, 0.35)';
             }}
             onMouseOut={e => {
               e.currentTarget.style.boxShadow = isLight
-                ? '0 4px 20px rgba(0, 0, 0, 0.06)'
+                ? (isSepia ? '0 4px 20px rgba(217, 119, 6, 0.08)' : '0 4px 20px rgba(0, 0, 0, 0.06)')
                 : '0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(147, 51, 234, 0.2)';
             }}
           >
@@ -205,8 +205,8 @@ export const DailyCosmicSection: React.FC = () => {
               {/* Date Pill Tab */}
               <div
                 style={{
-                  background: isLight ? '#ffffff' : '#080711',
-                  border: '1.5px solid var(--brand-purple)',
+                  background: isDark ? '#080711' : (isSepia ? '#fde8c8' : '#ffffff'),
+                  border: isSepia ? '1.5px solid rgba(217, 119, 6, 0.45)' : '1.5px solid var(--brand-purple)',
                   borderRadius: '20px',
                   padding: '14px 6px',
                   display: 'flex',
@@ -214,7 +214,7 @@ export const DailyCosmicSection: React.FC = () => {
                   alignItems: 'center',
                   writingMode: 'vertical-rl',
                   transform: 'rotate(180deg)',
-                  color: isLight ? '#111827' : '#ffffff',
+                  color: isSepia ? '#78350f' : (isLight ? '#111827' : '#ffffff'),
                   fontSize: '0.72rem',
                   fontWeight: 700,
                   letterSpacing: '1.2px',
@@ -233,12 +233,12 @@ export const DailyCosmicSection: React.FC = () => {
                   width: '32px',
                   height: '32px',
                   borderRadius: '50%',
-                  background: isLight ? '#ffffff' : '#080711',
-                  border: '1.5px solid var(--brand-purple)',
+                  background: isDark ? '#080711' : (isSepia ? '#fde8c8' : '#ffffff'),
+                  border: isSepia ? '1.5px solid rgba(217, 119, 6, 0.45)' : '1.5px solid var(--brand-purple)',
                   display: 'flex',
                   justifyContent: 'center',
                   alignItems: 'center',
-                  color: isLight ? 'var(--brand-purple)' : '#ffffff',
+                  color: isSepia ? '#b45309' : (isLight ? 'var(--brand-purple)' : '#ffffff'),
                   boxShadow: isLight ? '0 2px 8px rgba(0,0,0,0.1)' : '0 4px 12px rgba(0,0,0,0.6)'
                 }}
               >

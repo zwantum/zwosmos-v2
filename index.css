@@ -28,44 +28,131 @@ html[data-theme="light"] #root {
   color: #111827;
 }
 
+body.sepia-theme,
+html[data-theme="sepia"],
+html[data-theme="sepia"] body,
+html[data-theme="sepia"] #root {
+  background: #fff3e0 !important;
+  background-color: #fff3e0 !important;
+  color: #111827;
+}
+
 /* ==========================================================================
    Article Prose & Content Theme Typography Rules
    ========================================================================== */
 
-/* Light Theme Article Typography */
+/* Uniform Lora Font for Blog Post Rich Text Content and Editor */
+.zw-blog-content,
+.zw-blog-content *,
+.zw-blog-content-wrapper,
+.zw-blog-content-wrapper *,
+.zw-blog-prose,
+.zw-blog-prose *,
+.blog-article-content-area,
+.blog-article-content-area *,
+.zw-blog-editor-content,
+.zw-blog-editor-content *,
+.ProseMirror,
+.ProseMirror *,
+.tiptap,
+.tiptap * {
+  font-family: 'Lora', Georgia, Cambria, 'Times New Roman', Times, serif !important;
+}
+
+/* Monospace for Code Blocks */
+.zw-blog-content pre,
+.zw-blog-content code,
+.zw-blog-content kbd,
+.zw-blog-content-wrapper pre,
+.zw-blog-content-wrapper code,
+.zw-blog-content-wrapper kbd,
+.zw-blog-prose pre,
+.zw-blog-prose code,
+.blog-article-content-area pre,
+.blog-article-content-area code,
+.zw-blog-editor-content pre,
+.zw-blog-editor-content code,
+.ProseMirror pre,
+.ProseMirror code,
+.tiptap pre,
+.tiptap code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace !important;
+}
+
+/* Maintain Icons */
+.zw-blog-content [class*="icon"],
+.zw-blog-content .fa-solid,
+.zw-blog-content .fa-regular,
+.zw-blog-content-wrapper [class*="icon"],
+.blog-article-content-area [class*="icon"],
+.zw-blog-editor-content [class*="icon"] {
+  font-family: inherit !important;
+}
+
+/* Light & Sepia Theme Article Typography (100% design & color parity) */
 body.light-theme .zw-blog-content,
 html[data-theme="light"] .zw-blog-content,
+body.sepia-theme .zw-blog-content,
+html[data-theme="sepia"] .zw-blog-content,
 body.light-theme .zw-blog-prose,
 html[data-theme="light"] .zw-blog-prose,
-.zw-blog-content-wrapper.light-mode {
+body.sepia-theme .zw-blog-prose,
+html[data-theme="sepia"] .zw-blog-prose,
+.zw-blog-content-wrapper.light-mode,
+.zw-blog-content-wrapper.sepia-mode {
   color: #1e293b !important;
 }
 
 body.light-theme .zw-blog-content p,
 html[data-theme="light"] .zw-blog-content p,
+body.sepia-theme .zw-blog-content p,
+html[data-theme="sepia"] .zw-blog-content p,
 body.light-theme .zw-blog-prose p,
 html[data-theme="light"] .zw-blog-prose p,
+body.sepia-theme .zw-blog-prose p,
+html[data-theme="sepia"] .zw-blog-prose p,
 .zw-blog-content-wrapper.light-mode p,
+.zw-blog-content-wrapper.sepia-mode p,
 body.light-theme .zw-blog-content span,
 html[data-theme="light"] .zw-blog-content span,
+body.sepia-theme .zw-blog-content span,
+html[data-theme="sepia"] .zw-blog-content span,
 body.light-theme .zw-blog-prose span,
 html[data-theme="light"] .zw-blog-prose span,
+body.sepia-theme .zw-blog-prose span,
+html[data-theme="sepia"] .zw-blog-prose span,
 .zw-blog-content-wrapper.light-mode span,
+.zw-blog-content-wrapper.sepia-mode span,
 body.light-theme .zw-blog-content li,
 html[data-theme="light"] .zw-blog-content li,
+body.sepia-theme .zw-blog-content li,
+html[data-theme="sepia"] .zw-blog-content li,
 body.light-theme .zw-blog-prose li,
 html[data-theme="light"] .zw-blog-prose li,
+body.sepia-theme .zw-blog-prose li,
+html[data-theme="sepia"] .zw-blog-prose li,
 .zw-blog-content-wrapper.light-mode li,
+.zw-blog-content-wrapper.sepia-mode li,
 body.light-theme .zw-blog-content strong,
 html[data-theme="light"] .zw-blog-content strong,
+body.sepia-theme .zw-blog-content strong,
+html[data-theme="sepia"] .zw-blog-content strong,
 body.light-theme .zw-blog-prose strong,
 html[data-theme="light"] .zw-blog-prose strong,
+body.sepia-theme .zw-blog-prose strong,
+html[data-theme="sepia"] .zw-blog-prose strong,
 .zw-blog-content-wrapper.light-mode strong,
+.zw-blog-content-wrapper.sepia-mode strong,
 body.light-theme .zw-blog-content em,
 html[data-theme="light"] .zw-blog-content em,
+body.sepia-theme .zw-blog-content em,
+html[data-theme="sepia"] .zw-blog-content em,
 body.light-theme .zw-blog-prose em,
 html[data-theme="light"] .zw-blog-prose em,
-.zw-blog-content-wrapper.light-mode em {
+body.sepia-theme .zw-blog-prose em,
+html[data-theme="sepia"] .zw-blog-prose em,
+.zw-blog-content-wrapper.light-mode em,
+.zw-blog-content-wrapper.sepia-mode em {
   color: #1e293b !important;
 }
 
@@ -81,6 +168,18 @@ html[data-theme="light"] .zw-blog-content h3,
 html[data-theme="light"] .zw-blog-content h4,
 html[data-theme="light"] .zw-blog-content h5,
 html[data-theme="light"] .zw-blog-content h6,
+body.sepia-theme .zw-blog-content h1,
+body.sepia-theme .zw-blog-content h2,
+body.sepia-theme .zw-blog-content h3,
+body.sepia-theme .zw-blog-content h4,
+body.sepia-theme .zw-blog-content h5,
+body.sepia-theme .zw-blog-content h6,
+html[data-theme="sepia"] .zw-blog-content h1,
+html[data-theme="sepia"] .zw-blog-content h2,
+html[data-theme="sepia"] .zw-blog-content h3,
+html[data-theme="sepia"] .zw-blog-content h4,
+html[data-theme="sepia"] .zw-blog-content h5,
+html[data-theme="sepia"] .zw-blog-content h6,
 body.light-theme .zw-blog-prose h1,
 body.light-theme .zw-blog-prose h2,
 body.light-theme .zw-blog-prose h3,
@@ -93,20 +192,43 @@ html[data-theme="light"] .zw-blog-prose h3,
 html[data-theme="light"] .zw-blog-prose h4,
 html[data-theme="light"] .zw-blog-prose h5,
 html[data-theme="light"] .zw-blog-prose h6,
+body.sepia-theme .zw-blog-prose h1,
+body.sepia-theme .zw-blog-prose h2,
+body.sepia-theme .zw-blog-prose h3,
+body.sepia-theme .zw-blog-prose h4,
+body.sepia-theme .zw-blog-prose h5,
+body.sepia-theme .zw-blog-prose h6,
+html[data-theme="sepia"] .zw-blog-prose h1,
+html[data-theme="sepia"] .zw-blog-prose h2,
+html[data-theme="sepia"] .zw-blog-prose h3,
+html[data-theme="sepia"] .zw-blog-prose h4,
+html[data-theme="sepia"] .zw-blog-prose h5,
+html[data-theme="sepia"] .zw-blog-prose h6,
 .zw-blog-content-wrapper.light-mode h1,
 .zw-blog-content-wrapper.light-mode h2,
 .zw-blog-content-wrapper.light-mode h3,
 .zw-blog-content-wrapper.light-mode h4,
 .zw-blog-content-wrapper.light-mode h5,
-.zw-blog-content-wrapper.light-mode h6 {
+.zw-blog-content-wrapper.light-mode h6,
+.zw-blog-content-wrapper.sepia-mode h1,
+.zw-blog-content-wrapper.sepia-mode h2,
+.zw-blog-content-wrapper.sepia-mode h3,
+.zw-blog-content-wrapper.sepia-mode h4,
+.zw-blog-content-wrapper.sepia-mode h5,
+.zw-blog-content-wrapper.sepia-mode h6 {
   color: #0f172a !important;
 }
 
 body.light-theme .zw-blog-content blockquote,
 html[data-theme="light"] .zw-blog-content blockquote,
+body.sepia-theme .zw-blog-content blockquote,
+html[data-theme="sepia"] .zw-blog-content blockquote,
 body.light-theme .zw-blog-prose blockquote,
 html[data-theme="light"] .zw-blog-prose blockquote,
-.zw-blog-content-wrapper.light-mode blockquote {
+body.sepia-theme .zw-blog-prose blockquote,
+html[data-theme="sepia"] .zw-blog-prose blockquote,
+.zw-blog-content-wrapper.light-mode blockquote,
+.zw-blog-content-wrapper.sepia-mode blockquote {
   background: rgba(147, 51, 234, 0.06) !important;
   border-left: 4px solid var(--brand-purple) !important;
   color: #1e293b !important;
@@ -114,9 +236,14 @@ html[data-theme="light"] .zw-blog-prose blockquote,
 
 body.light-theme .zw-blog-content a,
 html[data-theme="light"] .zw-blog-content a,
+body.sepia-theme .zw-blog-content a,
+html[data-theme="sepia"] .zw-blog-content a,
 body.light-theme .zw-blog-prose a,
 html[data-theme="light"] .zw-blog-prose a,
-.zw-blog-content-wrapper.light-mode a {
+body.sepia-theme .zw-blog-prose a,
+html[data-theme="sepia"] .zw-blog-prose a,
+.zw-blog-content-wrapper.light-mode a,
+.zw-blog-content-wrapper.sepia-mode a {
   color: #7c3aed !important;
 }
 
@@ -255,6 +382,13 @@ h1, h2, h3, h4, h5, h6, .section-title {
   position: relative;
   line-height: 1.22;
   letter-spacing: -0.2px;
+}
+
+body.light-theme .section-title,
+body.sepia-theme .section-title,
+html[data-theme="light"] .section-title,
+html[data-theme="sepia"] .section-title {
+  color: #111827 !important;
 }
 
 @media (max-width: 640px) {
@@ -596,21 +730,37 @@ h1, h2, h3, h4, h5, h6, .section-title {
   transition: all 0.2s ease !important;
 }
 
-body:not(.light-theme) .zw-blog-faq,
+body.dark-theme .zw-blog-faq,
 .dark .zw-blog-faq,
 [data-theme='dark'] .zw-blog-faq {
   background: rgba(255, 255, 255, 0.04) !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
-body:not(.light-theme) .zw-blog-faq:hover,
+body.light-theme .zw-blog-faq,
+body.sepia-theme .zw-blog-faq,
+[data-theme='light'] .zw-blog-faq,
+[data-theme='sepia'] .zw-blog-faq {
+  background: rgba(0, 0, 0, 0.03) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+body.dark-theme .zw-blog-faq:hover,
 .dark .zw-blog-faq:hover,
 [data-theme='dark'] .zw-blog-faq:hover {
   background: rgba(255, 255, 255, 0.07) !important;
   border-color: rgba(168, 85, 247, 0.45) !important;
 }
 
-body:not(.light-theme) .zw-blog-faq[open],
+body.light-theme .zw-blog-faq:hover,
+body.sepia-theme .zw-blog-faq:hover,
+[data-theme='light'] .zw-blog-faq:hover,
+[data-theme='sepia'] .zw-blog-faq:hover {
+  background: rgba(0, 0, 0, 0.05) !important;
+  border-color: rgba(168, 85, 247, 0.45) !important;
+}
+
+body.dark-theme .zw-blog-faq[open],
 .dark .zw-blog-faq[open],
 [data-theme='dark'] .zw-blog-faq[open] {
   background: rgba(255, 255, 255, 0.06) !important;
@@ -618,7 +768,16 @@ body:not(.light-theme) .zw-blog-faq[open],
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
 }
 
-body:not(.light-theme) .zw-blog-faq-question,
+body.light-theme .zw-blog-faq[open],
+body.sepia-theme .zw-blog-faq[open],
+[data-theme='light'] .zw-blog-faq[open],
+[data-theme='sepia'] .zw-blog-faq[open] {
+  background: rgba(0, 0, 0, 0.04) !important;
+  border-color: rgba(168, 85, 247, 0.55) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06) !important;
+}
+
+body.dark-theme .zw-blog-faq-question,
 .dark .zw-blog-faq-question,
 [data-theme='dark'] .zw-blog-faq-question {
   color: #ffffff !important;
@@ -628,13 +787,31 @@ body:not(.light-theme) .zw-blog-faq-question,
   outline: none !important;
 }
 
-body:not(.light-theme) .zw-blog-faq[open] .zw-blog-faq-question,
+body.light-theme .zw-blog-faq-question,
+body.sepia-theme .zw-blog-faq-question,
+[data-theme='light'] .zw-blog-faq-question,
+[data-theme='sepia'] .zw-blog-faq-question {
+  color: #111827 !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  font-size: 1.05rem !important;
+  outline: none !important;
+}
+
+body.dark-theme .zw-blog-faq[open] .zw-blog-faq-question,
 .dark .zw-blog-faq[open] .zw-blog-faq-question,
 [data-theme='dark'] .zw-blog-faq[open] .zw-blog-faq-question {
   color: #c084fc !important;
 }
 
-body:not(.light-theme) .zw-blog-faq-answer,
+body.light-theme .zw-blog-faq[open] .zw-blog-faq-question,
+body.sepia-theme .zw-blog-faq[open] .zw-blog-faq-question,
+[data-theme='light'] .zw-blog-faq[open] .zw-blog-faq-question,
+[data-theme='sepia'] .zw-blog-faq[open] .zw-blog-faq-question {
+  color: #9333ea !important;
+}
+
+body.dark-theme .zw-blog-faq-answer,
 .dark .zw-blog-faq-answer,
 [data-theme='dark'] .zw-blog-faq-answer {
   color: rgba(255, 255, 255, 0.82) !important;
@@ -643,6 +820,18 @@ body:not(.light-theme) .zw-blog-faq-answer,
   font-size: 0.98rem !important;
   padding-top: 8px !important;
   border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.light-theme .zw-blog-faq-answer,
+body.sepia-theme .zw-blog-faq-answer,
+[data-theme='light'] .zw-blog-faq-answer,
+[data-theme='sepia'] .zw-blog-faq-answer {
+  color: #4b5563 !important;
+  margin-top: 12px !important;
+  line-height: 1.7 !important;
+  font-size: 0.98rem !important;
+  padding-top: 8px !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
 
 /* Remove divider lines after blog headings */
@@ -682,18 +871,24 @@ body:not(.light-theme) .zw-blog-faq-answer,
 }
 
 /* Ensure bright, clear contrast for italicized words in dark & light themes */
-body:not(.light-theme) .zw-cosmic-rich-content em,
-body:not(.light-theme) .zw-cosmic-rich-content i,
-body:not(.light-theme) .zw-cosmic-rich-content cite,
+body.dark-theme .zw-cosmic-rich-content em,
+body.dark-theme .zw-cosmic-rich-content i,
+body.dark-theme .zw-cosmic-rich-content cite,
 .dark .zw-cosmic-rich-content em,
-.dark .zw-cosmic-rich-content i {
+.dark .zw-cosmic-rich-content i,
+[data-theme='dark'] .zw-cosmic-rich-content em,
+[data-theme='dark'] .zw-cosmic-rich-content i {
   color: #ffffff !important;
 }
 
 body.light-theme .zw-cosmic-rich-content em,
 body.light-theme .zw-cosmic-rich-content i,
+body.sepia-theme .zw-cosmic-rich-content em,
+body.sepia-theme .zw-cosmic-rich-content i,
 html[data-theme='light'] .zw-cosmic-rich-content em,
-html[data-theme='light'] .zw-cosmic-rich-content i {
+html[data-theme='light'] .zw-cosmic-rich-content i,
+html[data-theme='sepia'] .zw-cosmic-rich-content em,
+html[data-theme='sepia'] .zw-cosmic-rich-content i {
   color: #0f172a !important;
 }
 
@@ -702,17 +897,23 @@ html[data-theme='light'] .zw-cosmic-rich-content i {
   font-weight: 700 !important;
 }
 
-body:not(.light-theme) .zw-cosmic-rich-content strong,
-body:not(.light-theme) .zw-cosmic-rich-content b,
+body.dark-theme .zw-cosmic-rich-content strong,
+body.dark-theme .zw-cosmic-rich-content b,
 .dark .zw-cosmic-rich-content strong,
-.dark .zw-cosmic-rich-content b {
+.dark .zw-cosmic-rich-content b,
+[data-theme='dark'] .zw-cosmic-rich-content strong,
+[data-theme='dark'] .zw-cosmic-rich-content b {
   color: #ffffff !important;
 }
 
 body.light-theme .zw-cosmic-rich-content strong,
 body.light-theme .zw-cosmic-rich-content b,
+body.sepia-theme .zw-cosmic-rich-content strong,
+body.sepia-theme .zw-cosmic-rich-content b,
 html[data-theme='light'] .zw-cosmic-rich-content strong,
-html[data-theme='light'] .zw-cosmic-rich-content b {
+html[data-theme='light'] .zw-cosmic-rich-content b,
+html[data-theme='sepia'] .zw-cosmic-rich-content strong,
+html[data-theme='sepia'] .zw-cosmic-rich-content b {
   color: #0f172a !important;
 }
 
