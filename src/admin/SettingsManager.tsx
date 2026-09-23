@@ -12,7 +12,8 @@ import {
   FolderOpen,
   Sparkles,
   X,
-  FileCode
+  FileCode,
+  Type
 } from 'lucide-react';
 import { settingsService, DEFAULT_SITE_SETTINGS, SiteSettings } from '../lib/settingsService';
 import { blogClient } from '../lib/blogClient';
@@ -23,7 +24,7 @@ export default function SettingsManager() {
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SITE_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeSubTab, setActiveSubTab] = useState<'og' | 'rss' | 'brand'>('og');
+  const [activeSubTab, setActiveSubTab] = useState<'og' | 'rss' | 'brand' | 'reading'>('og');
   const [previewPlatform, setPreviewPlatform] = useState<'twitter' | 'facebook'>('twitter');
 
   // Media Library & Upload States
@@ -263,6 +264,29 @@ export default function SettingsManager() {
           <Globe size={15} color={activeSubTab === 'brand' ? '#0f172a' : '#64748b'} />
           <span>Branding &amp; Social Links</span>
         </button>
+
+        <button
+          onClick={() => setActiveSubTab('reading')}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            background: activeSubTab === 'reading' ? '#ffcc00' : '#ffffff',
+            color: activeSubTab === 'reading' ? '#0f172a' : '#64748b',
+            border: '1px solid',
+            borderColor: activeSubTab === 'reading' ? '#ffcc00' : '#e2e8f0',
+            padding: '8px 16px',
+            borderRadius: '8px',
+            fontSize: '13px',
+            fontWeight: activeSubTab === 'reading' ? 600 : 500,
+            cursor: 'pointer',
+            boxShadow: activeSubTab === 'reading' ? '0 2px 8px rgba(255, 204, 0, 0.35)' : 'none',
+            transition: 'all 0.15s ease'
+          }}
+        >
+          <Type size={15} color={activeSubTab === 'reading' ? '#0f172a' : '#64748b'} />
+          <span>Blog &amp; Reading Settings</span>
+        </button>
       </div>
 
       {/* Hidden File Input for Image Upload */}
@@ -301,7 +325,7 @@ export default function SettingsManager() {
                 type="text"
                 value={settings.siteTitle}
                 onChange={e => handleChange('siteTitle', e.target.value)}
-                placeholder="Zwosmos — Exploring the Cosmos & Deep Space"
+                placeholder="Zwosmos - Exploring the Cosmos & Deep Space"
                 style={{
                   width: '100%',
                   padding: '10px 14px',
@@ -845,7 +869,7 @@ export default function SettingsManager() {
                 type="text"
                 value={settings.rssTitle}
                 onChange={e => handleChange('rssTitle', e.target.value)}
-                placeholder="Zwosmos — Cosmic Dispatch Feed"
+                placeholder="Zwosmos - Cosmic Dispatch Feed"
                 style={{
                   width: '100%',
                   padding: '10px 14px',
@@ -1122,6 +1146,172 @@ export default function SettingsManager() {
                     boxSizing: 'border-box'
                   }}
                 />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 4. BLOG & READING EXPERIENCE SECTION */}
+      {/* ========================================================================= */}
+      {activeSubTab === 'reading' && (
+        <div style={{ maxWidth: '860px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {/* Main Card */}
+          <div
+            style={{
+              background: '#ffffff',
+              border: '1px solid #e2e8f0',
+              borderRadius: '14px',
+              padding: '24px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px'
+            }}
+          >
+            <div>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#0f172a', margin: '0 0 6px 0' }}>
+                Editorial Typography &amp; Reading Presentation
+              </h2>
+              <p style={{ color: '#64748b', fontSize: '13px', margin: 0, lineHeight: 1.5 }}>
+                Configure global reading experience preferences for article pages. Changes take effect across all published and draft articles immediately.
+              </p>
+            </div>
+
+            {/* Toggle Card */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '18px 20px',
+                borderRadius: '12px',
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                gap: '16px'
+              }}
+            >
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '1.25rem' }}>🔤</span>
+                  <label
+                    htmlFor="toggle-drop-cap-settings"
+                    style={{
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      color: '#0f172a',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Opening Paragraph Drop Cap
+                  </label>
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      background: settings.enableDropCap !== false ? '#dcfce7' : '#f1f5f9',
+                      color: settings.enableDropCap !== false ? '#15803d' : '#64748b'
+                    }}
+                  >
+                    {settings.enableDropCap !== false ? 'Active' : 'Disabled'}
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: '12.5px', color: '#64748b', lineHeight: 1.5 }}>
+                  Renders an oversized, elegant serif initial letter on the opening paragraph of each blog dispatch. Turn this <strong>OFF</strong> if you prefer standard uniform paragraph text without touching any code.
+                </p>
+              </div>
+
+              {/* Styled Interactive Switch */}
+              <button
+                type="button"
+                id="toggle-drop-cap-settings"
+                role="switch"
+                aria-checked={settings.enableDropCap !== false}
+                onClick={() => handleChange('enableDropCap', settings.enableDropCap === false ? true : false)}
+                style={{
+                  position: 'relative',
+                  width: '52px',
+                  height: '28px',
+                  borderRadius: '14px',
+                  background: settings.enableDropCap !== false ? '#ffcc00' : '#cbd5e1',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '2px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  boxShadow: settings.enableDropCap !== false ? '0 2px 8px rgba(255, 204, 0, 0.4)' : 'none',
+                  transition: 'background 0.25s ease'
+                }}
+              >
+                <div
+                  style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    background: '#ffffff',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                    transform: settings.enableDropCap !== false ? 'translateX(24px)' : 'translateX(0px)',
+                    transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
+                  }}
+                />
+              </button>
+            </div>
+
+            {/* Live Visual Preview */}
+            <div style={{ marginTop: '8px' }}>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Live Appearance Preview
+              </div>
+              <div
+                style={{
+                  padding: '24px 28px',
+                  borderRadius: '12px',
+                  background: '#0b0d17',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  color: '#ffffff',
+                  boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.4)'
+                }}
+              >
+                <div style={{ fontSize: '11px', color: '#ffcc00', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '12px', fontFamily: "'Playfair Display', serif" }}>
+                  ✦ Sample Article Body
+                </div>
+                <div
+                  style={{
+                    fontFamily: "'Lora', Georgia, serif",
+                    fontSize: '1.08rem',
+                    lineHeight: 1.85,
+                    color: 'rgba(255, 255, 255, 0.88)'
+                  }}
+                >
+                  <p style={{ margin: 0 }}>
+                    {settings.enableDropCap !== false ? (
+                      <>
+                        <span
+                          style={{
+                            float: 'left',
+                            fontFamily: "'Playfair Display', Georgia, serif",
+                            fontSize: '3.6rem',
+                            lineHeight: 0.82,
+                            fontWeight: 700,
+                            marginRight: '0.55rem',
+                            marginTop: '0.12em',
+                            marginBottom: '-0.05em',
+                            color: '#ffffff',
+                            textTransform: 'uppercase'
+                          }}
+                        >
+                          M
+                        </span>
+                        ore than half a century after Apollo, human space exploration is entering a decisive new era. Rather than fleeting visits to plant flags, the Artemis accords and Lunar Gateway infrastructure aim to establish sustained scientific expeditions at the Moon's permanently shadowed south pole.
+                      </>
+                    ) : (
+                      "More than half a century after Apollo, human space exploration is entering a decisive new era. Rather than fleeting visits to plant flags, the Artemis accords and Lunar Gateway infrastructure aim to establish sustained scientific expeditions at the Moon's permanently shadowed south pole."
+                    )}
+                  </p>
+                </div>
               </div>
             </div>
           </div>

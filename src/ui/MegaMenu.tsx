@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
-import { useMobile } from '../contexts/MobileContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { settingsService, DEFAULT_SITE_SETTINGS, SiteSettings } from '../lib/settingsService';
 
@@ -97,7 +96,18 @@ export const ALL_MEGA_MENU_ITEMS: MenuItem[] = [
 ];
 
 export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
-  const { isMobile } = useMobile();
+  // Pure screen width tracking independent of DevTools touch emulation
+  const [winWidth, setWinWidth] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1200));
+
+  useEffect(() => {
+    const handleResize = () => setWinWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Only mobile and small tab view (<= 800px) use mobile single-column drawer; rest every other screen uses desktop 3-column menu
+  const isMobile = winWidth <= 800;
+  const isCompact = winWidth > 800 && winWidth < 1180;
   const { isSepia, isDark } = useTheme();
   const currentIsDark = isDark;
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SITE_SETTINGS);
@@ -149,12 +159,12 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: isMobile ? '14px' : '52px',
+        gap: isMobile ? '14px' : (isCompact ? '32px' : '52px'),
         borderRight: (!isMobile && hasRightBorder)
           ? (currentIsDark ? '1px solid rgba(255, 255, 255, 0.08)' : (isSepia ? '1px solid rgba(217, 119, 6, 0.18)' : '1px solid rgba(0, 0, 0, 0.08)'))
           : 'none',
-        paddingRight: (!isMobile && hasRightBorder) ? '48px' : '0px',
-        paddingLeft: (!isMobile && hasLeftPadding) ? '48px' : '0px',
+        paddingRight: (!isMobile && hasRightBorder) ? (isCompact ? '24px' : '48px') : '0px',
+        paddingLeft: (!isMobile && hasLeftPadding) ? (isCompact ? '24px' : '48px') : '0px',
         boxSizing: 'border-box'
       }}
     >
@@ -166,7 +176,7 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '18px',
+            gap: isMobile ? '18px' : (isCompact ? '14px' : '18px'),
             textDecoration: 'none',
             background: 'transparent',
             border: 'none',
@@ -200,9 +210,9 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
           {/* Free-floating Graphic/Image Thumbnail (Unboxed, No Card Frame) */}
           <div
             style={{
-              width: isMobile ? '48px' : '76px',
-              height: isMobile ? '48px' : '76px',
-              minWidth: isMobile ? '48px' : '76px',
+              width: isMobile ? '48px' : (isCompact ? '60px' : '76px'),
+              height: isMobile ? '48px' : (isCompact ? '60px' : '76px'),
+              minWidth: isMobile ? '48px' : (isCompact ? '60px' : '76px'),
               borderRadius: '16px',
               overflow: 'hidden',
               display: 'flex',
@@ -237,7 +247,7 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
               style={{
                 margin: '0 0 6px',
                 fontFamily: "'Playfair Display', serif",
-                fontSize: isMobile ? '0.95rem' : '1.34rem',
+                fontSize: isMobile ? '0.95rem' : (isCompact ? '1.15rem' : '1.34rem'),
                 fontWeight: 700,
                 color: currentIsDark ? '#ffffff' : '#111827',
                 lineHeight: 1.2,
@@ -251,7 +261,7 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
               style={{
                 margin: 0,
                 fontFamily: "'Lora', serif",
-                fontSize: isMobile ? '0.72rem' : '0.86rem',
+                fontSize: isMobile ? '0.72rem' : (isCompact ? '0.8rem' : '0.86rem'),
                 color: currentIsDark ? '#94a3b8' : (isSepia ? '#57534e' : '#64748b'),
                 lineHeight: 1.42,
                 transition: 'color 0.2s ease'
@@ -321,7 +331,7 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        padding: isMobile ? '24px 18px 24px' : '36px 48px 32px',
+        padding: isMobile ? '24px 18px 24px' : (isCompact ? '28px 32px 24px' : '36px 48px 32px'),
         animation: 'megaOverlayFade 0.22s cubic-bezier(0.16, 1, 0.3, 1)'
       }}
     >
@@ -357,7 +367,7 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
             src={currentIsDark ? '/assets/icons/Zwosmos_Logo_Light.svg' : '/assets/icons/Zwosmos_Logo_Dark.svg'}
             alt="7WOSMOS - LOOK UP. THINK BEYOND."
             style={{
-              width: isMobile ? '140px' : '340px',
+              width: isMobile ? '140px' : (isCompact ? '260px' : '340px'),
               maxWidth: '75vw',
               height: 'auto',
               display: 'block',
@@ -437,7 +447,7 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
           width: '100%',
           maxWidth: '1360px',
           margin: '0 auto',
-          padding: isMobile ? '8px 0 16px' : '40px 0 60px',
+          padding: isMobile ? '8px 0 16px' : (isCompact ? '24px 0 36px' : '40px 0 60px'),
           boxSizing: 'border-box',
           flex: 1,
           display: 'flex',

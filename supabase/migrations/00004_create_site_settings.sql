@@ -3,7 +3,7 @@
 
 CREATE TABLE IF NOT EXISTS public.site_settings (
   id TEXT PRIMARY KEY DEFAULT 'global',
-  site_title TEXT NOT NULL DEFAULT 'Zwosmos — Exploring the Cosmos & Deep Space',
+  site_title TEXT NOT NULL DEFAULT 'Zwosmos - Exploring the Cosmos & Deep Space',
   site_description TEXT NOT NULL DEFAULT 'Deep space explorations, astrophysical discoveries, cosmic mechanics, and astronomical wonders from across the universe.',
   site_url TEXT NOT NULL DEFAULT 'https://zwosmos.com',
   og_image TEXT DEFAULT 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&auto=format&fit=crop&q=80',
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS public.site_settings (
   keywords TEXT DEFAULT 'astronomy, astrophysics, cosmology, space exploration, stargazing, universe, black holes',
   author_name TEXT DEFAULT 'Zwosmos Editorial',
   contact_email TEXT DEFAULT 'contact@zwosmos.com',
-  rss_title TEXT DEFAULT 'Zwosmos — Cosmic Dispatch Feed',
+  rss_title TEXT DEFAULT 'Zwosmos - Cosmic Dispatch Feed',
   rss_description TEXT DEFAULT 'Latest cosmology, space discoveries, and astronomical observations from Zwosmos.',
   rss_language TEXT DEFAULT 'en-US',
   social_instagram TEXT DEFAULT 'https://instagram.com/zwosmos',

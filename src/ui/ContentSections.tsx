@@ -3,6 +3,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { Link } from 'react-router-dom';
 import { BlogCard } from './BlogCard';
 import Footer from './Footer';
+import ZwosmosIcon from './ZwosmosIcon';
 import { useBlogPosts } from '@zwantum/blog/react';
 import { BookItem, booksService, INITIAL_BOOKS, getDailyOrbitBooks } from '../lib/booksService';
 
@@ -182,12 +183,15 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
       {/* ========================================================================= */}
       <section className="content-section">
         <div className="section-container">
+          {/* Section Yellow Accent Divider */}
+          <div className="section-divider" />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: isSmallTab ? '20px' : '35px', flexWrap: 'wrap', gap: '15px' }}>
             <div>
-              <div style={{ color: 'var(--brand-purple)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '6px' }}>
-                ✦ Stellar Expeditions
+              <div style={{ color: 'var(--brand-purple)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <ZwosmosIcon size={12} color="var(--brand-purple)" />
+                <span>Stellar Expeditions</span>
               </div>
-              <h2 className="section-title" style={{ marginBottom: 0, color: isLight ? '#111827' : '#ffffff' }}>Deep Space Chronicles</h2>
+              <h2 className="section-title" style={{ margin: 0, color: isLight ? '#111827' : '#ffffff' }}>Deep Space Chronicles</h2>
             </div>
             <Link to="/universe" style={{ color: 'var(--brand-purple)', textDecoration: 'none', fontWeight: 600, letterSpacing: '2px', fontSize: '0.86rem' }}>
               VIEW ALL IN DEEP SPACE &rarr;
@@ -217,12 +221,15 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
       {/* ========================================================================= */}
       <section className="content-section">
         <div className="section-container">
+          {/* Section Yellow Accent Divider */}
+          <div className="section-divider" />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: isSmallTab ? '20px' : '35px', flexWrap: 'wrap', gap: '15px' }}>
             <div>
-              <div style={{ color: 'var(--brand-purple)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '6px' }}>
-                ✦ Astrophysical Instrumentation
+              <div style={{ color: 'var(--brand-purple)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <ZwosmosIcon size={12} color="var(--brand-purple)" />
+                <span>Astrophysical Instrumentation</span>
               </div>
-              <h2 className="section-title" style={{ marginBottom: 0, color: isLight ? '#111827' : '#ffffff' }}>Technology & Observatories</h2>
+              <h2 className="section-title" style={{ margin: 0, color: isLight ? '#111827' : '#ffffff' }}>Technology & Observatories</h2>
             </div>
             <Link to="/telescopes-technology" style={{ color: 'var(--brand-purple)', textDecoration: 'none', fontWeight: 600, letterSpacing: '2px', fontSize: '0.86rem' }}>
               VIEW ALL IN TECHNOLOGY &rarr;
@@ -285,12 +292,15 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
       {/* ========================================================================= */}
       <section className="content-section">
         <div className="section-container">
+          {/* Section Yellow Accent Divider */}
+          <div className="section-divider" />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: isSmallTab ? '20px' : '35px', flexWrap: 'wrap', gap: '15px' }}>
             <div>
-              <div style={{ color: 'var(--brand-purple)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '6px' }}>
-                ✦ Planetary Explorations
+              <div style={{ color: 'var(--brand-purple)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <ZwosmosIcon size={12} color="var(--brand-purple)" />
+                <span>Planetary Explorations</span>
               </div>
-              <h2 className="section-title" style={{ marginBottom: 0, color: isLight ? '#111827' : '#ffffff' }}>Solar System & Planetary Frontiers</h2>
+              <h2 className="section-title" style={{ margin: 0, color: isLight ? '#111827' : '#ffffff' }}>Solar System & Planetary Frontiers</h2>
             </div>
             <Link to="/solar-system" style={{ color: 'var(--brand-purple)', textDecoration: 'none', fontWeight: 600, letterSpacing: '2px', fontSize: '0.86rem' }}>
               VIEW ALL IN SOLAR SYSTEM &rarr;
@@ -348,11 +358,14 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
       {/* ========================================================================= */}
       <section className="content-section" style={{ padding: isLargeView ? '32px 20px 36px 20px' : isSmallPhone ? '50px 20px' : isSmallTab ? '64px 20px 70px 20px' : '80px 20px 90px 20px' }}>
         <div className="section-container">
+          {/* Section Yellow Accent Divider */}
+          <div className="section-divider" />
           <div style={{ marginBottom: isLargeView ? '26px' : isSmallPhone ? '32px' : isSmallTab ? '38px' : '48px' }}>
-            <div style={{ color: 'var(--brand-purple)', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '2.5px', textTransform: 'uppercase', marginBottom: '8px' }}>
-              ✦ Cosmic Compendium
+            <div style={{ color: 'var(--brand-purple)', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '2.5px', textTransform: 'uppercase', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <ZwosmosIcon size={12} color="var(--brand-purple)" />
+              <span>Cosmic Compendium</span>
             </div>
-            <h2 className="section-title" style={{ marginBottom: 0, color: isLight ? '#111827' : '#ffffff' }}>
+            <h2 className="section-title" style={{ margin: 0, color: isLight ? '#111827' : '#ffffff' }}>
               Explore by Topic
             </h2>
           </div>
@@ -501,8 +514,10 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
       {/* Reading Orbit Section */}
       <section className="content-section">
         <div className="section-container">
+          {/* Section Yellow Accent Divider */}
+          <div className="section-divider" />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '40px', flexWrap: 'wrap', gap: '15px' }}>
-            <h2 className="section-title" style={{ marginBottom: 0, color: isLight ? '#111827' : '#ffffff' }}>The Reading Orbit</h2>
+            <h2 className="section-title" style={{ margin: 0, color: isLight ? '#111827' : '#ffffff' }}>The Reading Orbit</h2>
             <Link
               to="/books"
               style={{

@@ -6,6 +6,7 @@ import Header from './Header';
 import SoftAurora from './SoftAurora';
 import Aurora from './Aurora';
 import { useBlogPosts } from '@zwantum/blog/react';
+import ZwosmosIcon from './ZwosmosIcon';
 
 class SafeAuroraBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
   constructor(props: { children: React.ReactNode }) {
@@ -183,23 +184,15 @@ export const HeroSection: React.FC = () => {
                 position: 'relative',
                 borderRadius: isMobile ? '18px' : '26px',
                 overflow: 'hidden',
-                boxShadow: isLight
-                  ? '0 10px 30px rgba(0, 0, 0, 0.08)'
-                  : '0 20px 48px rgba(0, 0, 0, 0.75), 0 0 20px rgba(147, 51, 234, 0.15)',
+                boxShadow: 'none',
                 border: isLight ? '1px solid #e5e7eb' : '1px solid rgba(255, 255, 255, 0.14)',
-                transition: 'transform 0.35s ease, box-shadow 0.35s ease'
+                transition: 'transform 0.35s ease'
               }}
               onMouseOver={e => {
                 e.currentTarget.style.transform = 'translateY(-4px)';
-                e.currentTarget.style.boxShadow = isLight
-                  ? '0 16px 36px rgba(0, 0, 0, 0.12)'
-                  : '0 24px 56px rgba(0, 0, 0, 0.85), 0 0 30px rgba(147, 51, 234, 0.3)';
               }}
               onMouseOut={e => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = isLight
-                  ? '0 10px 30px rgba(0, 0, 0, 0.08)'
-                  : '0 20px 48px rgba(0, 0, 0, 0.75), 0 0 20px rgba(147, 51, 234, 0.15)';
               }}
             >
               {featuredImg && (
@@ -238,7 +231,8 @@ export const HeroSection: React.FC = () => {
                     gap: '6px'
                   }}
                 >
-                  ✦ FEATURED • {featuredCategory}
+                  <ZwosmosIcon size={12} color="var(--brand-purple)" />
+                  <span>FEATURED • {featuredCategory}</span>
                 </div>
               )}
 

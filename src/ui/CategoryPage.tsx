@@ -5,9 +5,9 @@ import { useTheme } from '../contexts/ThemeContext';
 import { BlogCard } from './BlogCard';
 import Header from './Header';
 import Footer from './Footer';
+import ZwosmosIcon from './ZwosmosIcon';
 import {
-  getCategoryBySlug,
-  getPostsByCategorySlug
+  getCategoryBySlug
 } from '../data/blogData';
 import { useBlogPosts } from '@zwantum/blog/react';
 import { useSEO } from '../lib/seoService';
@@ -38,7 +38,26 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ slug: propSlug }) =>
   const isPhone = winWidth < 600;
 
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const { posts: livePosts } = useBlogPosts();
+  const { posts: livePosts, loading } = useBlogPosts();
+
+  // Read cached live posts synchronously to prevent any reload flash of empty or fallback content
+  const cachedPosts = useMemo(() => {
+    try {
+      const raw = sessionStorage.getItem('zw_cached_all_posts');
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return null;
+  }, []);
+
+  useEffect(() => {
+    if (livePosts && livePosts.length > 0) {
+      try {
+        sessionStorage.setItem('zw_cached_all_posts', JSON.stringify(livePosts));
+      } catch {}
+    }
+  }, [livePosts]);
+
+  const activeLivePosts = (livePosts && livePosts.length > 0) ? livePosts : (cachedPosts || []);
 
   // Current category info
   const currentCategory = useMemo(() => {
@@ -52,38 +71,36 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ slug: propSlug }) =>
     type: 'website'
   });
 
-  // Posts belonging to this category (dynamically matched from Supabase, or fallback)
+  // Posts belonging strictly to this category (only real live posts, no mock fallback)
   const categoryPosts = useMemo(() => {
-    if (livePosts && livePosts.length > 0) {
-      const matched = livePosts.filter(p => {
+    if (activeLivePosts && activeLivePosts.length > 0) {
+      const matched = activeLivePosts.filter((p: any) => {
         return (
           p.categories?.some(
-            c =>
+            (c: any) =>
               c.slug?.toLowerCase() === activeSlug.toLowerCase() ||
               c.slug?.toLowerCase() === currentCategory.slug.toLowerCase() ||
               c.name?.toLowerCase() === currentCategory.name.toLowerCase()
           ) || false
         );
       });
-      if (matched.length > 0) {
-        return matched.map(post => ({
-          id: post.slug || post.id,
-          category: post.categories?.[0]?.name || currentCategory.name,
-          categorySlug: post.categories?.[0]?.slug || currentCategory.slug,
-          title: post.title,
-          desc: post.excerpt || '',
-          img: post.featured_image?.url || currentCategory.heroImg,
-          authorName: post.author?.name || 'Editorial Team',
-          authorImg: post.author?.profile_image_url || undefined,
-          date: post.published_at
-            ? new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-            : 'Recent',
-          readTime: `${post.reading_time || 5} min read`
-        }));
-      }
+      return matched.map((post: any) => ({
+        id: post.slug || post.id,
+        category: post.categories?.[0]?.name || currentCategory.name,
+        categorySlug: post.categories?.[0]?.slug || currentCategory.slug,
+        title: post.title,
+        desc: post.excerpt || '',
+        img: (typeof post.featured_image?.url === 'string' ? post.featured_image.url : '') || (typeof post.custom_fields?.featured_image_url === 'string' ? post.custom_fields.featured_image_url : '') || currentCategory.heroImg,
+        authorName: post.author?.name || 'Editorial Team',
+        authorImg: post.author?.profile_image_url || undefined,
+        date: post.published_at
+          ? new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+          : 'Recent',
+        readTime: `${post.reading_time || 5} min read`
+      }));
     }
-    return getPostsByCategorySlug(currentCategory.slug);
-  }, [livePosts, activeSlug, currentCategory]);
+    return [];
+  }, [activeLivePosts, activeSlug, currentCategory]);
 
   // Reset pagination when category changes
   useEffect(() => {
@@ -174,10 +191,14 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ slug: propSlug }) =>
               fontWeight: 700,
               letterSpacing: '3px',
               textTransform: 'uppercase',
-              marginBottom: '8px'
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
             }}
           >
-            ✦ Cosmic Compendium ✦
+            <ZwosmosIcon size={12} color="var(--brand-purple)" />
+            <span>Cosmic Compendium</span>
+            <ZwosmosIcon size={12} color="var(--brand-purple)" />
           </div>
 
           <h1
@@ -225,7 +246,47 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ slug: propSlug }) =>
         {/* ========================================================================= */}
         {/* 4. ALL POSTS IN GRID VIEW (No single top story)                           */}
         {/* ========================================================================= */}
-        {categoryPosts.length === 0 ? (
+        {loading && categoryPosts.length === 0 ? (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: isPhone
+                ? '1fr'
+                : 'repeat(3, 1fr)',
+              gap: isPhone ? '24px 14px' : (isSmallTab ? '24px 12px' : '32px 20px')
+            }}
+          >
+            <style>{`
+              @keyframes zw-cat-skel {
+                0%, 100% { opacity: 0.35; }
+                50% { opacity: 0.8; }
+              }
+              .zw-cat-skel {
+                animation: zw-cat-skel 1.5s ease-in-out infinite;
+                background: ${isDark ? 'rgba(255, 255, 255, 0.08)' : isSepia ? 'rgba(217, 119, 6, 0.12)' : 'rgba(0, 0, 0, 0.07)'};
+                border-radius: 8px;
+              }
+            `}</style>
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div
+                key={i}
+                style={{
+                  borderRadius: '16px',
+                  border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.08)',
+                  padding: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px'
+                }}
+              >
+                <div className="zw-cat-skel" style={{ width: '100%', height: '180px', borderRadius: '12px' }} />
+                <div className="zw-cat-skel" style={{ width: '35%', height: '12px' }} />
+                <div className="zw-cat-skel" style={{ width: '85%', height: '18px' }} />
+                <div className="zw-cat-skel" style={{ width: '70%', height: '14px' }} />
+              </div>
+            ))}
+          </div>
+        ) : categoryPosts.length === 0 ? (
           <div
             style={{
               textAlign: 'center',
@@ -236,7 +297,7 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ slug: propSlug }) =>
               boxShadow: isLight ? '0 4px 20px rgba(0,0,0,0.05)' : 'none'
             }}
           >
-            <div style={{ fontSize: '2rem', marginBottom: '12px', color: 'var(--brand-purple)' }}>✦</div>
+            <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'center' }}><ZwosmosIcon size={36} color="var(--brand-purple)" /></div>
             <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.5rem', color: isLight ? '#111827' : '#ffffff', marginBottom: '8px' }}>
               No Dispatches in this Category Yet
             </h3>
@@ -270,7 +331,7 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ slug: propSlug }) =>
               gap: isPhone ? '24px 14px' : (isSmallTab ? '24px 12px' : '32px 20px')
             }}
           >
-            {paginatedPosts.map(post => (
+            {paginatedPosts.map((post: any) => (
               <BlogCard
                 key={post.id}
                 id={post.id}

@@ -378,6 +378,7 @@ h1, h2, h3, h4, h5, h6, .section-title {
   font-family: 'Playfair Display', serif;
   font-size: clamp(1.45rem, 1.15rem + 1.6vw, 2.45rem);
   color: white;
+  margin-top: 0;
   margin-bottom: clamp(16px, 2.5vw, 36px);
   position: relative;
   line-height: 1.22;
@@ -448,24 +449,81 @@ html[data-theme="sepia"] .section-title {
   }
 }
 
+/* ========================================================================= */
+/* Responsive Dividers: Home Page Sections & Footer                         */
+/* ========================================================================= */
+.section-divider {
+  width: 100px;
+  height: 2px;
+  background-color: #ffba00;
+  border-radius: 2px;
+  margin-bottom: 22px;
+}
+
+.footer-divider {
+  width: 369px;
+  max-width: 85%;
+  height: 2px;
+  background-color: #ffba00;
+  border-radius: 2px;
+  margin: 0 auto 16px auto;
+}
+
+@media (min-width: 801px) and (max-width: 1024px) {
+  .section-divider {
+    width: 85px !important;
+    margin-bottom: 18px !important;
+  }
+  .footer-divider {
+    width: 290px !important;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 800px) {
+  .section-divider {
+    width: 70px !important;
+    margin-bottom: 16px !important;
+  }
+  .footer-divider {
+    width: 230px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .section-divider {
+    width: 55px !important;
+    margin-bottom: 14px !important;
+  }
+  .footer-divider {
+    width: 170px !important;
+  }
+}
+
 /* Small tab view footer globe positioning (641px - 800px) */
 @media (min-width: 641px) and (max-width: 800px) {
   .footer-globe-img {
-    bottom: -220px !important;
+    bottom: -230px !important;
   }
 }
 
 /* Large tab view footer globe positioning (801px - 1180px) */
 @media (min-width: 801px) and (max-width: 1180px) {
   .footer-globe-img {
-    bottom: -220px !important;
+    bottom: -260px !important;
   }
 }
 
-/* Desktop view footer globe positioning (min-width: 1181px) - lower globe horizon gracefully */
-@media (min-width: 1181px) {
+/* Laptop view footer globe positioning (1181px - 1600px) */
+@media (min-width: 1181px) and (max-width: 1600px) {
   .footer-globe-img {
-    bottom: clamp(-430px, -28vw, -320px) !important;
+    bottom: -350px !important;
+  }
+}
+
+/* Desktop view footer globe positioning (min-width: 1601px) - lower globe horizon gracefully */
+@media (min-width: 1601px) {
+  .footer-globe-img {
+    bottom: clamp(-460px, -28vw, -320px) !important;
   }
 }
 
@@ -957,4 +1015,4 @@ html[data-theme='sepia'] .zw-cosmic-rich-content b {
     padding-right: 80px !important;
   }
 }
-
+

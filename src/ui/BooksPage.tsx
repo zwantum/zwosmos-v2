@@ -3,6 +3,7 @@ import { useMobile } from '../contexts/MobileContext';
 import { useTheme } from '../contexts/ThemeContext';
 import Header from './Header';
 import Footer from './Footer';
+import ZwosmosIcon from './ZwosmosIcon';
 import { BookItem, booksService, INITIAL_BOOKS } from '../lib/booksService';
 import { useSEO } from '../lib/seoService';
 
@@ -107,10 +108,16 @@ export const BooksPage: React.FC = () => {
               fontWeight: 700,
               letterSpacing: '3px',
               textTransform: 'uppercase',
-              marginBottom: '10px'
+              marginBottom: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
             }}
           >
-            ✦ The Reading Orbit Archive ✦
+            <ZwosmosIcon size={12} color="var(--brand-purple)" />
+            <span>The Reading Orbit Archive</span>
+            <ZwosmosIcon size={12} color="var(--brand-purple)" />
           </div>
 
           <h1

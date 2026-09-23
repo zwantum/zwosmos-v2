@@ -5,6 +5,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { BlogCard } from './BlogCard';
 import Header from './Header';
 import Footer from './Footer';
+import ZwosmosIcon from './ZwosmosIcon';
 import { useBlogPosts, useTags } from '@zwantum/blog/react';
 
 const POSTS_PER_PAGE = 12;
@@ -83,7 +84,11 @@ const TagPage: React.FC = () => {
 
         {/* Tag Hero Header */}
         <div style={{ textAlign: 'left', marginBottom: isMobile ? '35px' : '48px', borderBottom: divider, paddingBottom: isMobile ? '24px' : '32px' }}>
-          <div style={{ color: 'var(--brand-purple)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '8px', fontFamily: "'Orbitron', sans-serif" }}>✦ Topic Tag ✦</div>
+          <div style={{ color: 'var(--brand-purple)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '8px', fontFamily: "'Orbitron', sans-serif", display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <ZwosmosIcon size={12} color="var(--brand-purple)" />
+            <span>Topic Tag</span>
+            <ZwosmosIcon size={12} color="var(--brand-purple)" />
+          </div>
           <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: isMobile ? '1.7rem' : '3rem', lineHeight: 1.15, margin: '0 0 14px 0', color: isLight ? '#111827' : '#ffffff', display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
             <span style={{ display: 'inline-block', padding: '4px 18px', borderRadius: '999px', background: 'rgba(147,51,234,0.12)', border: '1px solid rgba(147,51,234,0.4)', fontSize: isMobile ? '1rem' : '1.3rem', letterSpacing: '0.5px', color: 'var(--brand-purple)', fontFamily: "'Lora', serif", fontWeight: 600, fontStyle: 'italic' }}>#{tagName}</span>
             <span>Stories</span>
@@ -117,7 +122,7 @@ const TagPage: React.FC = () => {
         {/* Grid or Empty */}
         {!loading && tagPosts.length === 0 && (
           <div style={{ textAlign: 'center', padding: '70px 20px', background: isLight ? '#ffffff' : 'rgba(255,255,255,0.02)', borderRadius: '16px', border: isLight ? '1px solid #e5e7eb' : '1px solid rgba(255,255,255,0.08)' }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: '14px', color: 'var(--brand-purple)' }}>✦</div>
+            <div style={{ marginBottom: '14px', display: 'flex', justifyContent: 'center' }}><ZwosmosIcon size={40} color="var(--brand-purple)" /></div>
             <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.5rem', color: isLight ? '#111827' : '#ffffff', marginBottom: '10px' }}>No stories tagged "{tagName}"</h3>
             <p style={{ fontFamily: "'Lora', serif", color: isLight ? '#4b5563' : 'rgba(255,255,255,0.6)', fontSize: '0.92rem', margin: '0 auto 20px auto', maxWidth: '380px' }}>No articles with this tag have been published yet.</p>
             <Link to="/blog" style={{ display: 'inline-block', background: 'var(--brand-purple)', color: '#ffffff', textDecoration: 'none', borderRadius: '20px', padding: '9px 22px', fontFamily: "'Orbitron', sans-serif", fontSize: '0.78rem', letterSpacing: '1px' }}>EXPLORE ALL STORIES</Link>

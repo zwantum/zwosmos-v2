@@ -854,16 +854,16 @@ export default function FactsManager() {
                   </h3>
 
                   <div
-                    className="zw-cosmic-rich-content"
+                    className="zw-cosmic-rich-content zw-cosmic-scrollable"
                     style={{
                       fontFamily: "'Lora', Georgia, 'Times New Roman', serif",
                       fontSynthesis: 'weight style',
                       fontSize: '0.95rem',
                       lineHeight: 1.68,
                       color: '#cbd5e1',
-                      maxHeight: '135px',
+                      maxHeight: '145px',
                       overflowY: 'auto',
-                      paddingRight: '6px'
+                      paddingRight: '8px'
                     }}
                     dangerouslySetInnerHTML={{ __html: data.astronomyContent }}
                   />
@@ -881,7 +881,7 @@ export default function FactsManager() {
                 }}
               />
 
-              {/* Right Module: Space Fact */}
+              {/* Right Module: Space Fact (Non-scrollable, full content) */}
               <div>
                 <h3
                   style={{
@@ -905,10 +905,7 @@ export default function FactsManager() {
                     fontSynthesis: 'weight style',
                     fontSize: '0.95rem',
                     lineHeight: 1.68,
-                    color: '#cbd5e1',
-                    maxHeight: '135px',
-                    overflowY: 'auto',
-                    paddingRight: '6px'
+                    color: '#cbd5e1'
                   }}
                   dangerouslySetInnerHTML={{ __html: data.factContent }}
                 />

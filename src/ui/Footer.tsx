@@ -140,14 +140,7 @@ const Footer: React.FC<FooterProps> = ({ isLight: propIsLight }) => {
       <div style={{ position: 'relative', zIndex: 3, width: '100%', maxWidth: '820px', margin: '0 auto' }}>
         {/* Quote / Mission Section */}
         <div style={{ textAlign: 'center', marginBottom: isSmallPhone ? '46px' : isSmallTab ? '56px' : '90px' }}>
-          <div
-            style={{
-              width: '40px',
-              height: '2px',
-              backgroundColor: isSepia ? '#d97706' : 'var(--brand-purple)',
-              margin: '0 auto 16px auto'
-            }}
-          />
+          <div className="footer-divider" />
           <h2
             style={{
               fontFamily: "'Playfair Display', serif",

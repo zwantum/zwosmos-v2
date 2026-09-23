@@ -2,13 +2,15 @@ import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useMobile } from '../contexts/MobileContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { ALL_BLOG_POSTS } from '../data/blogData';
 import Header from './Header';
 import Footer from './Footer';
 import { BlogCard } from './BlogCard';
+import ZwosmosIcon from './ZwosmosIcon';
 import { useBlogPost, useBlogPosts, BlogContent, CommentSection } from '@zwantum/blog/react';
 import '@zwantum/blog-editor/content.css';
 import { useSEO } from '../lib/seoService';
+import { settingsService } from '../lib/settingsService';
+import { blogClient } from '../lib/blogClient';
 
 const BlogPostPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -31,10 +33,77 @@ const BlogPostPage: React.FC = () => {
   const isTablet = isSmallTab || isLargeTab;
   const isPhone = winWidth < 600;
   const isDesktop = winWidth > 1280;
-  const isMobileView = isMobile || winWidth <= 960;
+  const isMobileView = isMobile || isTablet;
+
+  // Global Drop Cap Setting from site_settings / blog_settings / localStorage
+  const [enableDropCap, setEnableDropCap] = useState<boolean>(() => {
+    try {
+      const zwSettings = localStorage.getItem('zwosmos_site_settings');
+      if (zwSettings) {
+        const parsed = JSON.parse(zwSettings);
+        if (parsed.enableDropCap !== undefined) return !!parsed.enableDropCap;
+      }
+      const bDrop = localStorage.getItem('zw_blog_drop_cap');
+      if (bDrop !== null) return bDrop === 'true';
+    } catch {}
+    return true;
+  });
+
+  useEffect(() => {
+    settingsService.getSettings().then(s => {
+      if (s.enableDropCap !== undefined) setEnableDropCap(s.enableDropCap);
+    }).catch(() => {});
+
+    blogClient.settings.get().then((bs: any) => {
+      if (bs?.enableDropCap !== undefined) setEnableDropCap(bs.enableDropCap);
+    }).catch(() => {});
+
+    const handleSettingsUpdated = (e: any) => {
+      if (e.detail?.enableDropCap !== undefined) {
+        setEnableDropCap(e.detail.enableDropCap);
+      }
+    };
+    window.addEventListener('zwosmos_settings_updated', handleSettingsUpdated);
+    return () => window.removeEventListener('zwosmos_settings_updated', handleSettingsUpdated);
+  }, []);
+
   // Fetch live article and all published posts from Supabase via @zwantum/blog
-  const { post } = useBlogPost(id || '');
+  const { post, loading } = useBlogPost(id || '');
   const { posts: allLivePosts } = useBlogPosts();
+
+  // Synchronously read cached post to avoid any flash of empty or fallback content
+  const cachedPost = React.useMemo(() => {
+    if (!id) return null;
+    try {
+      const raw = sessionStorage.getItem(`zw_post_${id}`);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return null;
+  }, [id]);
+
+  useEffect(() => {
+    if (post && id) {
+      try {
+        sessionStorage.setItem(`zw_post_${id}`, JSON.stringify(post));
+        if (post.slug && post.slug !== id) {
+          sessionStorage.setItem(`zw_post_${post.slug}`, JSON.stringify(post));
+        }
+        if (post.id && post.id !== id) {
+          sessionStorage.setItem(`zw_post_${post.id}`, JSON.stringify(post));
+        }
+      } catch {}
+    }
+  }, [post, id]);
+
+  useEffect(() => {
+    if (allLivePosts && allLivePosts.length > 0) {
+      try {
+        sessionStorage.setItem('zw_cached_all_posts', JSON.stringify(allLivePosts));
+      } catch {}
+    }
+  }, [allLivePosts]);
+
+  const activePost = post || cachedPost || (allLivePosts?.find(p => p.slug === id || p.id === id) ?? null);
 
   useLayoutEffect(() => {
     window.scrollTo(0, 0);
@@ -44,7 +113,7 @@ const BlogPostPage: React.FC = () => {
     if (rootEl) rootEl.scrollTop = 0;
   }, [id]);
 
-  // Transform live posts to unified interface or fallback to curated mocks
+  // Transform live posts to unified interface (no mock fallback posts)
   const dynamicPostList = React.useMemo(() => {
     if (allLivePosts && allLivePosts.length > 0) {
       return allLivePosts.map(p => ({
@@ -53,7 +122,7 @@ const BlogPostPage: React.FC = () => {
         categorySlug: p.categories?.[0]?.slug || 'space-news',
         title: p.title,
         desc: p.excerpt || '',
-        img: p.featured_image?.url || 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1000&auto=format&fit=crop',
+        img: (typeof p.featured_image?.url === 'string' ? p.featured_image.url : '') || (typeof p.custom_fields?.featured_image_url === 'string' ? p.custom_fields.featured_image_url : '') || '',
         authorName: p.author?.name || 'Editorial Team',
         authorImg: p.author?.profile_image_url || undefined,
         date: p.published_at
@@ -62,27 +131,27 @@ const BlogPostPage: React.FC = () => {
         readTime: `${p.reading_time || 5} min read`
       }));
     }
-    return ALL_BLOG_POSTS;
+    return [];
   }, [allLivePosts]);
 
-  const currentId = id ? parseInt(id, 10) : 1;
-  const currentIndex = dynamicPostList.findIndex(p => p.id === id || p.id === currentId || p.categorySlug === id);
-  const validIndex = currentIndex >= 0 ? currentIndex : 0;
-  const currentPost = dynamicPostList[validIndex];
+  // Previous and Next posts navigation based purely on live dynamic posts
+  const currentIndex = dynamicPostList.findIndex(p => p.id === id || p.id === activePost?.slug || p.id === activePost?.id);
+  const prevPost = currentIndex > 0 ? dynamicPostList[currentIndex - 1] : null;
+  const nextPost = currentIndex >= 0 && currentIndex < dynamicPostList.length - 1 ? dynamicPostList[currentIndex + 1] : null;
 
   // Dynamic Open Graph & Article SEO for Facebook, Twitter/X, LinkedIn, Discord
-  const articleTitle = post?.title || currentPost?.title;
-  const articleDesc = post?.excerpt || currentPost?.desc;
-  const articleImage = post?.featured_image?.url || currentPost?.img;
-  const articleAuthor = post?.author?.name || currentPost?.authorName;
-  const articlePublishedAt = post?.published_at;
-  const articleCategory = post?.categories?.[0]?.name || currentPost?.category;
-  const articleTags = post?.tags?.map((t: any) => (typeof t === 'string' ? t : t?.name)).filter(Boolean) || [];
+  const articleTitle = activePost?.title || '';
+  const articleDesc = activePost?.excerpt || '';
+  const articleImage = activePost?.featured_image?.url || activePost?.custom_fields?.featured_image_url || '';
+  const articleAuthor = activePost?.author?.name || 'Zwosmos';
+  const articlePublishedAt = activePost?.published_at;
+  const articleCategory = activePost?.categories?.[0]?.name || 'Space News';
+  const articleTags = activePost?.tags?.map((t: any) => (typeof t === 'string' ? t : t?.name)).filter(Boolean) || [];
 
   useSEO({
-    title: articleTitle,
-    description: articleDesc,
-    image: articleImage,
+    title: articleTitle ? (articleTitle.includes('Zwosmos') ? articleTitle : `${articleTitle} | Zwosmos`) : undefined,
+    description: articleDesc || undefined,
+    image: articleImage || undefined,
     type: 'article',
     author: articleAuthor,
     publishedTime: articlePublishedAt || undefined,
@@ -91,25 +160,23 @@ const BlogPostPage: React.FC = () => {
     twitterCard: 'summary_large_image'
   });
 
-  // Previous and Next posts navigation
-  const prevPost = validIndex > 0 ? dynamicPostList[validIndex - 1] : dynamicPostList[dynamicPostList.length - 1];
-  const nextPost = validIndex < dynamicPostList.length - 1 ? dynamicPostList[validIndex + 1] : dynamicPostList[0];
-
   // Related posts: prioritize same category, exclude current post, limit to 3 posts
   const relatedPosts = React.useMemo(() => {
-    if (!currentPost && !post) return dynamicPostList.slice(0, 3);
-    const categorySlug = post?.categories?.[0]?.slug || currentPost?.categorySlug;
+    if (!activePost) return [];
+    const categorySlug = activePost?.categories?.[0]?.slug;
+    const categoryName = activePost?.categories?.[0]?.name;
+    const currentPostId = activePost?.slug || activePost?.id;
     const sameCategory = dynamicPostList.filter(
-      p => p.id !== (post?.slug || post?.id || currentPost?.id) && (p.categorySlug === categorySlug || p.category === post?.categories?.[0]?.name)
+      p => p.id !== currentPostId && (p.categorySlug === categorySlug || p.category === categoryName)
     );
     const results = [...sameCategory];
     if (results.length < 3) {
-      const existingIds = new Set([post?.slug, post?.id, currentPost?.id, ...results.map(p => p.id)]);
+      const existingIds = new Set([currentPostId, ...results.map(p => p.id)]);
       const others = dynamicPostList.filter(p => !existingIds.has(p.id));
       results.push(...others);
     }
     return results.slice(0, 3);
-  }, [dynamicPostList, currentPost, post]);
+  }, [dynamicPostList, activePost]);
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -120,8 +187,8 @@ const BlogPostPage: React.FC = () => {
   // Real dynamic count of works published by this author
   const authorArticlesCount = React.useMemo(() => {
     if (!allLivePosts || allLivePosts.length === 0) return 1;
-    const authorId = post?.author?.id;
-    const authorName = post?.author?.name || currentPost?.authorName;
+    const authorId = activePost?.author?.id;
+    const authorName = activePost?.author?.name;
     if (authorId) {
       const match = allLivePosts.filter(p => p.author?.id === authorId).length;
       if (match > 0) return match;
@@ -131,53 +198,54 @@ const BlogPostPage: React.FC = () => {
       if (match > 0) return match;
     }
     return allLivePosts.length;
-  }, [allLivePosts, post, currentPost]);
+  }, [allLivePosts, activePost]);
 
   // Real dynamic tags assigned to this blog post (with slug for routing)
   const postTags = React.useMemo(() => {
-    if (post?.tags && post.tags.length > 0) {
-      return post.tags.map(t => ({
+    if (activePost?.tags && activePost.tags.length > 0) {
+      return activePost.tags.map((t: any) => ({
         name: t.name,
         slug: t.slug || t.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
       }));
     }
-    if (post?.categories && post.categories.length > 0) {
-      return post.categories.map(c => ({
+    if (activePost?.categories && activePost.categories.length > 0) {
+      return activePost.categories.map((c: any) => ({
         name: c.name,
         slug: c.slug || c.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
       }));
     }
-    if (currentPost?.category) {
-      return [{ name: currentPost.category, slug: currentPost.categorySlug || currentPost.category.toLowerCase().replace(/\s+/g, '-') }];
-    }
     return [];
-  }, [post, currentPost]);
+  }, [activePost]);
 
   // Real dynamic latest posts fetched from Supabase (excluding the current active article)
   const latestSidebarPosts = React.useMemo(() => {
-    const currentPostId = post?.slug || post?.id || id;
+    const currentPostId = activePost?.slug || activePost?.id || id;
     const filtered = dynamicPostList.filter(p => p.id !== currentPostId);
     return filtered.slice(0, 3);
-  }, [dynamicPostList, post, id]);
+  }, [dynamicPostList, activePost, id]);
 
-  // Dynamic post metadata with live Supabase post or fallback to curated mocks
+  // Dynamic post metadata with live Supabase post (no hardcoded mock fallback values)
   const postData = {
-    title: post ? post.title : (currentPost ? currentPost.title : 'The Nursery of New Stars: Inside the Pillars of Cosmic Creation'),
-    excerpt: post?.excerpt || (currentPost ? currentPost.desc : 'Deep within the eagle-winged clouds of interstellar gas, gravitational whispers give birth to newborn suns.'),
-    featuredImage: post?.featured_image?.url || (currentPost ? currentPost.img : 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1600&auto=format&fit=crop'),
-    imageCaption: post?.featured_image?.caption || '',
-    category: (post?.categories?.[0]?.name || (currentPost ? currentPost.category : 'DEEP SPACE')).toUpperCase(),
-    categoryName: post?.categories?.[0]?.name || (currentPost ? currentPost.category : 'Deep Space'),
-    publishedDate: post?.published_at
-      ? new Date(post.published_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-      : (currentPost ? currentPost.date : 'September 26, 2026'),
-    readTime: post?.reading_time ? `${post.reading_time} min read` : (currentPost?.readTime || '6 min read'),
+    title: activePost?.title || '',
+    excerpt: activePost?.excerpt || '',
+    featuredImage: activePost?.featured_image?.url || activePost?.custom_fields?.featured_image_url || '',
+    imageCaption: (typeof activePost?.featured_image?.caption === 'string' && activePost.featured_image.caption.trim()) ||
+      (typeof activePost?.custom_fields?.featured_image_caption === 'string' && activePost.custom_fields.featured_image_caption.trim()) ||
+      (typeof activePost?.custom_fields?.image_caption === 'string' && activePost.custom_fields.image_caption.trim()) ||
+      (typeof activePost?.custom_fields?.caption === 'string' && activePost.custom_fields.caption.trim()) || '',
+    category: (activePost?.categories?.[0]?.name || 'SPACE NEWS').toUpperCase(),
+    categoryName: activePost?.categories?.[0]?.name || 'Space News',
+    categorySlug: activePost?.categories?.[0]?.slug || 'space-news',
+    publishedDate: activePost?.published_at
+      ? new Date(activePost.published_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+      : '',
+    readTime: activePost?.reading_time ? `${activePost.reading_time} min read` : '5 min read',
     author: {
-      name: post?.author?.name || (currentPost ? currentPost.authorName : 'Zwosmos'),
-      slug: post?.author?.slug || (post?.author?.name || '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
-      role: post?.author?.designation || (currentPost ? 'Editor' : 'Editor'),
-      avatar: post?.author?.profile_image_url || null, // ONLY show image if added in dashboard, never show random fallback
-      bio: post?.author?.bio || '',
+      name: activePost?.author?.name || 'Zwosmos',
+      slug: activePost?.author?.slug || (activePost?.author?.name || '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+      role: activePost?.author?.designation || 'Editor',
+      avatar: activePost?.author?.profile_image_url || null,
+      bio: activePost?.author?.bio || '',
       articlesCount: authorArticlesCount
     },
     tags: postTags
@@ -222,7 +290,7 @@ const BlogPostPage: React.FC = () => {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: postData.imageCaption ? (isMobile ? '12px' : '16px') : (isMobile ? '16px' : '22px'),
+        marginTop: postData.imageCaption ? '0px' : (isMobile ? '16px' : '22px'),
         marginBottom: isMobile ? '8px' : '14px',
         position: 'relative',
         zIndex: 2,
@@ -275,7 +343,7 @@ const BlogPostPage: React.FC = () => {
               : '1px solid rgba(0,0,0,0.1)'
           }}
         >
-          <span style={{ color: isSepia ? '#d97706' : 'var(--brand-purple)', fontSize: '0.8rem' }}>✦</span>
+          <ZwosmosIcon size={12} color={isSepia ? '#d97706' : 'var(--brand-purple)'} />
           <span>Text Size</span>
         </div>
 
@@ -572,7 +640,7 @@ const BlogPostPage: React.FC = () => {
           gap: '5px'
         }}
       >
-        <span style={{ color: isSepia ? '#d97706' : 'var(--brand-purple)', fontSize: '0.8rem' }}>✦</span> Share:
+        <ZwosmosIcon size={12} color={isSepia ? '#d97706' : 'var(--brand-purple)'} /> Share:
       </span>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -723,7 +791,7 @@ const BlogPostPage: React.FC = () => {
             flexShrink: 0
           }}
         >
-          <span style={{ color: isSepia ? '#d97706' : 'var(--brand-purple)', fontSize: '0.8rem' }}>✦</span> Tags:
+          <ZwosmosIcon size={12} color={isSepia ? '#d97706' : 'var(--brand-purple)'} /> Tags:
         </span>
 
         <div
@@ -734,7 +802,7 @@ const BlogPostPage: React.FC = () => {
             alignItems: 'center'
           }}
         >
-          {postData.tags.map((tag, idx) => (
+          {postData.tags.map((tag: any, idx: number) => (
             <Link
               key={idx}
               to={`/tag/${tag.slug}`}
@@ -826,6 +894,7 @@ const BlogPostPage: React.FC = () => {
               transform: 'rotate(180deg)',
               display: 'inline-flex',
               alignItems: 'center',
+              gap: '8px',
               fontFamily: "'Playfair Display', serif",
               fontSize: '0.88rem',
               letterSpacing: '1px',
@@ -833,7 +902,8 @@ const BlogPostPage: React.FC = () => {
               whiteSpace: 'nowrap'
             }}
           >
-            <span style={{ color: isSepia ? '#d97706' : 'var(--brand-purple)', marginRight: '5px' }}>✦</span> Author
+            <ZwosmosIcon size={12} color={isSepia ? '#d97706' : 'var(--brand-purple)'} />
+            <span>Author</span>
           </span>
         </div>
 
@@ -950,18 +1020,20 @@ const BlogPostPage: React.FC = () => {
     </div>
   );
 
-  const renderLatestWidget = () => (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'stretch',
-        position: 'relative',
-        marginLeft: (isMobile || isTablet) ? '6px' : '8px',
-        width: '100%',
-        height: '100%',
-        boxSizing: 'border-box'
-      }}
-    >
+  const renderLatestWidget = () => {
+    if (latestSidebarPosts.length === 0) return null;
+    return (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'stretch',
+          position: 'relative',
+          marginLeft: (isMobile || isTablet) ? '6px' : '8px',
+          width: '100%',
+          height: '100%',
+          boxSizing: 'border-box'
+        }}
+      >
       {/* Wireframe Border */}
       <div
         style={{
@@ -1011,6 +1083,7 @@ const BlogPostPage: React.FC = () => {
               transform: 'rotate(180deg)',
               display: 'inline-flex',
               alignItems: 'center',
+              gap: '8px',
               fontFamily: "'Playfair Display', serif",
               fontSize: '0.88rem',
               letterSpacing: '1px',
@@ -1018,7 +1091,8 @@ const BlogPostPage: React.FC = () => {
               whiteSpace: 'nowrap'
             }}
           >
-            <span style={{ color: isSepia ? '#d97706' : 'var(--brand-purple)', marginRight: '5px' }}>✦</span> Latest
+            <ZwosmosIcon size={12} color={isSepia ? '#d97706' : 'var(--brand-purple)'} />
+            <span>Latest</span>
           </span>
         </div>
 
@@ -1076,7 +1150,7 @@ const BlogPostPage: React.FC = () => {
                 }}
               >
                 <img
-                  src={latestItem.img}
+                  src={String(latestItem.img || '')}
                   alt={latestItem.title}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
@@ -1113,7 +1187,8 @@ const BlogPostPage: React.FC = () => {
         </div>
       </div>
     </div>
-  );
+    );
+  };
 
   const renderDesktopTags = () => {
     if (!postData.tags || postData.tags.length === 0) return null;
@@ -1168,6 +1243,7 @@ const BlogPostPage: React.FC = () => {
                 transform: 'rotate(180deg)',
                 display: 'inline-flex',
                 alignItems: 'center',
+                gap: '8px',
                 fontFamily: "'Playfair Display', serif",
                 fontSize: '0.88rem',
                 letterSpacing: '1px',
@@ -1175,7 +1251,8 @@ const BlogPostPage: React.FC = () => {
                 whiteSpace: 'nowrap'
               }}
             >
-              <span style={{ color: isSepia ? '#d97706' : 'var(--brand-purple)', marginRight: '5px' }}>✦</span> Tags
+              <ZwosmosIcon size={12} color={isSepia ? '#d97706' : 'var(--brand-purple)'} />
+              <span>Tags</span>
             </span>
           </div>
 
@@ -1201,7 +1278,7 @@ const BlogPostPage: React.FC = () => {
               gap: '6px'
             }}
           >
-            {postData.tags.map((tag, idx) => (
+            {postData.tags.map((tag: any, idx: number) => (
               <Link
                 key={idx}
                 to={`/tag/${tag.slug}`}
@@ -1284,10 +1361,11 @@ const BlogPostPage: React.FC = () => {
           letterSpacing: '0.5px',
           display: 'inline-flex',
           alignItems: 'center',
-          gap: '5px'
+          gap: '8px'
         }}
       >
-        <span style={{ color: isSepia ? '#d97706' : 'var(--brand-purple)', fontSize: '0.8rem' }}>✦</span> Share:
+        <ZwosmosIcon size={12} color={isSepia ? '#d97706' : 'var(--brand-purple)'} />
+        <span>Share:</span>
       </span>
 
       {/* Circular Icon-Only Buttons */}
@@ -1443,7 +1521,100 @@ const BlogPostPage: React.FC = () => {
       {/* Global Shared Header */}
       <Header />
 
-      <div className="blog-post-page-container" style={{ maxWidth: '1400px', margin: '0 auto', padding: isPhone ? '20px 30px 20px' : isTablet ? '24px 50px 24px' : '25px 4% 20px', boxSizing: 'border-box' }}>
+      {/* 1. Loading Skeleton View (Eliminates fallback mock flash) */}
+      {loading && !activePost && (
+        <div className="blog-post-page-container" style={{ maxWidth: '1400px', margin: '0 auto', padding: isPhone ? '20px 30px 20px' : isTablet ? '24px 50px 24px' : '25px 4% 20px', boxSizing: 'border-box' }}>
+          <style>{`
+            @keyframes zw-skel-pulse {
+              0%, 100% { opacity: 0.35; }
+              50% { opacity: 0.8; }
+            }
+            .zw-skel-pulse {
+              animation: zw-skel-pulse 1.6s ease-in-out infinite;
+              background: ${isDark ? 'rgba(255, 255, 255, 0.08)' : isSepia ? 'rgba(217, 119, 6, 0.12)' : 'rgba(0, 0, 0, 0.07)'};
+              border-radius: 8px;
+            }
+          `}</style>
+
+          {/* Breadcrumb Skeleton */}
+          <div style={{ paddingLeft: isDesktop ? '200px' : !isPhone ? '80px' : undefined, paddingRight: isDesktop ? '200px' : !isPhone ? '80px' : undefined, marginBottom: '28px' }}>
+            <div className="zw-skel-pulse" style={{ width: '220px', height: '14px' }} />
+          </div>
+
+          {/* Header Skeleton */}
+          <div style={{ paddingLeft: isDesktop ? '200px' : !isPhone ? '80px' : undefined, paddingRight: isDesktop ? '200px' : !isPhone ? '80px' : undefined, marginBottom: '40px' }}>
+            <div className="zw-skel-pulse" style={{ width: '85%', height: isPhone ? '32px' : '46px', marginBottom: '14px' }} />
+            <div className="zw-skel-pulse" style={{ width: '55%', height: isPhone ? '32px' : '46px', marginBottom: '22px' }} />
+            <div className="zw-skel-pulse" style={{ width: '92%', height: '18px', marginBottom: '10px' }} />
+            <div className="zw-skel-pulse" style={{ width: '70%', height: '18px', marginBottom: '24px' }} />
+            <div className="zw-skel-pulse" style={{ width: '280px', height: '16px' }} />
+          </div>
+
+          {/* Featured Image Skeleton */}
+          <div className="zw-skel-pulse" style={{ width: '100%', height: isPhone ? '240px' : isTablet ? '360px' : '480px', borderRadius: isMobile ? '16px' : '22px', marginBottom: '40px' }} />
+
+          {/* Body Content Skeleton */}
+          <div style={{ maxWidth: '900px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div className="zw-skel-pulse" style={{ width: '100%', height: '18px' }} />
+            <div className="zw-skel-pulse" style={{ width: '96%', height: '18px' }} />
+            <div className="zw-skel-pulse" style={{ width: '92%', height: '18px' }} />
+            <div className="zw-skel-pulse" style={{ width: '88%', height: '18px' }} />
+            <div className="zw-skel-pulse" style={{ width: '60%', height: '18px', marginBottom: '20px' }} />
+            <div className="zw-skel-pulse" style={{ width: '45%', height: '32px', marginBottom: '12px' }} />
+            <div className="zw-skel-pulse" style={{ width: '100%', height: '18px' }} />
+            <div className="zw-skel-pulse" style={{ width: '94%', height: '18px' }} />
+          </div>
+        </div>
+      )}
+
+      {/* 2. Article Not Found (when loading is complete and no post exists) */}
+      {!loading && !activePost && (
+        <div style={{ maxWidth: '800px', margin: '100px auto', textAlign: 'center', padding: '0 24px' }}>
+          <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+            <ZwosmosIcon size={44} color="var(--brand-purple)" />
+          </div>
+          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: '2.2rem', marginBottom: '14px', color: isLight ? '#111827' : '#ffffff' }}>
+            Cosmic Article Not Found
+          </h1>
+          <p style={{ fontFamily: "'Lora', serif", fontSize: '1.05rem', color: isLight ? '#4b5563' : 'rgba(255,255,255,0.7)', marginBottom: '32px' }}>
+            The dispatch you are looking for may have drifted into the deep void or does not exist.
+          </p>
+          <div style={{ display: 'inline-flex', gap: '14px', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <Link
+              to="/blog"
+              style={{
+                padding: '11px 24px',
+                borderRadius: '8px',
+                background: 'var(--brand-purple)',
+                color: '#fff',
+                textDecoration: 'none',
+                fontWeight: 600,
+                fontSize: '0.92rem'
+              }}
+            >
+              ← Back to All Stories
+            </Link>
+            <Link
+              to="/"
+              style={{
+                padding: '11px 24px',
+                borderRadius: '8px',
+                border: isDark ? '1px solid rgba(255,255,255,0.2)' : '1px solid #d1d5db',
+                color: isLight ? '#111827' : '#fff',
+                textDecoration: 'none',
+                fontWeight: 600,
+                fontSize: '0.92rem'
+              }}
+            >
+              Zwosmos Home
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Active Post View */}
+      {activePost && (
+        <div className="blog-post-page-container" style={{ maxWidth: '1400px', margin: '0 auto', padding: isPhone ? '20px 30px 20px' : isTablet ? '24px 50px 24px' : '25px 4% 20px', boxSizing: 'border-box' }}>
         {/* ========================================================================= */}
         {/* 1. TOP BAR: Breadcrumb Navigation                                        */}
         {/* ========================================================================= */}
@@ -1455,8 +1626,8 @@ const BlogPostPage: React.FC = () => {
             flexWrap: 'wrap',
             gap: '12px',
             marginBottom: isMobile ? '20px' : '30px',
-            paddingLeft: isDesktop ? '200px' : !isPhone ? '80px' : undefined,
-            paddingRight: isDesktop ? '200px' : !isPhone ? '80px' : undefined,
+            paddingLeft: isDesktop ? '200px' : !isPhone ? (winWidth >= 1000 ? '160px' : '80px') : undefined,
+            paddingRight: isDesktop ? '200px' : !isPhone ? (winWidth >= 1000 ? '160px' : '80px') : undefined,
             boxSizing: 'border-box'
           }}
         >
@@ -1489,7 +1660,7 @@ const BlogPostPage: React.FC = () => {
             </Link>
             <span style={{ color: 'var(--brand-purple)', margin: '0 6px' }}>›</span>
             <Link
-              to={`/${currentPost?.categorySlug || 'space-news'}`}
+              to={`/${postData.categorySlug || 'space-news'}`}
               style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }}
               onMouseOver={e => (e.currentTarget.style.color = 'var(--brand-purple)')}
               onMouseOut={e => (e.currentTarget.style.color = isLight ? '#6b7280' : 'rgba(255,255,255,0.6)')}
@@ -1521,8 +1692,8 @@ const BlogPostPage: React.FC = () => {
           {/* Post Title, Excerpt, and Details Container (compacted on desktop and tablet views) */}
           <div
             style={{
-              paddingLeft: isDesktop ? '200px' : !isPhone ? '80px' : undefined,
-              paddingRight: isDesktop ? '200px' : !isPhone ? '80px' : undefined,
+              paddingLeft: isDesktop ? '200px' : !isPhone ? (winWidth >= 1000 ? '160px' : '80px') : undefined,
+              paddingRight: isDesktop ? '200px' : !isPhone ? (winWidth >= 1000 ? '160px' : '80px') : undefined,
               boxSizing: 'border-box'
             }}
           >
@@ -1530,12 +1701,12 @@ const BlogPostPage: React.FC = () => {
             <h1
               style={{
                 fontFamily: "'Playfair Display', serif",
-                fontSize: isMobile ? '1.65rem' : '2.65rem',
-                lineHeight: isMobile ? 1.25 : 1.2,
-                margin: isMobile ? '0 0 14px 0' : '0 0 18px 0',
+                fontSize: isPhone ? '1.65rem' : isSmallTab ? '2.15rem' : '2.65rem',
+                lineHeight: isPhone ? 1.25 : 1.2,
+                margin: isPhone ? '0 0 14px 0' : '0 0 18px 0',
                 fontWeight: 700,
                 color: isLight ? '#111827' : 'white',
-                letterSpacing: isMobile ? '-0.2px' : '-0.4px'
+                letterSpacing: isPhone ? '-0.2px' : '-0.4px'
               }}
             >
               {postData.title}
@@ -1544,13 +1715,13 @@ const BlogPostPage: React.FC = () => {
             {/* Excerpt */}
             <div
               style={{
-                fontSize: isMobile ? '1rem' : '1.3rem',
-                lineHeight: isMobile ? 1.6 : 1.65,
+                fontSize: isPhone ? '1rem' : isSmallTab ? '1.15rem' : '1.3rem',
+                lineHeight: isPhone ? 1.6 : 1.65,
                 color: isLight ? '#2b2d42' : 'rgba(255,255,255,0.9)',
                 fontFamily: "'Lora', serif",
                 fontStyle: 'italic',
-                margin: isMobile ? '0 0 18px 0' : '0 0 24px 0',
-                paddingLeft: isMobile ? '12px' : '18px',
+                margin: isPhone ? '0 0 18px 0' : '0 0 24px 0',
+                paddingLeft: isPhone ? '12px' : '18px',
                 borderLeft: '3px solid var(--brand-purple)'
               }}
             >
@@ -1563,15 +1734,15 @@ const BlogPostPage: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 flexWrap: 'wrap',
-                gap: isMobile ? '8px 12px' : '18px',
-                marginBottom: isMobile ? '24px' : '35px',
-                fontSize: isMobile ? '0.8rem' : '0.9rem',
+                gap: isPhone ? '8px 12px' : '18px',
+                marginBottom: isPhone ? '24px' : '35px',
+                fontSize: isPhone ? '0.8rem' : '0.9rem',
                 fontFamily: "'Lora', serif",
                 color: isLight ? '#4b5563' : 'rgba(255,255,255,0.72)'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ color: 'var(--brand-purple)' }}>✦</span>
+                <ZwosmosIcon size={12} color="var(--brand-purple)" />
                 <span style={{ color: isLight ? '#111827' : 'white', fontWeight: 600 }}>
                   {postData.publishedDate}
                 </span>
@@ -1636,16 +1807,19 @@ const BlogPostPage: React.FC = () => {
             {postData.imageCaption ? (
               <div
                 style={{
-                  marginTop: isMobile ? '10px' : '14px',
-                  fontSize: isMobile ? '0.78rem' : '0.84rem',
-                  color: isLight ? '#6b7280' : 'rgba(255, 255, 255, 0.55)',
+                  marginTop: isMobile ? '12px' : '16px',
+                  marginBottom: isMobile ? '30px' : '40px',
+                  fontSize: isMobile ? '15px' : '16px',
+                  color: isDark ? 'rgba(255, 255, 255, 0.82)' : isSepia ? '#5c3a21' : '#374151',
                   fontFamily: "'Lora', serif",
                   fontStyle: 'italic',
+                  fontWeight: 400,
                   textAlign: 'center',
-                  maxWidth: '750px',
+                  maxWidth: '850px',
                   marginLeft: 'auto',
                   marginRight: 'auto',
-                  lineHeight: 1.5
+                  lineHeight: 1.6,
+                  letterSpacing: '0.2px'
                 }}
               >
                 {postData.imageCaption}
@@ -1666,8 +1840,8 @@ const BlogPostPage: React.FC = () => {
           style={{
             display: 'flex',
             flexDirection: isMobileView ? 'column' : 'row',
-            gap: isMobileView ? '24px' : '30px',
-            alignItems: 'flex-start',
+            gap: isMobileView ? '24px' : (winWidth >= 1440 ? '120px' : '60px'),
+            alignItems: isMobileView ? 'stretch' : 'flex-start',
             justifyContent: 'center',
             marginTop: '10px'
           }}
@@ -1677,20 +1851,23 @@ const BlogPostPage: React.FC = () => {
           {/* Mobile Order: 1 (Comes immediately after featured image)              */}
           {/* --------------------------------------------------------------------- */}
           <article
-            className="blog-article-content-area"
+            className={`blog-article-content-area ${enableDropCap ? 'has-dropcap' : ''}`}
             style={{
               order: isMobileView ? 1 : 2,
-              flex: '1 1 auto',
+              flex: isMobileView ? '1 1 auto' : '1 1 auto',
               minWidth: 0,
-              maxWidth: isMobileView ? '100%' : '900px',
+              maxWidth: isMobileView ? '100%' : (winWidth >= 1440 ? '800px' : '740px'),
               fontSize: `calc(${isMobile ? '1.02rem' : '1.14rem'} * ${fontScale})`,
               lineHeight: isMobile ? 1.75 : 1.9,
               color: isLight ? '#2b2d42' : 'rgba(255,255,255,0.88)',
               fontFamily: "'Lora', serif",
-              padding: isMobileView
-                ? (isDesktop ? '0 200px' : (isTablet || isSmallTab) ? '0 80px' : '0')
-                : '0 10px',
-              width: isMobileView ? '100%' : 'auto',
+              paddingLeft: isMobileView
+                ? (!isPhone ? (winWidth >= 1000 ? '160px' : '80px') : '0')
+                : '10px',
+              paddingRight: isMobileView
+                ? (!isPhone ? (winWidth >= 1000 ? '160px' : '80px') : '0')
+                : '10px',
+              width: '100%',
               boxSizing: 'border-box'
             }}
           >
@@ -1751,6 +1928,27 @@ const BlogPostPage: React.FC = () => {
               .blog-article-content-area .zw-blog-content pre,
               .blog-article-content-area .zw-blog-content code {
                 font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace !important;
+              }
+
+              /* Editorial Magazine-Style Drop Cap on first letter of first paragraph */
+              .blog-article-content-area.has-dropcap .zw-blog-content-wrapper > .zw-blog-content > p:first-of-type::first-letter,
+              .blog-article-content-area.has-dropcap .zw-blog-content-wrapper > .zw-blog-prose > p:first-of-type::first-letter,
+              .blog-article-content-area.has-dropcap .zw-blog-content-wrapper > p:first-of-type::first-letter,
+              .blog-article-content-area.has-dropcap .zw-blog-content > p:first-of-type::first-letter,
+              .blog-article-content-area.has-dropcap .zw-blog-prose > p:first-of-type::first-letter,
+              .blog-article-content-area.has-dropcap .ProseMirror > p:first-of-type::first-letter,
+              .blog-article-content-area.has-dropcap .tiptap > p:first-of-type::first-letter {
+                float: left;
+                font-family: 'Playfair Display', Georgia, 'Times New Roman', serif !important;
+                font-size: calc(${isMobile ? '3.3rem' : '4.1rem'} * ${fontScale}) !important;
+                line-height: 0.8 !important;
+                font-weight: 700 !important;
+                margin-top: 0.12em !important;
+                margin-right: 0.65rem !important;
+                margin-bottom: -0.05em !important;
+                padding: 0 4px 0 0 !important;
+                color: ${isSepia ? '#78350f' : isLight ? '#0f172a' : '#ffffff'} !important;
+                text-transform: uppercase !important;
               }
             `}</style>
             {post?.content ? (
@@ -1902,202 +2100,20 @@ const BlogPostPage: React.FC = () => {
                       color: rgba(255, 255, 255, 0.75) !important;
                     }
                   `}</style>
-                <BlogContent content={post.content} />
+                <BlogContent content={activePost.content} />
               </div>
-            ) : (
-              <>
-                <p
-                  style={{
-                    marginBottom: isMobile ? '20px' : '26px',
-                    fontSize: isMobile ? '1.05rem' : '1.18rem',
-                    color: isLight ? '#2b2d42' : 'rgba(255,255,255,0.88)'
-                  }}
-                >
-                  <span
-                    style={{
-                      float: 'left',
-                      fontSize: 'clamp(2.2rem, 1.6rem + 2.5vw, 3.8rem)',
-                      lineHeight: '0.85',
-                      paddingTop: isMobile ? '4px' : '6px',
-                      paddingRight: isMobile ? '8px' : '12px',
-                      paddingBottom: '2px',
-                      color: 'var(--brand-purple)',
-                      fontFamily: "'Playfair Display', serif",
-                      fontWeight: 700
-                    }}
-                  >
-                    F
-                  </span>
-                  ar beyond the terrestrial horizons, across vast stellar voids stretching millions of astronomical units, interstellar matter undergoes an extraordinary celestial alchemy. Inside these colossal molecular towers known colloquially as the Pillars of Creation, new protostellar cores condense from cold pockets of molecular hydrogen and microscopic carbon-silicate grains. What appears from afar as an impassive veil of cosmic shadows is in fact one of the most turbulent, fertile furnaces in the known universe.
-                </p>
-
-                <h2
-                  style={{
-                    fontFamily: "'Playfair Display', serif",
-                    fontSize: 'clamp(1.3rem, 1rem + 1.5vw, 2.3rem)',
-                    color: isLight ? '#111827' : 'white',
-                    margin: isMobile ? '30px 0 14px 0' : '40px 0 20px 0',
-                    position: 'relative',
-                    paddingBottom: isMobile ? '8px' : '12px',
-                    borderBottom: isLight ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.1)',
-                    lineHeight: 1.25
-                  }}
-                >
-                  The Mechanics of Molecular Collapse
-                </h2>
-
-                <p
-                  style={{
-                    marginBottom: isMobile ? '18px' : '24px',
-                    color: isLight ? '#2b2d42' : 'rgba(255,255,255,0.88)'
-                  }}
-                >
-                  Every star begins its journey as a gravitational instability within a giant molecular cloud. These regions are cold, with temperatures hovering merely ten to twenty degrees above absolute zero. At these frigid thresholds, thermal pressure is suppressed, allowing gravity to slowly gain the upper hand over kinetic turbulence.
-                </p>
-
-                <p
-                  style={{
-                    marginBottom: isMobile ? '18px' : '24px',
-                    color: isLight ? '#2b2d42' : 'rgba(255,255,255,0.88)'
-                  }}
-                >
-                  When massive neighboring stars detonate as supernovae or radiate piercing ultraviolet winds, shockwaves propagate through the surrounding interstellar medium. These pressure fronts compress quiescent gas pockets, triggering runaway gravitational collapse. As the clump falls inward, potential energy converts into thermal kinetic motion. Within fractions of astronomical epochs, the core densifies and heats up, transitioning from an invisible pocket into an incandescent protostellar envelope.
-                </p>
-
-                {/* Styled Cosmic Quote Callout */}
-                <blockquote
-                  style={{
-                    margin: isMobile ? '24px 0' : '40px 0',
-                    padding: isMobile ? '18px 18px' : '28px 32px',
-                    background: isLight ? 'rgba(147, 51, 234, 0.06)' : 'rgba(147, 51, 234, 0.08)',
-                    borderLeft: '4px solid var(--brand-purple)',
-                    borderRadius: '0 12px 12px 0',
-                    fontFamily: "'Playfair Display', serif",
-                    fontSize: isMobile ? '1.05rem' : '1.35rem',
-                    fontStyle: 'italic',
-                    color: isLight ? '#111827' : 'rgba(255,255,255,0.95)',
-                    lineHeight: 1.55
-                  }}
-                >
-                  “The cosmos is within us. We are made of star-stuff. We are a way for the cosmos to know itself.”
-                  <footer
-                    style={{
-                      marginTop: '10px',
-                      fontSize: isMobile ? '0.78rem' : '0.88rem',
-                      fontFamily: "'Lora', serif",
-                      fontStyle: 'normal',
-                      color: isLight ? '#4b5563' : 'rgba(255,255,255,0.6)'
-                    }}
-                  >
-                    — Carl Sagan, Cosmic Reflections
-                  </footer>
-                </blockquote>
-
-                <h2
-                  style={{
-                    fontFamily: "'Playfair Display', serif",
-                    fontSize: 'clamp(1.3rem, 1rem + 1.5vw, 2.3rem)',
-                    color: isLight ? '#111827' : 'white',
-                    margin: isMobile ? '30px 0 14px 0' : '40px 0 20px 0',
-                    position: 'relative',
-                    lineHeight: 1.25
-                  }}
-                >
-                  Protoplanetary Disks: The Birthplace of Worlds
-                </h2>
-
-                <p
-                  style={{
-                    marginBottom: isMobile ? '18px' : '24px',
-                    color: isLight ? '#2b2d42' : 'rgba(255,255,255,0.88)'
-                  }}
-                >
-                  Conservation of angular momentum dictates that collapsing clouds cannot simply fall straight into a point mass. Instead, the swirling mass spins faster as it contracts, flattening naturally into a thin, circumstellar disk orbiting the newborn star. Within this spinning circumstellar carousel, electrostatic forces cause microscopic dust grains to stick together, snowballing into pebbles, boulders, and eventually kilometer-wide planetesimals.
-                </p>
-
-                <p
-                  style={{
-                    marginBottom: isMobile ? '18px' : '24px',
-                    color: isLight ? '#2b2d42' : 'rgba(255,255,255,0.88)'
-                  }}
-                >
-                  Over tens of millions of years, these gravitational attractors clear gaps along their orbital tracks, giving rise to rocky terrestrial spheres near the central star where volatiles evaporate, and massive gas giants in the outer, colder zones beyond the frost line. It is the exact sequence that shaped our own Solar System 4.6 billion years ago.
-                </p>
-
-                {/* Highlighted Insight Grid Box */}
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-                    gap: isMobile ? '14px' : '20px',
-                    margin: isMobile ? '24px 0' : '35px 0'
-                  }}
-                >
-                  <div
-                    style={{
-                      padding: isMobile ? '16px' : '22px',
-                      borderRadius: '10px',
-                      background: isLight ? '#f8f9fa' : 'rgba(255,255,255,0.03)',
-                      border: '1px solid rgba(147, 51, 234, 0.3)'
-                    }}
-                  >
-                    <div style={{ color: 'var(--brand-purple)', fontSize: isMobile ? '1rem' : '1.15rem', marginBottom: '6px' }}>
-                      ✦ Infrared Penetration
-                    </div>
-                    <div style={{ fontSize: isMobile ? '0.86rem' : '0.94rem', color: isLight ? '#2b2d42' : 'rgba(255,255,255,0.75)', lineHeight: 1.55 }}>
-                      Infrared wavelengths slice straight through obscuring dust lanes, unveiling hidden embryonic protostars invisible to optical observatories.
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      padding: isMobile ? '16px' : '22px',
-                      borderRadius: '10px',
-                      background: isLight ? '#f8f9fa' : 'rgba(255,255,255,0.03)',
-                      border: '1px solid rgba(147, 51, 234, 0.3)'
-                    }}
-                  >
-                    <div style={{ color: 'var(--brand-purple)', fontSize: isMobile ? '1rem' : '1.15rem', marginBottom: '6px' }}>
-                      ✦ Bipolar Outflows
-                    </div>
-                    <div style={{ fontSize: isMobile ? '0.86rem' : '0.94rem', color: isLight ? '#2b2d42' : 'rgba(255,255,255,0.75)', lineHeight: 1.55 }}>
-                      Magnetic field lines funnel ionized plasma into relativistic bipolar jets shooting light-years into the surrounding medium.
-                    </div>
-                  </div>
-                </div>
-
-                <h2
-                  style={{
-                    fontFamily: "'Playfair Display', serif",
-                    fontSize: 'clamp(1.3rem, 1rem + 1.5vw, 2.3rem)',
-                    color: isLight ? '#111827' : 'white',
-                    margin: isMobile ? '30px 0 14px 0' : '40px 0 20px 0',
-                    position: 'relative',
-                    lineHeight: 1.25
-                  }}
-                >
-                  Illuminating the Frontiers of Discovery
-                </h2>
-
-                <p
-                  style={{
-                    marginBottom: isMobile ? '18px' : '24px',
-                    color: isLight ? '#2b2d42' : 'rgba(255,255,255,0.88)'
-                  }}
-                >
-                  With modern observatories such as the James Webb Space Telescope and the Atacama Large Millimeter Array (ALMA), humanity is no longer restricted to theoretical models. We can now observe the concentric rings of protoplanetary disks in real-time, measure prebiotic molecular compounds, and trace how our own origins were forged in deep space.
-                </p>
-
-                <p
-                  style={{
-                    marginBottom: isMobile ? '24px' : '35px',
-                    color: isLight ? '#2b2d42' : 'rgba(255,255,255,0.88)'
-                  }}
-                >
-                  Every atom of carbon in our cells, every grain of iron in our bloodstream, was once forged in the heart of stars like these. When we look into the deep nebulous clouds of the cosmos, we are gazing directly into our own ancestry.
-                </p>
-              </>
-            )}
+            ) : activePost?.content_html ? (
+              <div
+                className={`zw-blog-content zw-blog-content-wrapper ${isLight ? 'light-mode' : 'dark-mode'}`}
+                dangerouslySetInnerHTML={{ __html: activePost.content_html }}
+                style={{
+                  color: isLight ? '#1e293b' : 'rgba(255,255,255,0.88)',
+                  fontSize: `calc(${isMobile ? '1.05rem' : '1.18rem'} * ${fontScale})`,
+                  lineHeight: isMobile ? 1.75 : 1.9,
+                  marginBottom: '30px'
+                }}
+              />
+            ) : null}
 
 
 
@@ -2444,7 +2460,7 @@ const BlogPostPage: React.FC = () => {
             boxSizing: 'border-box'
           }}
         >
-          <CommentSection postId={post?.id || String(currentPost?.id || id || '1')} />
+          <CommentSection postId={activePost?.id || String(id || '1')} />
         </section>
 
         {/* ========================================================================= */}
@@ -2499,12 +2515,12 @@ const BlogPostPage: React.FC = () => {
                   }}
                 >
                   Related Posts
-                  <span style={{ fontSize: '0.95rem', color: isSepia ? '#d97706' : 'var(--brand-purple)' }}>✦</span>
+                  <ZwosmosIcon size={14} color={isSepia ? '#d97706' : 'var(--brand-purple)'} />
                 </h3>
               </div>
 
               <Link
-                to={`/category/${currentPost?.categorySlug || 'space-news'}`}
+                to={`/${postData.categorySlug || 'space-news'}`}
                 style={{
                   fontFamily: "'Orbitron', sans-serif",
                   fontSize: '0.74rem',
@@ -2521,7 +2537,7 @@ const BlogPostPage: React.FC = () => {
                 onMouseOver={e => (e.currentTarget.style.opacity = '0.75')}
                 onMouseOut={e => (e.currentTarget.style.opacity = '1')}
               >
-                <span>More in {currentPost?.category || 'Space'}</span>
+                <span>More in {postData.categoryName || 'Space'}</span>
                 <span>→</span>
               </Link>
             </div>
@@ -2542,7 +2558,7 @@ const BlogPostPage: React.FC = () => {
                   category={post.category}
                   title={post.title}
                   desc={post.desc}
-                  img={post.img}
+                  img={String(post.img || '')}
                   authorName={post.authorName}
                   authorImg={post.authorImg}
                   date={post.date}
@@ -2554,6 +2570,7 @@ const BlogPostPage: React.FC = () => {
           </section>
         )}
       </div>
+      )}
       <Footer isLight={isLight} />
     </div>
   );

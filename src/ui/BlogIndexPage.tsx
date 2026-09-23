@@ -5,7 +5,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { BlogCard } from './BlogCard';
 import Header from './Header';
 import Footer from './Footer';
-import { ALL_BLOG_POSTS } from '../data/blogData';
+import ZwosmosIcon from './ZwosmosIcon';
 import { useBlogPosts } from '@zwantum/blog/react';
 import { useSEO } from '../lib/seoService';
 
@@ -30,7 +30,7 @@ const BlogIndexPage: React.FC = () => {
   const { theme, isDark } = useTheme();
   const isLight = !isDark;
   const isSepia = theme === 'sepia';
-  const { posts: livePosts } = useBlogPosts();
+  const { posts: livePosts, loading } = useBlogPosts();
   const [searchParams, setSearchParams] = useSearchParams();
   const urlSearch = searchParams.get('search') || '';
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
@@ -43,6 +43,25 @@ const BlogIndexPage: React.FC = () => {
     type: 'website'
   });
 
+  // Read cached live posts synchronously to prevent any reload flash of empty or fallback content
+  const cachedPosts = useMemo(() => {
+    try {
+      const raw = sessionStorage.getItem('zw_cached_all_posts');
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return null;
+  }, []);
+
+  useEffect(() => {
+    if (livePosts && livePosts.length > 0) {
+      try {
+        sessionStorage.setItem('zw_cached_all_posts', JSON.stringify(livePosts));
+      } catch {}
+    }
+  }, [livePosts]);
+
+  const activeLivePosts = (livePosts && livePosts.length > 0) ? livePosts : (cachedPosts || []);
+
   // Synchronize when URL search param changes
   useEffect(() => {
     setSearchQuery(urlSearch);
@@ -51,16 +70,16 @@ const BlogIndexPage: React.FC = () => {
     }
   }, [urlSearch]);
 
-  // Combine live database posts or fallback to curated list if DB has no posts yet
+  // Combine live database posts (strictly from DB / cache, no mock fallback)
   const allPosts = useMemo(() => {
-    if (livePosts && livePosts.length > 0) {
-      return livePosts.map(post => ({
+    if (activeLivePosts && activeLivePosts.length > 0) {
+      return activeLivePosts.map((post: any) => ({
         id: post.slug || post.id,
         category: post.categories?.[0]?.name || 'Space News',
         categorySlug: post.categories?.[0]?.slug || 'space-news',
         title: post.title,
         desc: post.excerpt || '',
-        img: post.featured_image?.url || 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1600&auto=format&fit=crop',
+        img: (typeof post.featured_image?.url === 'string' ? post.featured_image.url : '') || (typeof post.custom_fields?.featured_image_url === 'string' ? post.custom_fields.featured_image_url : '') || 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1600&auto=format&fit=crop',
         authorName: post.author?.name || 'Editorial Team',
         authorImg: post.author?.profile_image_url || undefined,
         date: post.published_at
@@ -69,8 +88,8 @@ const BlogIndexPage: React.FC = () => {
         readTime: `${post.reading_time || 5} min read`
       }));
     }
-    return ALL_BLOG_POSTS;
-  }, [livePosts]);
+    return [];
+  }, [activeLivePosts]);
 
   // Reset page when category changes
   const handleCategorySelect = (catVal: string) => {
@@ -97,7 +116,7 @@ const BlogIndexPage: React.FC = () => {
 
   // Filtered posts based on category and search query
   const filteredPosts = useMemo(() => {
-    return allPosts.filter(post => {
+    return allPosts.filter((post: any) => {
       const matchesCat = selectedCategory === 'ALL' || post.category.toLowerCase() === selectedCategory.toLowerCase();
       const query = searchQuery.trim().toLowerCase();
       if (!query) return matchesCat;
@@ -154,10 +173,16 @@ const BlogIndexPage: React.FC = () => {
               fontWeight: 700,
               letterSpacing: '3px',
               textTransform: 'uppercase',
-              marginBottom: '10px'
+              marginBottom: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
             }}
           >
-            ✦ Cosmic Chronicles ✦
+            <ZwosmosIcon size={12} color="var(--brand-purple)" />
+            <span>Cosmic Chronicles</span>
+            <ZwosmosIcon size={12} color="var(--brand-purple)" />
           </div>
 
           <h1
@@ -355,7 +380,45 @@ const BlogIndexPage: React.FC = () => {
           </div>
         </div>
 
-        {filteredPosts.length === 0 ? (
+        {loading && allPosts.length === 0 ? (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+              gap: isMobile ? '24px 14px' : '32px 20px'
+            }}
+          >
+            <style>{`
+              @keyframes zw-idx-skel {
+                0%, 100% { opacity: 0.35; }
+                50% { opacity: 0.8; }
+              }
+              .zw-idx-skel {
+                animation: zw-idx-skel 1.5s ease-in-out infinite;
+                background: ${isDark ? 'rgba(255, 255, 255, 0.08)' : isSepia ? 'rgba(217, 119, 6, 0.12)' : 'rgba(0, 0, 0, 0.07)'};
+                border-radius: 8px;
+              }
+            `}</style>
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div
+                key={i}
+                style={{
+                  borderRadius: '16px',
+                  border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.08)',
+                  padding: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px'
+                }}
+              >
+                <div className="zw-idx-skel" style={{ width: '100%', height: '180px', borderRadius: '12px' }} />
+                <div className="zw-idx-skel" style={{ width: '35%', height: '12px' }} />
+                <div className="zw-idx-skel" style={{ width: '85%', height: '18px' }} />
+                <div className="zw-idx-skel" style={{ width: '70%', height: '14px' }} />
+              </div>
+            ))}
+          </div>
+        ) : filteredPosts.length === 0 ? (
           <div
             style={{
               textAlign: 'center',
@@ -378,7 +441,9 @@ const BlogIndexPage: React.FC = () => {
                 : 'none'
             }}
           >
-            <div style={{ fontSize: '2rem', marginBottom: '14px', color: isSepia ? '#d97706' : 'var(--brand-purple)' }}>✦</div>
+            <div style={{ marginBottom: '14px', display: 'flex', justifyContent: 'center' }}>
+              <ZwosmosIcon size={36} color={isSepia ? '#d97706' : 'var(--brand-purple)'} />
+            </div>
             <h3
               style={{
                 fontFamily: "'Playfair Display', serif",
@@ -431,7 +496,7 @@ const BlogIndexPage: React.FC = () => {
               gap: isMobile ? '24px 14px' : '32px 20px'
             }}
           >
-            {paginatedPosts.map(post => (
+            {paginatedPosts.map((post: any) => (
               <BlogCard
                 key={post.id}
                 id={post.id}

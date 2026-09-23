@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useMobile } from '../contexts/MobileContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { getCosmicData, DailyCosmicData, DEFAULT_COSMIC_DATA } from '../lib/cosmicService';
 
 export const DailyCosmicSection: React.FC = () => {
-  const { isMobile } = useMobile();
   const { isLight, isSepia, isDark } = useTheme();
 
   const [winWidth, setWinWidth] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1200));
@@ -15,6 +13,9 @@ export const DailyCosmicSection: React.FC = () => {
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
+
+  // Only mobile and small tab view (<= 800px) use mobile sizing
+  const isMobile = winWidth <= 800;
 
   useEffect(() => {
     let mounted = true;
@@ -125,20 +126,21 @@ export const DailyCosmicSection: React.FC = () => {
         }
         .zw-cosmic-scrollable {
           scrollbar-width: thin;
-          scrollbar-color: ${isLight ? 'rgba(0, 0, 0, 0.2) transparent' : 'rgba(255, 255, 255, 0.3) transparent'};
+          scrollbar-color: ${isLight ? 'rgba(147, 51, 234, 0.45) rgba(0, 0, 0, 0.05)' : 'rgba(168, 85, 247, 0.5) rgba(255, 255, 255, 0.06)'};
         }
         .zw-cosmic-scrollable::-webkit-scrollbar {
-          width: 4px;
+          width: 5px;
         }
         .zw-cosmic-scrollable::-webkit-scrollbar-track {
-          background: transparent;
+          background: ${isLight ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.06)'};
+          border-radius: 4px;
         }
         .zw-cosmic-scrollable::-webkit-scrollbar-thumb {
-          background: ${isLight ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.3)'};
+          background: ${isLight ? 'rgba(147, 51, 234, 0.45)' : 'rgba(168, 85, 247, 0.5)'};
           border-radius: 4px;
         }
         .zw-cosmic-scrollable::-webkit-scrollbar-thumb:hover {
-          background: ${isLight ? 'var(--brand-purple)' : '#ffcc00'};
+          background: ${isLight ? 'var(--brand-purple)' : '#c084fc'};
         }
       `}</style>
 
@@ -273,7 +275,7 @@ export const DailyCosmicSection: React.FC = () => {
               {renderAstronomyTitle(cosmic.astronomyTitle)}
             </h3>
 
-            {/* Dynamic Rich Text Description (Scrollable if > 5 lines) */}
+            {/* Dynamic Rich Text Description (Scrollable) */}
             <div
               className="zw-cosmic-rich-content zw-cosmic-scrollable"
               style={{
@@ -283,9 +285,9 @@ export const DailyCosmicSection: React.FC = () => {
                 fontSize: isMobile ? '0.9rem' : '0.98rem',
                 lineHeight: 1.68,
                 color: isLight ? '#4b5563' : '#cbd5e1',
-                maxHeight: isMobile ? '130px' : '135px',
+                maxHeight: isMobile ? '135px' : '145px',
                 overflowY: 'auto',
-                paddingRight: '6px'
+                paddingRight: '8px'
               }}
               dangerouslySetInnerHTML={{ __html: cosmic.astronomyContent }}
             />
@@ -310,7 +312,7 @@ export const DailyCosmicSection: React.FC = () => {
         )}
 
         {/* =================================================================== */}
-        {/* RIGHT MODULE: SPACE FACT OF THE DAY                                */}
+        {/* RIGHT MODULE: SPACE FACT OF THE DAY (Non-scrollable, full content)  */}
         {/* =================================================================== */}
         <div
           style={{
@@ -349,17 +351,14 @@ export const DailyCosmicSection: React.FC = () => {
             </h3>
 
             <div
-              className={isSmallPhone ? "zw-cosmic-rich-content" : "zw-cosmic-rich-content zw-cosmic-scrollable"}
+              className="zw-cosmic-rich-content"
               style={{
                 margin: 0,
                 fontFamily: "'Lora', Georgia, 'Times New Roman', serif",
                 fontSynthesis: 'weight style',
                 fontSize: isMobile ? '0.9rem' : '0.98rem',
                 lineHeight: 1.68,
-                color: isLight ? '#4b5563' : '#cbd5e1',
-                maxHeight: isSmallPhone ? 'none' : isMobile ? '130px' : '135px',
-                overflowY: isSmallPhone ? 'visible' : 'auto',
-                paddingRight: isSmallPhone ? '0px' : '6px'
+                color: isLight ? '#4b5563' : '#cbd5e1'
               }}
               dangerouslySetInnerHTML={{ __html: cosmic.factContent }}
             />

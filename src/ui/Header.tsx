@@ -4,6 +4,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import MegaMenu, { ALL_MEGA_MENU_ITEMS, MenuItem } from './MegaMenu';
 import { ALL_BLOG_POSTS } from '../data/blogData';
 import { useBlogPosts } from '@zwantum/blog/react';
+import ZwosmosIcon from './ZwosmosIcon';
 
 export interface HeaderProps {
   isLight?: boolean;
@@ -561,7 +562,7 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, theme: pro
                             cursor: 'pointer'
                           }}
                         >
-                          <span style={{ color: 'var(--brand-purple)' }}>✦</span> {cat.title}
+                          <ZwosmosIcon size={10} color="var(--brand-purple)" /> <span>{cat.title}</span>
                         </button>
                       ))}
                     </div>
@@ -639,7 +640,7 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, theme: pro
                   </div>
                 ) : (
                   <div style={{ padding: '30px 12px', textAlign: 'center', color: currentIsDark ? 'rgba(255,255,255,0.6)' : '#6b7280', fontFamily: "'Lora', serif", fontSize: '0.88rem' }}>
-                    <div style={{ color: 'var(--brand-purple)', fontSize: '1.4rem', marginBottom: '6px' }}>✦</div>
+                    <div style={{ marginBottom: '6px', display: 'flex', justifyContent: 'center' }}><ZwosmosIcon size={24} color="var(--brand-purple)" /></div>
                     No stories found matching "{searchVal.trim()}"
                   </div>
                 )}
@@ -1336,7 +1337,7 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, theme: pro
                           e.currentTarget.style.color = currentIsDark ? '#e9d5ff' : '#7e22ce';
                         }}
                       >
-                        <span>✦</span> {cat.title}
+                        <ZwosmosIcon size={10} color="currentColor" /> <span>{cat.title}</span>
                       </button>
                     ))}
                   </div>
@@ -1427,7 +1428,7 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, theme: pro
                 </div>
               ) : (
                 <div style={{ padding: '24px 12px', textAlign: 'center', color: currentIsDark ? 'rgba(255,255,255,0.6)' : '#6b7280', fontFamily: "'Lora', serif", fontSize: '0.82rem' }}>
-                  <div style={{ color: 'var(--brand-purple)', fontSize: '1.2rem', marginBottom: '4px' }}>✦</div>
+                  <div style={{ marginBottom: '4px', display: 'flex', justifyContent: 'center' }}><ZwosmosIcon size={20} color="var(--brand-purple)" /></div>
                   No stories found matching "{searchVal.trim()}"
                 </div>
               )}
@@ -1583,7 +1584,7 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, theme: pro
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ color: currentIsDark ? '#c084fc' : '#9333ea', fontSize: '0.85rem' }}>✦</span>
+                <ZwosmosIcon size={12} color={currentIsDark ? '#c084fc' : '#9333ea'} />
                 <span
                   style={{
                     fontFamily: "'Orbitron', sans-serif",
@@ -1661,7 +1662,7 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, theme: pro
                       gap: '6px'
                     }}
                   >
-                    <span>✦</span> Spotlight Story
+                    <ZwosmosIcon size={11} color="currentColor" /> Spotlight Story
                   </span>
                   <span
                     style={{

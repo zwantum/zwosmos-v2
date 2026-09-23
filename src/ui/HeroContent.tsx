@@ -1,6 +1,7 @@
 import React from 'react';
 import { useMobile } from '../contexts/MobileContext';
 import CountdownTimer from './CountdownTimer';
+import ZwosmosIcon from './ZwosmosIcon';
 
 const HeroContent: React.FC = () => {
   const { isMobile } = useMobile();
@@ -30,9 +31,14 @@ const HeroContent: React.FC = () => {
           letterSpacing: isMobile ? '2px' : '4px',
           marginBottom: isMobile ? '15px' : '20px',
           textTransform: 'uppercase',
-          textShadow: '0 0 10px rgba(56, 189, 248, 0.8)'
+          textShadow: '0 0 10px rgba(56, 189, 248, 0.8)',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '8px'
         }}>
-          ✦ Daily Space Fact ✦
+          <ZwosmosIcon size={12} color="#38bdf8" />
+          <span>Daily Space Fact</span>
+          <ZwosmosIcon size={12} color="#38bdf8" />
         </h3>
 
         <h1 style={{
