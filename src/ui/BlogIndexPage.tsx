@@ -168,9 +168,10 @@ const BlogIndexPage: React.FC = () => {
         <div style={{ textAlign: 'center', marginBottom: isMobile ? '35px' : '45px' }}>
           <div
             style={{
-              color: 'var(--brand-purple)',
+              color: '#bd75ff',
+              fontFamily: '"Noto Sans", sans-serif',
               fontSize: '0.84rem',
-              fontWeight: 700,
+              fontWeight: 400,
               letterSpacing: '3px',
               textTransform: 'uppercase',
               marginBottom: '10px',
@@ -180,9 +181,9 @@ const BlogIndexPage: React.FC = () => {
               gap: '8px'
             }}
           >
-            <ZwosmosIcon size={12} color="var(--brand-purple)" />
+            <ZwosmosIcon size={12} color="#bd75ff" />
             <span>Cosmic Chronicles</span>
-            <ZwosmosIcon size={12} color="var(--brand-purple)" />
+            <ZwosmosIcon size={12} color="#bd75ff" />
           </div>
 
           <h1
@@ -370,10 +371,12 @@ const BlogIndexPage: React.FC = () => {
         <div style={{ marginBottom: '28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div
             style={{
-              fontFamily: "'Orbitron', sans-serif",
+              fontFamily: '"Noto Sans", sans-serif',
               fontSize: '0.82rem',
+              fontWeight: 400,
               color: isLight ? '#6b7280' : 'rgba(255, 255, 255, 0.55)',
-              letterSpacing: '1.5px'
+              letterSpacing: '2px',
+              textTransform: 'uppercase'
             }}
           >
             SHOWING {filteredPosts.length === 0 ? 0 : `${(currentPage - 1) * POSTS_PER_PAGE + 1}–${Math.min(filteredPosts.length, currentPage * POSTS_PER_PAGE)}`} OF {filteredPosts.length} STORIES
@@ -381,13 +384,7 @@ const BlogIndexPage: React.FC = () => {
         </div>
 
         {loading && allPosts.length === 0 ? (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
-              gap: isMobile ? '24px 14px' : '32px 20px'
-            }}
-          >
+          <div className="blog-cards-grid">
             <style>{`
               @keyframes zw-idx-skel {
                 0%, 100% { opacity: 0.35; }
@@ -487,15 +484,7 @@ const BlogIndexPage: React.FC = () => {
             </button>
           </div>
         ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: isMobile
-                ? '1fr'
-                : 'repeat(3, 1fr)',
-              gap: isMobile ? '24px 14px' : '32px 20px'
-            }}
-          >
+          <div className="blog-cards-grid">
             {paginatedPosts.map((post: any) => (
               <BlogCard
                 key={post.id}

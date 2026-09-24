@@ -18,6 +18,14 @@ const CATEGORIES: { label: string; value: string }[] = [
 
 export const BooksPage: React.FC = () => {
   const { isMobile } = useMobile();
+  const [winWidth, setWinWidth] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1200));
+  useEffect(() => {
+    const onResize = () => setWinWidth(window.innerWidth);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  const isMobilePopup = winWidth < 680;
+
   const { theme, isDark, toggleTheme } = useTheme();
   const isLight = !isDark;
   const isSepia = theme === 'sepia';
@@ -103,9 +111,10 @@ export const BooksPage: React.FC = () => {
         <div style={{ textAlign: 'center', marginBottom: isMobile ? '35px' : '50px' }}>
           <div
             style={{
-              color: 'var(--brand-purple)',
+              color: '#bd75ff',
+              fontFamily: '"Noto Sans", sans-serif',
               fontSize: '0.84rem',
-              fontWeight: 700,
+              fontWeight: 400,
               letterSpacing: '3px',
               textTransform: 'uppercase',
               marginBottom: '10px',
@@ -115,9 +124,9 @@ export const BooksPage: React.FC = () => {
               gap: '8px'
             }}
           >
-            <ZwosmosIcon size={12} color="var(--brand-purple)" />
+            <ZwosmosIcon size={12} color="#bd75ff" />
             <span>The Reading Orbit Archive</span>
-            <ZwosmosIcon size={12} color="var(--brand-purple)" />
+            <ZwosmosIcon size={12} color="#bd75ff" />
           </div>
 
           <h1
@@ -305,10 +314,12 @@ export const BooksPage: React.FC = () => {
         <div style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div
             style={{
-              fontFamily: "'Orbitron', sans-serif",
-              fontSize: '0.88rem',
+              fontFamily: '"Noto Sans", sans-serif',
+              fontSize: '0.84rem',
+              fontWeight: 400,
               color: isLight ? '#6b7280' : 'rgba(255,255,255,0.6)',
-              letterSpacing: '1px'
+              letterSpacing: '2px',
+              textTransform: 'uppercase'
             }}
           >
             SHOWING {filteredBooks.length} {filteredBooks.length === 1 ? 'PUBLICATION' : 'PUBLICATIONS'}
@@ -361,15 +372,7 @@ export const BooksPage: React.FC = () => {
             </button>
           </div>
         ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: isMobile
-                ? '1fr'
-                : 'repeat(auto-fill, minmax(360px, 1fr))',
-              gap: isMobile ? '24px' : '32px'
-            }}
-          >
+          <div className="books-cards-grid">
             {filteredBooks.map(book => (
               <div
                 key={book.id}
@@ -602,8 +605,8 @@ export const BooksPage: React.FC = () => {
                         padding: '7px 18px',
                         borderRadius: '22px',
                         fontSize: '0.84rem',
-                        fontFamily: "'Playfair Display', serif",
-                        fontWeight: 600,
+                        fontFamily: '"Noto Sans", sans-serif',
+                        fontWeight: 400,
                         cursor: 'pointer',
                         display: 'inline-flex',
                         alignItems: 'center',
@@ -657,37 +660,53 @@ export const BooksPage: React.FC = () => {
             style={{
               background: isDark ? '#0e0e18' : (isSepia ? '#fef6ea' : '#ffffff'),
               border: isSepia ? '1px solid rgba(217, 119, 6, 0.4)' : '1px solid var(--brand-purple)',
-              borderRadius: '16px',
+              borderRadius: isMobilePopup ? '20px' : '16px',
               maxWidth: '650px',
               width: '100%',
-              padding: isMobile ? '24px 20px' : '36px 36px',
+              padding: isMobilePopup ? '28px 18px 24px' : '36px 36px',
               boxSizing: 'border-box',
               position: 'relative',
               boxShadow: isSepia
                 ? '0 20px 50px rgba(0,0,0,0.5), 0 0 30px rgba(217, 119, 6, 0.2)'
                 : '0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(147, 51, 234, 0.35)',
-              maxHeight: '90vh',
+              maxHeight: isMobilePopup ? '88vh' : '90vh',
               overflowY: 'auto'
             }}
           >
             {/* Close Button */}
             <button
               onClick={() => setActiveModalBook(null)}
+              aria-label="Close details"
               style={{
                 position: 'absolute',
-                top: '16px',
-                right: '18px',
-                background: 'none',
+                top: isMobilePopup ? '12px' : '16px',
+                right: isMobilePopup ? '12px' : '18px',
+                background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.1)',
                 border: 'none',
-                color: isSepia ? '#78350f' : (isLight ? '#6b7280' : 'rgba(255,255,255,0.7)'),
-                fontSize: '1.2rem',
-                cursor: 'pointer'
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: isSepia ? '#78350f' : (isLight ? '#4b5563' : 'rgba(255,255,255,0.8)'),
+                fontSize: '0.95rem',
+                cursor: 'pointer',
+                zIndex: 10,
+                transition: 'background 0.2s ease'
               }}
             >
               ✕
             </button>
 
-            <div style={{ display: 'flex', gap: isMobile ? '16px' : '26px', alignItems: 'flex-start', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: isMobilePopup ? 'column' : 'row',
+                gap: isMobilePopup ? '16px' : '26px',
+                alignItems: isMobilePopup ? 'center' : 'flex-start'
+              }}
+            >
               {/* Cover in Modal */}
               {activeModalBook.coverImage && !failedImages[activeModalBook.id] ? (
                 <img
@@ -698,26 +717,30 @@ export const BooksPage: React.FC = () => {
                     setFailedImages(prev => ({ ...prev, [activeModalBook.id]: true }));
                   }}
                   style={{
-                    width: '130px',
-                    height: '195px',
+                    width: isMobilePopup ? '145px' : '130px',
+                    height: isMobilePopup ? '215px' : '195px',
                     objectFit: 'cover',
                     borderRadius: '4px 8px 8px 4px',
-                    boxShadow: '10px 10px 24px rgba(0,0,0,0.6)',
-                    borderLeft: '4px solid rgba(255,255,255,0.2)',
+                    boxShadow: isMobilePopup
+                      ? '0 12px 28px -4px rgba(0,0,0,0.45), 0 4px 12px rgba(0,0,0,0.2)'
+                      : '10px 10px 24px rgba(0,0,0,0.6)',
+                    borderLeft: '4px solid rgba(255,255,255,0.25)',
                     flexShrink: 0
                   }}
                 />
               ) : (
                 <div
                   style={{
-                    width: '130px',
-                    height: '195px',
+                    width: isMobilePopup ? '145px' : '130px',
+                    height: isMobilePopup ? '215px' : '195px',
                     background: isSepia
                       ? 'linear-gradient(145deg, #78350f 0%, #451a03 100%)'
                       : activeModalBook.gradient,
                     borderRadius: '2px 6px 6px 2px',
                     borderLeft: isSepia ? '4px solid #b45309' : `4px solid ${activeModalBook.spineColor}`,
-                    boxShadow: '10px 10px 22px rgba(0,0,0,0.5)',
+                    boxShadow: isMobilePopup
+                      ? '0 12px 28px -4px rgba(0,0,0,0.45), 0 4px 12px rgba(0,0,0,0.2)'
+                      : '10px 10px 22px rgba(0,0,0,0.5)',
                     flexShrink: 0,
                     display: 'flex',
                     flexDirection: 'column',
@@ -750,13 +773,13 @@ export const BooksPage: React.FC = () => {
               )}
 
               {/* Info in Modal */}
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1, width: '100%', textAlign: isMobilePopup ? 'center' : 'left' }}>
                 <div
                   style={{
                     color: activeModalBook.accentColor,
-                    fontSize: '0.76rem',
+                    fontSize: '0.74rem',
                     fontWeight: 700,
-                    letterSpacing: '1.5px',
+                    letterSpacing: '1.6px',
                     textTransform: 'uppercase',
                     marginBottom: '6px'
                   }}
@@ -767,8 +790,8 @@ export const BooksPage: React.FC = () => {
                 <h2
                   style={{
                     fontFamily: "'Playfair Display', serif",
-                    fontSize: isMobile ? '1.5rem' : '1.9rem',
-                    lineHeight: 1.2,
+                    fontSize: isMobilePopup ? '1.5rem' : '1.9rem',
+                    lineHeight: 1.25,
                     margin: '0 0 6px 0',
                     color: isLight ? '#111827' : '#ffffff'
                   }}
@@ -779,9 +802,9 @@ export const BooksPage: React.FC = () => {
                 <div
                   style={{
                     color: isLight ? '#6b7280' : 'rgba(255,255,255,0.6)',
-                    fontSize: '0.88rem',
+                    fontSize: '0.86rem',
                     fontFamily: "'Lora', serif",
-                    marginBottom: '14px'
+                    marginBottom: '12px'
                   }}
                 >
                   By <strong style={{ color: isLight ? '#111827' : '#ffffff' }}>{activeModalBook.author}</strong>
@@ -790,35 +813,79 @@ export const BooksPage: React.FC = () => {
                 </div>
 
                 {activeModalBook.rating && Number(activeModalBook.rating) > 0 ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                    <span style={{ color: '#fbbf24', fontSize: '1rem' }}>★★★★★</span>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{activeModalBook.rating} / 5.0</span>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: isMobilePopup ? 'center' : 'flex-start',
+                      gap: '8px',
+                      marginBottom: '12px'
+                    }}
+                  >
+                    <span style={{ color: '#fbbf24', fontSize: '1rem', letterSpacing: '1px' }}>★★★★★</span>
+                    <span style={{ fontSize: '0.88rem', fontWeight: 600 }}>{activeModalBook.rating} / 5.0</span>
                     {activeModalBook.reviewsCount && Number(activeModalBook.reviewsCount) > 0 ? (
-                      <span style={{ color: isLight ? '#9ca3af' : 'rgba(255,255,255,0.4)', fontSize: '0.82rem' }}>
+                      <span style={{ color: isLight ? '#9ca3af' : 'rgba(255,255,255,0.45)', fontSize: '0.8rem' }}>
                         ({activeModalBook.reviewsCount} reviews)
                       </span>
                     ) : null}
                   </div>
                 ) : null}
 
-                <div style={{ fontSize: '0.84rem', fontWeight: 600, color: 'var(--brand-purple)', marginBottom: '14px', fontFamily: "'Orbitron', sans-serif", letterSpacing: '1px' }}>
-                  HARDCOVER EDITION
+                <div style={{ marginBottom: '14px' }}>
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      fontSize: '0.74rem',
+                      fontWeight: 700,
+                      color: 'var(--brand-purple)',
+                      background: isLight ? 'rgba(147, 51, 234, 0.08)' : 'rgba(147, 51, 234, 0.18)',
+                      border: '1px solid rgba(147, 51, 234, 0.25)',
+                      padding: '3px 12px',
+                      borderRadius: '20px',
+                      fontFamily: "'Orbitron', sans-serif",
+                      letterSpacing: '1px'
+                    }}
+                  >
+                    HARDCOVER EDITION
+                  </span>
                 </div>
+
+                {/* Subtle Divider on Mobile */}
+                {isMobilePopup && (
+                  <div
+                    style={{
+                      height: '1px',
+                      background: isLight ? '#f1f5f9' : 'rgba(255,255,255,0.08)',
+                      margin: '12px 0 16px 0',
+                      width: '100%'
+                    }}
+                  />
+                )}
 
                 <p
                   style={{
                     fontFamily: "'Lora', serif",
                     fontSize: '0.94rem',
-                    lineHeight: 1.6,
+                    lineHeight: 1.65,
                     color: isLight ? '#374151' : 'rgba(255,255,255,0.85)',
-                    margin: '0 0 16px 0'
+                    margin: '0 0 16px 0',
+                    textAlign: 'left'
                   }}
                 >
                   {activeModalBook.longDesc}
                 </p>
 
                 {/* Tags */}
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '22px' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: '8px',
+                    flexWrap: 'wrap',
+                    justifyContent: isMobilePopup ? 'center' : 'flex-start',
+                    marginBottom: '20px'
+                  }}
+                >
                   {activeModalBook.tags.map(t => (
                     <span
                       key={t}
@@ -834,7 +901,7 @@ export const BooksPage: React.FC = () => {
                           ? '#4b5563'
                           : 'rgba(255,255,255,0.7)',
                         borderRadius: '12px',
-                        padding: '3px 10px',
+                        padding: '4px 11px',
                         fontSize: '0.74rem'
                       }}
                     >
@@ -844,7 +911,7 @@ export const BooksPage: React.FC = () => {
                 </div>
 
                 {/* Actions */}
-                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', justifyContent: isMobilePopup ? 'center' : 'flex-start' }}>
                   {activeModalBook.buyUrl ? (
                     <a
                       href={activeModalBook.buyUrl}
@@ -855,14 +922,18 @@ export const BooksPage: React.FC = () => {
                         color: '#ffffff',
                         textDecoration: 'none',
                         borderRadius: '25px',
-                        padding: '10px 22px',
+                        padding: '12px 28px',
                         fontFamily: "'Playfair Display', serif",
-                        fontSize: '0.88rem',
+                        fontSize: '0.92rem',
                         fontWeight: 600,
                         display: 'inline-flex',
                         alignItems: 'center',
+                        justifyContent: 'center',
                         gap: '8px',
-                        boxShadow: '0 4px 14px rgba(147, 51, 234, 0.4)'
+                        width: isMobilePopup ? '100%' : 'auto',
+                        boxSizing: 'border-box',
+                        boxShadow: '0 4px 16px rgba(147, 51, 234, 0.45)',
+                        transition: 'all 0.2s ease'
                       }}
                     >
                       Buy Now
@@ -877,14 +948,18 @@ export const BooksPage: React.FC = () => {
                         color: '#ffffff',
                         textDecoration: 'none',
                         borderRadius: '25px',
-                        padding: '10px 22px',
+                        padding: '12px 28px',
                         fontFamily: "'Playfair Display', serif",
-                        fontSize: '0.88rem',
+                        fontSize: '0.92rem',
                         fontWeight: 600,
                         display: 'inline-flex',
                         alignItems: 'center',
+                        justifyContent: 'center',
                         gap: '8px',
-                        boxShadow: '0 4px 14px rgba(147, 51, 234, 0.4)'
+                        width: isMobilePopup ? '100%' : 'auto',
+                        boxSizing: 'border-box',
+                        boxShadow: '0 4px 16px rgba(147, 51, 234, 0.45)',
+                        transition: 'all 0.2s ease'
                       }}
                     >
                       Find & Buy Online &nearr;

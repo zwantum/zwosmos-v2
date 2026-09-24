@@ -102,10 +102,10 @@ const AuthorPage: React.FC = () => {
 
           {/* Info — all inline, no separate stat box */}
           <div style={{ flex: 1 }}>
-            <div style={{ color: 'var(--brand-purple)', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '6px', fontFamily: "'Orbitron', sans-serif", display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <ZwosmosIcon size={12} color="var(--brand-purple)" />
+            <div style={{ color: '#bd75ff', fontSize: '0.72rem', fontWeight: 400, letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '6px', fontFamily: '"Noto Sans", sans-serif', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <ZwosmosIcon size={12} color="#bd75ff" />
               <span>Author Profile</span>
-              <ZwosmosIcon size={12} color="var(--brand-purple)" />
+              <ZwosmosIcon size={12} color="#bd75ff" />
             </div>
             <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: isMobile ? '1.7rem' : '2.8rem', lineHeight: 1.15, margin: '0 0 6px 0', color: isLight ? '#111827' : '#ffffff' }}>
               {loading ? <span style={{ opacity: 0.4 }}>Loading…</span> : (authorInfo?.name || authorSlug?.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))}
@@ -114,7 +114,7 @@ const AuthorPage: React.FC = () => {
             {/* Role + Work count as inline pills */}
             <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: authorInfo?.bio ? '12px' : 0 }}>
               {authorInfo?.role && (
-                <span style={{ fontSize: '0.82rem', color: 'var(--brand-purple)', fontWeight: 600, fontFamily: "'Lora', serif" }}>{authorInfo.role}</span>
+                <span style={{ fontSize: '0.82rem', color: '#bd75ff', fontWeight: 600, fontFamily: "'Lora', serif" }}>{authorInfo.role}</span>
               )}
               {authorInfo?.role && authorPosts.length > 0 && (
                 <span style={{ color: isLight ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)', fontSize: '0.8rem' }}>·</span>
@@ -125,7 +125,7 @@ const AuthorPage: React.FC = () => {
                   fontSize: '0.78rem', fontFamily: "'Lora', serif",
                   color: isLight ? '#6b7280' : 'rgba(255,255,255,0.55)'
                 }}>
-                  <span style={{ color: 'var(--brand-purple)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif", fontSize: '0.85rem' }}>{authorPosts.length}</span>
+                  <span style={{ color: '#bd75ff', fontWeight: 700, fontFamily: '"Noto Sans", sans-serif', fontSize: '0.85rem' }}>{authorPosts.length}</span>
                   {authorPosts.length === 1 ? 'article published' : 'articles published'}
                 </span>
               )}
@@ -151,7 +151,7 @@ const AuthorPage: React.FC = () => {
         {/* Count */}
         {!loading && authorPosts.length > 0 && (
           <div style={{ marginBottom: '25px' }}>
-            <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '0.82rem', color: isLight ? '#6b7280' : 'rgba(255,255,255,0.55)', letterSpacing: '1.5px' }}>
+            <div style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '0.82rem', fontWeight: 400, color: isLight ? '#6b7280' : 'rgba(255,255,255,0.55)', letterSpacing: '2px', textTransform: 'uppercase' }}>
               SHOWING {(currentPage - 1) * POSTS_PER_PAGE + 1}–{Math.min(authorPosts.length, currentPage * POSTS_PER_PAGE)} OF {authorPosts.length} STORIES
             </div>
           </div>
@@ -159,7 +159,7 @@ const AuthorPage: React.FC = () => {
 
         {/* Loading skeleton */}
         {loading && (
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? '24px 14px' : '32px 20px' }}>
+          <div className="blog-cards-grid">
             {[1,2,3].map(n => (
               <div key={n} style={{ borderRadius: '12px', overflow: 'hidden', background: isLight ? '#f3f4f6' : 'rgba(255,255,255,0.04)', border: isLight ? '1px solid #e5e7eb' : '1px solid rgba(255,255,255,0.06)', height: '320px', animation: 'pulse 1.5s infinite' }} />
             ))}
@@ -170,16 +170,16 @@ const AuthorPage: React.FC = () => {
         {!loading && authorPosts.length === 0 && (
           <div style={{ textAlign: 'center', padding: '70px 20px', background: isLight ? '#ffffff' : 'rgba(255,255,255,0.02)', borderRadius: '16px', border: isLight ? '1px solid #e5e7eb' : '1px solid rgba(255,255,255,0.08)' }}>
             <div style={{ marginBottom: '14px', display: 'flex', justifyContent: 'center' }}>
-              <ZwosmosIcon size={40} color="var(--brand-purple)" />
+              <ZwosmosIcon size={40} color="#bd75ff" />
             </div>
             <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.5rem', color: isLight ? '#111827' : '#ffffff', marginBottom: '10px' }}>Author Not Found</h3>
             <p style={{ fontFamily: "'Lora', serif", color: isLight ? '#4b5563' : 'rgba(255,255,255,0.6)', fontSize: '0.92rem', margin: '0 auto 20px auto', maxWidth: '380px' }}>No articles found for this author.</p>
-            <Link to="/blog" style={{ display: 'inline-block', background: 'var(--brand-purple)', color: '#ffffff', textDecoration: 'none', borderRadius: '20px', padding: '9px 22px', fontFamily: "'Orbitron', sans-serif", fontSize: '0.78rem', letterSpacing: '1px' }}>EXPLORE ALL STORIES</Link>
+            <Link to="/blog" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#bd75ff', textDecoration: 'none', fontFamily: '"Noto Sans", sans-serif', fontSize: '0.84rem', fontWeight: 400, letterSpacing: '3px', textTransform: 'uppercase' }}>EXPLORE ALL STORIES ↗</Link>
           </div>
         )}
 
         {!loading && authorPosts.length > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? '24px 14px' : '32px 20px' }}>
+          <div className="blog-cards-grid">
             {paginatedPosts.map(post => (
               <BlogCard key={post.id} id={post.id} category={post.category} title={post.title} desc={post.desc} img={post.img} authorName={post.authorName} authorImg={post.authorImg} date={post.date} variant="standard" />
             ))}

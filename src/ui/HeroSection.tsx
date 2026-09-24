@@ -27,7 +27,7 @@ class SafeAuroraBoundary extends React.Component<{ children: React.ReactNode }, 
 
 export const HeroSection: React.FC = () => {
   const { isMobile } = useMobile();
-  const { isDark } = useTheme();
+  const { isDark, isSepia } = useTheme();
   const isLight = !isDark;
 
   // Fetch live blog posts from Supabase database
@@ -172,41 +172,150 @@ export const HeroSection: React.FC = () => {
             style={{
               display: 'grid',
               gridTemplateColumns: isSmallPhone ? '1fr' : '1.15fr 1fr',
-              gap: isSmallPhone ? '24px' : '24px',
-              alignItems: 'center',
+              gap: isSmallPhone ? '24px' : '28px',
+              alignItems: isSmallPhone ? 'center' : 'stretch',
               textDecoration: 'none',
               color: 'inherit'
             }}
           >
-            {/* Left Column: Rounded Historic Photo */}
+            {/* Left Column: Photo Card with Signature Border & Floating Sidebar Tabs */}
             <div
               style={{
                 position: 'relative',
-                borderRadius: isMobile ? '18px' : '26px',
-                overflow: 'hidden',
-                boxShadow: 'none',
-                border: isLight ? '1px solid #e5e7eb' : '1px solid rgba(255, 255, 255, 0.14)',
-                transition: 'transform 0.35s ease'
-              }}
-              onMouseOver={e => {
-                e.currentTarget.style.transform = 'translateY(-4px)';
-              }}
-              onMouseOut={e => {
-                e.currentTarget.style.transform = 'translateY(0)';
+                marginLeft: isSmallPhone ? '22px' : '30px',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column'
               }}
             >
-              {featuredImg && (
-                <img
-                  src={featuredImg}
-                  alt={featuredTitle}
+              {/* Signature Floating Sidebar Tabs Centered on the Left Border */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: 0,
+                  transform: 'translate(-50%, -50%)',
+                  zIndex: 5,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '12px'
+                }}
+              >
+                {/* Featured Pill Tab */}
+                <div
                   style={{
-                    width: '100%',
-                    height: isSmallPhone ? '260px' : isTablet ? '320px' : '380px',
-                    objectFit: 'cover',
-                    display: 'block'
+                    background: '#4C0086',
+                    borderRadius: '999px',
+                    padding: isSmallPhone ? '20px 8px' : '30px 8px',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    writingMode: 'vertical-rl',
+                    transform: 'rotate(180deg)',
+                    color: '#FFBA00',
+                    fontFamily: '"Noto Sans", sans-serif',
+                    fontSize: isSmallPhone ? '1.24rem' : '1.55rem',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    whiteSpace: 'nowrap'
                   }}
-                />
-              )}
+                >
+                  FEATURED
+                </div>
+
+                {/* Share Icon Button */}
+                <div
+                  title="Share"
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '50%',
+                    background: isDark ? 'var(--bg-main)' : (isSepia ? '#fde8c8' : '#ffffff'),
+                    border: isSepia ? '2.5px solid rgba(217, 119, 6, 0.45)' : '1px solid var(--brand-purple)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    color: isSepia ? '#78350f' : (isLight ? '#374151' : 'white'),
+                    boxShadow: isLight ? '0 2px 8px rgba(0,0,0,0.1)' : '0 4px 12px rgba(0,0,0,0.6)',
+                    cursor: 'pointer',
+                    transition: 'background 0.2s, color 0.2s, transform 0.2s'
+                  }}
+                  onMouseOver={e => {
+                    e.currentTarget.style.background = 'var(--brand-purple)';
+                    e.currentTarget.style.color = '#ffffff';
+                    e.currentTarget.style.transform = 'scale(1.1)';
+                  }}
+                  onMouseOut={e => {
+                    e.currentTarget.style.background = isDark ? 'var(--bg-main)' : (isSepia ? '#fde8c8' : '#ffffff');
+                    e.currentTarget.style.color = isSepia ? '#78350f' : (isLight ? '#374151' : 'white');
+                    e.currentTarget.style.transform = 'scale(1)';
+                  }}
+                  onClick={e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (navigator.share) {
+                      navigator.share({
+                        title: featuredTitle,
+                        url: `${window.location.origin}${featuredLink}`
+                      }).catch(() => {});
+                    } else {
+                      navigator.clipboard.writeText(`${window.location.origin}${featuredLink}`);
+                    }
+                  }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="18" cy="5" r="3"></circle>
+                    <circle cx="6" cy="12" r="3"></circle>
+                    <circle cx="18" cy="19" r="3"></circle>
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                  </svg>
+                </div>
+              </div>
+
+              {/* Photo Box with Signature Card Border */}
+              <div
+                style={{
+                  position: 'relative',
+                  flex: 1,
+                  borderRadius: isMobile ? '18px' : '26px',
+                  overflow: 'hidden',
+                  boxShadow: isLight
+                    ? (isSepia ? '0 4px 20px rgba(217, 119, 6, 0.08)' : '0 4px 20px rgba(0, 0, 0, 0.06)')
+                    : '0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(147, 51, 234, 0.2)',
+                  transition: 'transform 0.35s ease, box-shadow 0.35s ease',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}
+                onMouseOver={e => {
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                  e.currentTarget.style.boxShadow = isLight
+                    ? (isSepia ? '0 8px 24px rgba(217, 119, 6, 0.16)' : '0 8px 24px rgba(147, 51, 234, 0.15)')
+                    : '0 12px 36px rgba(0, 0, 0, 0.6), 0 0 28px rgba(147, 51, 234, 0.35)';
+                }}
+                onMouseOut={e => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = isLight
+                    ? (isSepia ? '0 4px 20px rgba(217, 119, 6, 0.08)' : '0 4px 20px rgba(0, 0, 0, 0.06)')
+                    : '0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(147, 51, 234, 0.2)';
+                }}
+              >
+                {featuredImg && (
+                  <img
+                    src={featuredImg}
+                    alt={featuredTitle}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      minHeight: isSmallPhone ? '260px' : isTablet ? '320px' : '380px',
+                      objectFit: 'cover',
+                      display: 'block'
+                    }}
+                  />
+                )}
+              </div>
             </div>
 
             {/* Right Column: Editorial Title & Description */}
@@ -214,16 +323,19 @@ export const HeroSection: React.FC = () => {
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                height: '100%',
+                padding: isSmallPhone ? '0' : '8px 0'
               }}
             >
               {featuredCategory && (
                 <div
                   style={{
-                    color: 'var(--brand-purple)',
+                    color: '#bd75ff',
+                    fontFamily: '"Noto Sans", sans-serif',
                     fontSize: '0.78rem',
-                    fontWeight: 700,
-                    letterSpacing: '2.5px',
+                    fontWeight: 400,
+                    letterSpacing: '3px',
                     textTransform: 'uppercase',
                     marginBottom: '10px',
                     display: 'flex',
@@ -231,8 +343,8 @@ export const HeroSection: React.FC = () => {
                     gap: '6px'
                   }}
                 >
-                  <ZwosmosIcon size={12} color="var(--brand-purple)" />
-                  <span>FEATURED • {featuredCategory}</span>
+                  <ZwosmosIcon size={12} color="#bd75ff" />
+                  <span>{featuredCategory}</span>
                 </div>
               )}
 
@@ -273,11 +385,11 @@ export const HeroSection: React.FC = () => {
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
                 <span
                   style={{
-                    fontFamily: "'Orbitron', sans-serif",
-                    fontSize: '0.82rem',
-                    fontWeight: 600,
-                    letterSpacing: '1.5px',
-                    color: 'var(--brand-purple)',
+                    fontFamily: '"Noto Sans", sans-serif',
+                    fontSize: '0.84rem',
+                    fontWeight: 400,
+                    letterSpacing: '3px',
+                    color: '#bd75ff',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '6px'
@@ -293,8 +405,8 @@ export const HeroSection: React.FC = () => {
             style={{
               display: 'grid',
               gridTemplateColumns: isSmallPhone ? '1fr' : '1.15fr 1fr',
-              gap: isSmallPhone ? '24px' : '24px',
-              alignItems: 'center',
+              gap: isSmallPhone ? '24px' : '28px',
+              alignItems: isSmallPhone ? 'center' : 'stretch',
               minHeight: isSmallPhone ? '260px' : isTablet ? '320px' : '380px'
             }}
           >

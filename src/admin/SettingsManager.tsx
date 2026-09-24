@@ -1148,6 +1148,39 @@ export default function SettingsManager() {
                 />
               </div>
             </div>
+
+            {/* Save Button for Branding & Social Links */}
+            <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'flex-start' }}>
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: saving ? '#cbd5e1' : '#ffcc00',
+                  color: '#0f172a',
+                  border: 'none',
+                  padding: '10px 24px',
+                  borderRadius: '9px',
+                  fontWeight: 600,
+                  fontSize: '13.5px',
+                  cursor: saving ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 3px 10px rgba(255, 204, 0, 0.35)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                {saving ? (
+                  <span>Saving...</span>
+                ) : (
+                  <>
+                    <Save size={15} />
+                    <span>Save Changes</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -499,6 +499,64 @@ html[data-theme="sepia"] .section-title {
   }
 }
 
+/* ========================================================================= */
+/* Responsive Cards Grid: Blog Index, Category, Tags, Author Pages           */
+/* ========================================================================= */
+.blog-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px 20px;
+}
+
+/* Large Tablet (e.g. iPad Pro 1032px, 901px - 1050px) -> 3 Columns */
+@media (min-width: 901px) and (max-width: 1050px) {
+  .blog-cards-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 26px 16px !important;
+  }
+}
+
+/* Mini Tablet & Portrait Tablet (601px - 900px, e.g. iPad Mini 768px) -> 2 Columns */
+@media (min-width: 601px) and (max-width: 900px) {
+  .blog-cards-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 24px 16px !important;
+  }
+}
+
+/* Mobile View (max-width: 600px) -> 1 Column */
+@media (max-width: 600px) {
+  .blog-cards-grid {
+    grid-template-columns: 1fr !important;
+    gap: 24px 14px !important;
+  }
+}
+
+/* ========================================================================= */
+/* Responsive Books Grid: Books Page                                         */
+/* ========================================================================= */
+.books-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 32px;
+}
+
+/* Large Tablet & Mini Tablet (601px - 1050px) -> 2 Columns */
+@media (min-width: 601px) and (max-width: 1050px) {
+  .books-cards-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 24px 18px !important;
+  }
+}
+
+/* Mobile View (max-width: 600px) -> 1 Column */
+@media (max-width: 600px) {
+  .books-cards-grid {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+}
+
 /* Small tab view footer globe positioning (641px - 800px) */
 @media (min-width: 641px) and (max-width: 800px) {
   .footer-globe-img {

@@ -84,13 +84,13 @@ const TagPage: React.FC = () => {
 
         {/* Tag Hero Header */}
         <div style={{ textAlign: 'left', marginBottom: isMobile ? '35px' : '48px', borderBottom: divider, paddingBottom: isMobile ? '24px' : '32px' }}>
-          <div style={{ color: 'var(--brand-purple)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '8px', fontFamily: "'Orbitron', sans-serif", display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <ZwosmosIcon size={12} color="var(--brand-purple)" />
+          <div style={{ color: '#bd75ff', fontSize: '0.78rem', fontWeight: 400, letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '8px', fontFamily: '"Noto Sans", sans-serif', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <ZwosmosIcon size={12} color="#bd75ff" />
             <span>Topic Tag</span>
-            <ZwosmosIcon size={12} color="var(--brand-purple)" />
+            <ZwosmosIcon size={12} color="#bd75ff" />
           </div>
           <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: isMobile ? '1.7rem' : '3rem', lineHeight: 1.15, margin: '0 0 14px 0', color: isLight ? '#111827' : '#ffffff', display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
-            <span style={{ display: 'inline-block', padding: '4px 18px', borderRadius: '999px', background: 'rgba(147,51,234,0.12)', border: '1px solid rgba(147,51,234,0.4)', fontSize: isMobile ? '1rem' : '1.3rem', letterSpacing: '0.5px', color: 'var(--brand-purple)', fontFamily: "'Lora', serif", fontWeight: 600, fontStyle: 'italic' }}>#{tagName}</span>
+            <span style={{ display: 'inline-block', padding: '4px 18px', borderRadius: '999px', background: 'rgba(147,51,234,0.12)', border: '1px solid rgba(147,51,234,0.4)', fontSize: isMobile ? '1rem' : '1.3rem', letterSpacing: '0.5px', color: '#bd75ff', fontFamily: "'Lora', serif", fontWeight: 600, fontStyle: 'italic' }}>#{tagName}</span>
             <span>Stories</span>
           </h1>
           <p style={{ fontFamily: "'Lora', serif", fontSize: isMobile ? '1rem' : '1.1rem', color: isLight ? '#4b5563' : 'rgba(255,255,255,0.72)', margin: 0, lineHeight: 1.65, maxWidth: '640px' }}>
@@ -104,7 +104,7 @@ const TagPage: React.FC = () => {
         {/* Count */}
         {!loading && tagPosts.length > 0 && (
           <div style={{ marginBottom: '25px' }}>
-            <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '0.82rem', color: isLight ? '#6b7280' : 'rgba(255,255,255,0.55)', letterSpacing: '1.5px' }}>
+            <div style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '0.82rem', fontWeight: 400, color: isLight ? '#6b7280' : 'rgba(255,255,255,0.55)', letterSpacing: '2px', textTransform: 'uppercase' }}>
               SHOWING {(currentPage - 1) * POSTS_PER_PAGE + 1}–{Math.min(tagPosts.length, currentPage * POSTS_PER_PAGE)} OF {tagPosts.length} STORIES
             </div>
           </div>
@@ -112,7 +112,7 @@ const TagPage: React.FC = () => {
 
         {/* Loading skeleton */}
         {loading && (
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? '24px 14px' : '32px 20px' }}>
+          <div className="blog-cards-grid">
             {[1,2,3].map(n => (
               <div key={n} style={{ borderRadius: '12px', background: isLight ? '#f3f4f6' : 'rgba(255,255,255,0.04)', border: isLight ? '1px solid #e5e7eb' : '1px solid rgba(255,255,255,0.06)', height: '320px' }} />
             ))}
@@ -122,15 +122,15 @@ const TagPage: React.FC = () => {
         {/* Grid or Empty */}
         {!loading && tagPosts.length === 0 && (
           <div style={{ textAlign: 'center', padding: '70px 20px', background: isLight ? '#ffffff' : 'rgba(255,255,255,0.02)', borderRadius: '16px', border: isLight ? '1px solid #e5e7eb' : '1px solid rgba(255,255,255,0.08)' }}>
-            <div style={{ marginBottom: '14px', display: 'flex', justifyContent: 'center' }}><ZwosmosIcon size={40} color="var(--brand-purple)" /></div>
+            <div style={{ marginBottom: '14px', display: 'flex', justifyContent: 'center' }}><ZwosmosIcon size={40} color="#bd75ff" /></div>
             <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.5rem', color: isLight ? '#111827' : '#ffffff', marginBottom: '10px' }}>No stories tagged "{tagName}"</h3>
             <p style={{ fontFamily: "'Lora', serif", color: isLight ? '#4b5563' : 'rgba(255,255,255,0.6)', fontSize: '0.92rem', margin: '0 auto 20px auto', maxWidth: '380px' }}>No articles with this tag have been published yet.</p>
-            <Link to="/blog" style={{ display: 'inline-block', background: 'var(--brand-purple)', color: '#ffffff', textDecoration: 'none', borderRadius: '20px', padding: '9px 22px', fontFamily: "'Orbitron', sans-serif", fontSize: '0.78rem', letterSpacing: '1px' }}>EXPLORE ALL STORIES</Link>
+            <Link to="/blog" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#bd75ff', textDecoration: 'none', fontFamily: '"Noto Sans", sans-serif', fontSize: '0.84rem', fontWeight: 400, letterSpacing: '3px', textTransform: 'uppercase' }}>EXPLORE ALL STORIES ↗</Link>
           </div>
         )}
 
         {!loading && tagPosts.length > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? '24px 14px' : '32px 20px' }}>
+          <div className="blog-cards-grid">
             {paginatedPosts.map(post => (
               <BlogCard key={post.id} id={post.id} category={post.category} title={post.title} desc={post.desc} img={post.img} authorName={post.authorName} authorImg={post.authorImg} date={post.date} variant="standard" />
             ))}

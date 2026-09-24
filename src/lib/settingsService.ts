@@ -106,7 +106,6 @@ function mapSettingsToRow(settings: Partial<SiteSettings>): any {
     social_linkedin: settings.socialLinkedin,
     social_youtube: settings.socialYoutube,
     copyright_text: settings.copyrightText,
-    enable_drop_cap: settings.enableDropCap !== undefined ? settings.enableDropCap : true,
     updated_at: new Date().toISOString()
   };
 }
@@ -175,14 +174,16 @@ export const settingsService = {
           .single();
 
         if (!error && data) {
-          const saved = mapRowToSettings(data);
+          const saved = { ...mapRowToSettings(data), enableDropCap: merged.enableDropCap };
           saveLocalSettings(saved);
           return saved;
         } else if (error) {
-          console.warn('Supabase update site_settings error:', error);
+          console.error('Supabase update site_settings error:', error);
+          throw new Error(error.message);
         }
-      } catch (err) {
-        console.warn('Supabase update site_settings exception:', err);
+      } catch (err: any) {
+        console.error('Supabase update site_settings exception:', err);
+        throw err;
       }
     }
 

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { LayoutDashboard, FileText, Database, BookOpen, Settings as SettingsIcon, LogOut } from 'lucide-react';
 import BlogsManager from './BlogsManager';
@@ -8,8 +9,67 @@ import SettingsManager from './SettingsManager';
 import { PushNotificationContainer } from './PushNotification';
 import './Admin.css';
 
+type AdminTab = 'blogs' | 'facts' | 'books' | 'settings';
+const VALID_TABS: AdminTab[] = ['blogs', 'facts', 'books', 'settings'];
+
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'blogs' | 'facts' | 'books' | 'settings'>('blogs');
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const getInitialTab = (): AdminTab => {
+    // 1. Try URL search parameter ?tab=...
+    const urlTab = searchParams.get('tab') as AdminTab;
+    if (urlTab && VALID_TABS.includes(urlTab)) {
+      return urlTab;
+    }
+    // 2. Try LocalStorage
+    try {
+      const stored = localStorage.getItem('zwosmos_admin_tab') as AdminTab;
+      if (stored && VALID_TABS.includes(stored)) {
+        return stored;
+      }
+    } catch {}
+    // 3. Fallback
+    return 'blogs';
+  };
+
+  const [activeTab, setActiveTabState] = useState<AdminTab>(getInitialTab);
+
+  const handleTabChange = (tab: AdminTab) => {
+    setActiveTabState(tab);
+    try {
+      localStorage.setItem('zwosmos_admin_tab', tab);
+    } catch {}
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set('tab', tab);
+        return next;
+      },
+      { replace: true }
+    );
+  };
+
+  // Keep URL search params and tab state synchronized
+  useEffect(() => {
+    const urlTab = searchParams.get('tab') as AdminTab;
+    if (urlTab && VALID_TABS.includes(urlTab)) {
+      if (urlTab !== activeTab) {
+        setActiveTabState(urlTab);
+        try {
+          localStorage.setItem('zwosmos_admin_tab', urlTab);
+        } catch {}
+      }
+    } else {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set('tab', activeTab);
+          return next;
+        },
+        { replace: true }
+      );
+    }
+  }, [searchParams]);
 
   const handleLogout = async () => {
     if (supabase) {
@@ -70,7 +130,7 @@ export default function AdminDashboard() {
         {/* Navigation Items */}
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
           <button
-            onClick={() => setActiveTab('blogs')}
+            onClick={() => handleTabChange('blogs')}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -105,7 +165,7 @@ export default function AdminDashboard() {
           </button>
 
           <button
-            onClick={() => setActiveTab('facts')}
+            onClick={() => handleTabChange('facts')}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -140,7 +200,7 @@ export default function AdminDashboard() {
           </button>
 
           <button
-            onClick={() => setActiveTab('books')}
+            onClick={() => handleTabChange('books')}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -175,7 +235,7 @@ export default function AdminDashboard() {
           </button>
 
           <button
-            onClick={() => setActiveTab('settings')}
+            onClick={() => handleTabChange('settings')}
             style={{
               display: 'flex',
               alignItems: 'center',

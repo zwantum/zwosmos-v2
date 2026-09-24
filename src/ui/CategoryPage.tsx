@@ -26,17 +26,6 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ slug: propSlug }) =>
   const { categorySlug } = useParams<{ categorySlug?: string }>();
   const activeSlug = propSlug || categorySlug || 'space-news';
 
-  // Window width tracking for accurate tablet (both small & large tab) detection
-  const [winWidth, setWinWidth] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1200));
-  useEffect(() => {
-    const onResize = () => setWinWidth(window.innerWidth);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-
-  const isSmallTab = winWidth >= 600 && winWidth < 800;
-  const isPhone = winWidth < 600;
-
   const [currentPage, setCurrentPage] = useState<number>(1);
   const { posts: livePosts, loading } = useBlogPosts();
 
@@ -186,19 +175,21 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ slug: propSlug }) =>
         >
           <div
             style={{
-              color: 'var(--brand-purple)',
+              color: '#bd75ff',
+              fontFamily: '"Noto Sans", sans-serif',
               fontSize: '0.82rem',
-              fontWeight: 700,
+              fontWeight: 400,
               letterSpacing: '3px',
               textTransform: 'uppercase',
+              marginBottom: '10px',
               display: 'flex',
               alignItems: 'center',
               gap: '8px'
             }}
           >
-            <ZwosmosIcon size={12} color="var(--brand-purple)" />
+            <ZwosmosIcon size={12} color="#bd75ff" />
             <span>Cosmic Compendium</span>
-            <ZwosmosIcon size={12} color="var(--brand-purple)" />
+            <ZwosmosIcon size={12} color="#bd75ff" />
           </div>
 
           <h1
@@ -233,10 +224,12 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ slug: propSlug }) =>
         <div style={{ marginBottom: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div
             style={{
-              fontFamily: "'Orbitron', sans-serif",
+              fontFamily: '"Noto Sans", sans-serif',
               fontSize: '0.82rem',
+              fontWeight: 400,
               color: isLight ? '#6b7280' : 'rgba(255, 255, 255, 0.55)',
-              letterSpacing: '1.5px'
+              letterSpacing: '2px',
+              textTransform: 'uppercase'
             }}
           >
             SHOWING {categoryPosts.length === 0 ? 0 : `${(currentPage - 1) * POSTS_PER_PAGE + 1}–${Math.min(categoryPosts.length, currentPage * POSTS_PER_PAGE)}`} OF {categoryPosts.length} STORIES
@@ -247,15 +240,7 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ slug: propSlug }) =>
         {/* 4. ALL POSTS IN GRID VIEW (No single top story)                           */}
         {/* ========================================================================= */}
         {loading && categoryPosts.length === 0 ? (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: isPhone
-                ? '1fr'
-                : 'repeat(3, 1fr)',
-              gap: isPhone ? '24px 14px' : (isSmallTab ? '24px 12px' : '32px 20px')
-            }}
-          >
+          <div className="blog-cards-grid">
             <style>{`
               @keyframes zw-cat-skel {
                 0%, 100% { opacity: 0.35; }
@@ -322,15 +307,7 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ slug: propSlug }) =>
             </Link>
           </div>
         ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: isPhone
-                ? '1fr'
-                : 'repeat(3, 1fr)',
-              gap: isPhone ? '24px 14px' : (isSmallTab ? '24px 12px' : '32px 20px')
-            }}
-          >
+          <div className="blog-cards-grid">
             {paginatedPosts.map((post: any) => (
               <BlogCard
                 key={post.id}

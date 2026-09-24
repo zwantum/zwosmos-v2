@@ -156,7 +156,7 @@ const Footer: React.FC<FooterProps> = ({ isLight: propIsLight }) => {
           <p
             style={{
               fontFamily: "'Playfair Display', serif",
-              color: isDark ? 'rgba(255, 255, 255, 0.75)' : (isSepia ? '#5c3d18' : '#4b5563'),
+              color: isDark ? 'rgba(255, 255, 255, 0.75)' : (isSepia ? '#5c3d18' : '#000'),
               fontSize: isSmallPhone ? '0.86rem' : '1.02rem',
               letterSpacing: '2px',
               textTransform: 'uppercase',
@@ -164,7 +164,7 @@ const Footer: React.FC<FooterProps> = ({ isLight: propIsLight }) => {
               margin: 0
             }}
           >
-            We explore the universe through stories,<br />tools, and ideas that inspire wonder.
+            We explore the universe through stories,<br />explainers & ideas that inspire wonder.
           </p>
         </div>
 
@@ -201,7 +201,7 @@ const Footer: React.FC<FooterProps> = ({ isLight: propIsLight }) => {
         <p
           style={{
             color: isLight ? '#374151' : 'rgba(255, 255, 255, 0.82)',
-            fontSize: isSmallPhone ? '0.9rem' : '1.02rem',
+            fontSize: isSmallPhone ? '0.9rem' : '1.32rem',
             lineHeight: 1.6,
             fontFamily: "'Lora', serif",
             maxWidth: '500px',
@@ -209,7 +209,7 @@ const Footer: React.FC<FooterProps> = ({ isLight: propIsLight }) => {
             fontWeight: isLight ? 500 : 400
           }}
         >
-          Exploring the universe through stories, tools, and ideas that inspire wonder.
+          Stay in the signal.
         </p>
 
         {/* Social Media Icons (Only Instagram, Facebook, X, LinkedIn, YouTube) */}
@@ -326,7 +326,7 @@ const Footer: React.FC<FooterProps> = ({ isLight: propIsLight }) => {
             fontFamily: "'Lora', serif"
           }}
         >
-          {settings.copyrightText || '© 2026 Zwosmos. All rights reserved.'}
+          {settings.copyrightText || '© 2025 -2026 Zwosmos. All rights reserved.'}
         </div>
       </div>
     </footer>

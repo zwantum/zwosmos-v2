@@ -343,7 +343,7 @@ const BlogPostPage: React.FC = () => {
               : '1px solid rgba(0,0,0,0.1)'
           }}
         >
-          <ZwosmosIcon size={12} color={isSepia ? '#d97706' : 'var(--brand-purple)'} />
+          <ZwosmosIcon size={12} color={isSepia ? '#d97706' : '#bd75ff'} />
           <span>Text Size</span>
         </div>
 
@@ -630,17 +630,18 @@ const BlogPostPage: React.FC = () => {
     >
       <span
         style={{
-          fontFamily: "'Playfair Display', serif",
-          fontSize: '0.96rem',
-          fontWeight: 700,
+          fontFamily: '"Noto Sans", sans-serif',
+          fontSize: '0.82rem',
+          fontWeight: 400,
           color: isLight ? '#111827' : '#ffffff',
-          letterSpacing: '0.5px',
+          letterSpacing: '2px',
+          textTransform: 'uppercase',
           display: 'inline-flex',
           alignItems: 'center',
-          gap: '5px'
+          gap: '6px'
         }}
       >
-        <ZwosmosIcon size={12} color={isSepia ? '#d97706' : 'var(--brand-purple)'} /> Share:
+        <ZwosmosIcon size={12} color={isSepia ? '#d97706' : '#bd75ff'} /> Share:
       </span>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -718,7 +719,7 @@ const BlogPostPage: React.FC = () => {
             justifyContent: 'center',
             cursor: 'pointer',
             fontSize: '0.82rem',
-            transition: 'transform 0.2s',
+            transition: 'all 0.2s ease',
             boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
           }}
         >
@@ -780,18 +781,19 @@ const BlogPostPage: React.FC = () => {
       >
         <span
           style={{
-            fontFamily: "'Playfair Display', serif",
-            fontSize: '0.96rem',
-            fontWeight: 700,
+            fontFamily: '"Noto Sans", sans-serif',
+            fontSize: '0.82rem',
+            fontWeight: 400,
             color: isLight ? '#111827' : '#ffffff',
-            letterSpacing: '0.5px',
+            letterSpacing: '2px',
+            textTransform: 'uppercase',
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '5px',
+            gap: '6px',
             flexShrink: 0
           }}
         >
-          <ZwosmosIcon size={12} color={isSepia ? '#d97706' : 'var(--brand-purple)'} /> Tags:
+          <ZwosmosIcon size={12} color={isSepia ? '#d97706' : '#bd75ff'} /> Tags:
         </span>
 
         <div
@@ -895,14 +897,16 @@ const BlogPostPage: React.FC = () => {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '8px',
-              fontFamily: "'Playfair Display', serif",
-              fontSize: '0.88rem',
-              letterSpacing: '1px',
+              fontFamily: '"Noto Sans", sans-serif',
+              fontSize: '0.78rem',
+              fontWeight: 400,
+              letterSpacing: '3px',
+              textTransform: 'uppercase',
               color: isLight ? '#111827' : 'white',
               whiteSpace: 'nowrap'
             }}
           >
-            <ZwosmosIcon size={12} color={isSepia ? '#d97706' : 'var(--brand-purple)'} />
+            <ZwosmosIcon size={12} color={isSepia ? '#d97706' : '#bd75ff'} />
             <span>Author</span>
           </span>
         </div>
@@ -962,7 +966,7 @@ const BlogPostPage: React.FC = () => {
               <Link
                 to={`/author/${postData.author.slug}`}
                 style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }}
-                onMouseOver={e => (e.currentTarget.style.color = isSepia ? '#d97706' : 'var(--brand-purple)')}
+                onMouseOver={e => (e.currentTarget.style.color = isSepia ? '#d97706' : '#bd75ff')}
                 onMouseOut={e => (e.currentTarget.style.color = isLight ? '#111827' : 'white')}
               >
                 {postData.author.name}
@@ -972,10 +976,11 @@ const BlogPostPage: React.FC = () => {
             {postData.author.role && (
               <div
                 style={{
-                  color: isSepia ? '#b45309' : 'var(--brand-purple)',
-                  fontSize: '0.7rem',
-                  fontFamily: "'Lora', serif",
-                  fontWeight: 600
+                  color: isSepia ? '#b45309' : '#bd75ff',
+                  fontSize: '0.74rem',
+                  fontFamily: '"Noto Sans", sans-serif',
+                  fontWeight: 400,
+                  letterSpacing: '0.5px'
                 }}
               >
                 {postData.author.role}
@@ -1084,14 +1089,16 @@ const BlogPostPage: React.FC = () => {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '8px',
-              fontFamily: "'Playfair Display', serif",
-              fontSize: '0.88rem',
-              letterSpacing: '1px',
+              fontFamily: '"Noto Sans", sans-serif',
+              fontSize: '0.78rem',
+              fontWeight: 400,
+              letterSpacing: '3px',
+              textTransform: 'uppercase',
               color: isLight ? '#111827' : 'white',
               whiteSpace: 'nowrap'
             }}
           >
-            <ZwosmosIcon size={12} color={isSepia ? '#d97706' : 'var(--brand-purple)'} />
+            <ZwosmosIcon size={12} color={isSepia ? '#d97706' : '#bd75ff'} />
             <span>Latest</span>
           </span>
         </div>
@@ -1244,14 +1251,16 @@ const BlogPostPage: React.FC = () => {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '8px',
-                fontFamily: "'Playfair Display', serif",
-                fontSize: '0.88rem',
-                letterSpacing: '1px',
+                fontFamily: '"Noto Sans", sans-serif',
+                fontSize: '0.78rem',
+                fontWeight: 400,
+                letterSpacing: '3px',
+                textTransform: 'uppercase',
                 color: isLight ? '#111827' : 'white',
                 whiteSpace: 'nowrap'
               }}
             >
-              <ZwosmosIcon size={12} color={isSepia ? '#d97706' : 'var(--brand-purple)'} />
+              <ZwosmosIcon size={12} color={isSepia ? '#d97706' : '#bd75ff'} />
               <span>Tags</span>
             </span>
           </div>
@@ -1354,17 +1363,18 @@ const BlogPostPage: React.FC = () => {
     >
       <span
         style={{
-          fontFamily: "'Playfair Display', serif",
-          fontSize: '0.96rem',
-          fontWeight: 700,
+          fontFamily: '"Noto Sans", sans-serif',
+          fontSize: '0.82rem',
+          fontWeight: 400,
           color: isLight ? '#111827' : '#ffffff',
-          letterSpacing: '0.5px',
+          letterSpacing: '2px',
+          textTransform: 'uppercase',
           display: 'inline-flex',
           alignItems: 'center',
           gap: '8px'
         }}
       >
-        <ZwosmosIcon size={12} color={isSepia ? '#d97706' : 'var(--brand-purple)'} />
+        <ZwosmosIcon size={12} color={isSepia ? '#d97706' : '#bd75ff'} />
         <span>Share:</span>
       </span>
 
@@ -1742,7 +1752,7 @@ const BlogPostPage: React.FC = () => {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <ZwosmosIcon size={12} color="var(--brand-purple)" />
+                <ZwosmosIcon size={12} color="#bd75ff" />
                 <span style={{ color: isLight ? '#111827' : 'white', fontWeight: 600 }}>
                   {postData.publishedDate}
                 </span>
@@ -1759,9 +1769,11 @@ const BlogPostPage: React.FC = () => {
                 <span style={{ color: isLight ? '#4b5563' : 'rgba(255,255,255,0.5)' }}>Category:</span>
                 <span
                   style={{
-                    color: 'var(--brand-purple)',
-                    fontWeight: 700,
-                    letterSpacing: '0.5px'
+                    color: '#bd75ff',
+                    fontFamily: '"Noto Sans", sans-serif',
+                    fontWeight: 400,
+                    letterSpacing: '2px',
+                    textTransform: 'uppercase'
                   }}
                 >
                   {postData.category}
@@ -2303,13 +2315,13 @@ const BlogPostPage: React.FC = () => {
                 >
                   <div
                     style={{
-                      fontFamily: "'Orbitron', sans-serif",
-                      fontSize: (isMobile || isTablet) ? '0.66rem' : '0.62rem',
-                      fontWeight: 700,
-                      letterSpacing: (isMobile || isTablet) ? '0.6px' : '1.2px',
-                      color: isSepia ? '#b45309' : 'var(--brand-purple)',
+                      fontFamily: '"Noto Sans", sans-serif',
+                      fontSize: (isMobile || isTablet) ? '0.68rem' : '0.72rem',
+                      fontWeight: 400,
+                      letterSpacing: '3px',
+                      color: isSepia ? '#b45309' : '#bd75ff',
                       textTransform: 'uppercase',
-                      marginBottom: (isMobile || isTablet) ? '0px' : '3px',
+                      marginBottom: (isMobile || isTablet) ? '0px' : '4px',
                       textAlign: 'left',
                       whiteSpace: 'nowrap',
                       width: 'auto'
@@ -2394,13 +2406,13 @@ const BlogPostPage: React.FC = () => {
                 >
                   <div
                     style={{
-                      fontFamily: "'Orbitron', sans-serif",
-                      fontSize: (isMobile || isTablet) ? '0.66rem' : '0.62rem',
-                      fontWeight: 700,
-                      letterSpacing: (isMobile || isTablet) ? '0.6px' : '1.2px',
-                      color: isSepia ? '#b45309' : 'var(--brand-purple)',
+                      fontFamily: '"Noto Sans", sans-serif',
+                      fontSize: (isMobile || isTablet) ? '0.68rem' : '0.72rem',
+                      fontWeight: 400,
+                      letterSpacing: '3px',
+                      color: isSepia ? '#b45309' : '#bd75ff',
                       textTransform: 'uppercase',
-                      marginBottom: (isMobile || isTablet) ? '0px' : '3px',
+                      marginBottom: (isMobile || isTablet) ? '0px' : '4px',
                       textAlign: 'right',
                       whiteSpace: 'nowrap',
                       width: 'auto'
@@ -2433,14 +2445,14 @@ const BlogPostPage: React.FC = () => {
                     width: (isMobile || isTablet) ? '28px' : '36px',
                     height: (isMobile || isTablet) ? '28px' : '36px',
                     borderRadius: '50%',
-                    background: isDark ? 'rgba(147, 51, 234, 0.2)' : (isSepia ? '#fde8c8' : 'rgba(147, 51, 234, 0.08)'),
-                    border: isSepia ? '1px solid #d97706' : '1px solid var(--brand-purple)',
+                    background: isDark ? 'rgba(189, 117, 255, 0.15)' : (isSepia ? '#fde8c8' : 'rgba(189, 117, 255, 0.08)'),
+                    border: isSepia ? '1px solid #d97706' : '1px solid #bd75ff',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: isSepia ? '#b45309' : 'var(--brand-purple)',
+                    color: isSepia ? '#b45309' : '#bd75ff',
                     fontSize: (isMobile || isTablet) ? '0.85rem' : '1.05rem',
-                    fontWeight: 700,
+                    fontWeight: 400,
                     flexShrink: 0
                   }}
                 >
@@ -2490,13 +2502,13 @@ const BlogPostPage: React.FC = () => {
               <div>
                 <div
                   style={{
-                    fontFamily: "'Orbitron', sans-serif",
-                    fontSize: '0.68rem',
-                    fontWeight: 600,
-                    letterSpacing: '2px',
-                    color: isSepia ? '#b45309' : 'var(--brand-purple)',
+                    fontFamily: '"Noto Sans", sans-serif',
+                    fontSize: '0.78rem',
+                    fontWeight: 400,
+                    letterSpacing: '3px',
+                    color: isSepia ? '#b45309' : '#bd75ff',
                     textTransform: 'uppercase',
-                    marginBottom: '4px'
+                    marginBottom: '6px'
                   }}
                 >
                   EXPLORE FURTHER
@@ -2515,24 +2527,25 @@ const BlogPostPage: React.FC = () => {
                   }}
                 >
                   Related Posts
-                  <ZwosmosIcon size={14} color={isSepia ? '#d97706' : 'var(--brand-purple)'} />
+                  <ZwosmosIcon size={14} color={isSepia ? '#d97706' : '#bd75ff'} />
                 </h3>
               </div>
 
               <Link
                 to={`/${postData.categorySlug || 'space-news'}`}
                 style={{
-                  fontFamily: "'Orbitron', sans-serif",
-                  fontSize: '0.74rem',
-                  fontWeight: 600,
-                  letterSpacing: '1px',
-                  color: isSepia ? '#b45309' : 'var(--brand-purple)',
+                  fontFamily: '"Noto Sans", sans-serif',
+                  fontSize: '0.84rem',
+                  fontWeight: 400,
+                  letterSpacing: '3px',
+                  color: isSepia ? '#b45309' : '#bd75ff',
                   textDecoration: 'none',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
                   transition: 'opacity 0.2s',
-                  paddingBottom: '2px'
+                  paddingBottom: '2px',
+                  textTransform: 'uppercase'
                 }}
                 onMouseOver={e => (e.currentTarget.style.opacity = '0.75')}
                 onMouseOut={e => (e.currentTarget.style.opacity = '1')}

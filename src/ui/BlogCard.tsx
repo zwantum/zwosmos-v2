@@ -48,9 +48,10 @@ export const BlogCard = ({
 
   // Image heights based on variant
   const getImageHeight = () => {
+    if (isSmallPhone) return '230px';
     if (isHorizontal) return horizontalIsRow ? '140px' : '160px';
-    if (isFeatured) return isSmallPhone ? '230px' : '270px';
-    if (isWide) return isSmallPhone ? '220px' : '280px';
+    if (isFeatured) return '270px';
+    if (isWide) return '280px';
     return '240px';
   };
 
@@ -71,39 +72,46 @@ export const BlogCard = ({
     <div
       style={{
         position: 'relative',
-        marginLeft: isHorizontal ? (isMobile ? '10px' : '14px') : (isMobile ? '18px' : '22px'),
-        marginBottom: (isHorizontal || isFeatured) ? '0' : '8px',
-        height: '100%',
-        flex: isHorizontal ? '1 1 0px' : isFeatured ? '1 1 auto' : 'none',
+        marginLeft: (isHorizontal && !isSmallPhone) ? (isMobile ? '10px' : '14px') : (isMobile ? '18px' : '22px'),
+        marginBottom: (isHorizontal && !isSmallPhone) ? '0' : '8px',
+        height: isSmallPhone ? 'auto' : '100%',
+        flex: (isHorizontal && !isSmallPhone) ? '1 1 0px' : (isFeatured && !isSmallPhone) ? '1 1 auto' : 'none',
         display: 'flex',
         flexDirection: 'column'
       }}
     >
       <Link
         to={`/blog/${id}`}
-        style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', height: '100%', flex: 1 }}
+        style={{
+          textDecoration: 'none',
+          color: 'inherit',
+          display: 'flex',
+          flexDirection: 'column',
+          height: isSmallPhone ? 'auto' : '100%',
+          flex: isSmallPhone ? 'none' : 1
+        }}
       >
         <div
           style={{
             cursor: 'pointer',
-            height: '100%',
-            flex: 1,
-            background: isHorizontal
+            height: isSmallPhone ? 'auto' : '100%',
+            flex: isSmallPhone ? 'none' : 1,
+            background: (isHorizontal && !isSmallPhone)
               ? (isDark ? 'rgba(255, 255, 255, 0.02)' : (isSepia ? '#fef6ea' : '#ffffff'))
               : 'transparent',
-            borderRadius: '12px',
-            border: isHorizontal
+            borderRadius: (isHorizontal && !isSmallPhone) ? '12px' : '0px',
+            border: (isHorizontal && !isSmallPhone)
               ? (isDark ? '1px solid rgba(147, 51, 234, 0.22)' : (isSepia ? '1px solid rgba(217, 119, 6, 0.28)' : '1px solid #e5e7eb'))
               : 'none',
-            padding: isHorizontal
+            padding: (isHorizontal && !isSmallPhone)
               ? '12px 14px'
               : isFeatured
               ? '0'
               : (isSmallPhone ? '8px 2px' : '10px 4px 12px 4px'),
             display: 'flex',
             flexDirection: horizontalIsRow ? 'row' : 'column',
-            gap: isHorizontal ? '14px' : '0',
-            alignItems: isHorizontal ? 'center' : 'stretch',
+            gap: (isHorizontal && !isSmallPhone) ? '14px' : '0',
+            alignItems: (isHorizontal && !isSmallPhone && horizontalIsRow) ? 'center' : 'stretch',
             boxSizing: 'border-box',
             transition: 'background 0.3s ease, border-color 0.3s ease, transform 0.3s ease'
           }}
@@ -112,7 +120,7 @@ export const BlogCard = ({
             const t = e.currentTarget.querySelector('.tabs') as HTMLElement;
             if (w) w.style.transform = 'translate(0, 0)';
             if (t) t.style.transform = 'translate(-50%, 0)';
-            if (isHorizontal) {
+            if (isHorizontal && !isSmallPhone) {
               e.currentTarget.style.borderColor = 'var(--brand-purple)';
               e.currentTarget.style.background = isDark
                 ? 'rgba(147, 51, 234, 0.08)'
@@ -124,7 +132,7 @@ export const BlogCard = ({
             const t = e.currentTarget.querySelector('.tabs') as HTMLElement;
             if (w) w.style.transform = 'translate(-12px, 12px)';
             if (t) t.style.transform = 'translate(calc(-50% - 12px), 12px)';
-            if (isHorizontal) {
+            if (isHorizontal && !isSmallPhone) {
               e.currentTarget.style.borderColor = isDark ? 'rgba(147, 51, 234, 0.2)' : (isSepia ? 'rgba(217, 119, 6, 0.28)' : '#e5e7eb');
               e.currentTarget.style.background = isDark ? 'rgba(255, 255, 255, 0.02)' : (isSepia ? '#fef6ea' : '#ffffff');
             }
@@ -134,9 +142,9 @@ export const BlogCard = ({
           <div
             style={{
               position: 'relative',
-              width: horizontalIsRow ? '140px' : '100%',
+              width: (isHorizontal && !isSmallPhone && horizontalIsRow) ? '140px' : '100%',
               height: getImageHeight(),
-              marginBottom: isHorizontal ? (horizontalIsRow ? '0' : '14px') : '22px',
+              marginBottom: (isHorizontal && !isSmallPhone) ? (horizontalIsRow ? '0' : '14px') : '22px',
               flexShrink: 0,
               zIndex: 1
             }}
@@ -164,31 +172,32 @@ export const BlogCard = ({
               className="tabs"
               style={{
                 position: 'absolute',
-                top: isHorizontal ? '14px' : '20px',
+                top: (isHorizontal && !isSmallPhone) ? '14px' : '20px',
                 left: 0,
                 transform: 'translate(calc(-50% - 12px), 12px)',
                 zIndex: 4,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: isHorizontal ? '8px' : '12px',
+                gap: (isHorizontal && !isSmallPhone) ? '8px' : '12px',
                 transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
               }}
             >
               <div
                 style={{
-                  background: isDark ? 'var(--bg-main)' : (isSepia ? '#fde8c8' : '#ffffff'),
+                  background: isDark ? '#4C0086' : (isSepia ? '#fde8c8' : '#ffffff'),
                   border: isSepia ? '1px solid rgba(217, 119, 6, 0.45)' : '1px solid var(--brand-purple)',
                   borderRadius: '20px',
-                  padding: isHorizontal ? '10px 4px' : '15px 5px',
+                  padding: (isHorizontal && !isSmallPhone) ? '10px 4px' : '15px 5px',
                   display: 'flex',
                   justifyContent: 'center',
                   alignItems: 'center',
                   writingMode: 'vertical-rl',
                   transform: 'rotate(180deg)',
                   color: isSepia ? '#78350f' : (isLight ? '#111827' : 'white'),
-                  fontSize: isHorizontal ? '0.72rem' : '0.8rem',
-                  fontWeight: 'bold',
+                  fontFamily: '"Noto Sans", sans-serif',
+                  fontSize: (isHorizontal && !isSmallPhone) ? '0.72rem' : '0.8rem',
+                  fontWeight: 400,
                   letterSpacing: '1px',
                   boxShadow: isSepia ? '0 2px 8px rgba(217, 119, 6, 0.15)' : (isLight ? '0 2px 8px rgba(0,0,0,0.1)' : '0 4px 10px rgba(0,0,0,0.5)')
                 }}
@@ -196,7 +205,7 @@ export const BlogCard = ({
                 {category}
               </div>
 
-              {!isHorizontal && (
+              {(!isHorizontal || isSmallPhone) && (
                 <div
                   title="Share"
                   style={{
@@ -269,8 +278,8 @@ export const BlogCard = ({
             style={{
               display: 'flex',
               flexDirection: 'column',
-              flex: 1,
-              justifyContent: isHorizontal ? 'space-between' : 'flex-start',
+              flex: isSmallPhone ? 'none' : 1,
+              justifyContent: (isHorizontal && !isSmallPhone) ? 'space-between' : 'flex-start',
               width: '100%'
             }}
           >
@@ -278,11 +287,11 @@ export const BlogCard = ({
               <h3
                 style={{
                   fontSize: getTitleSize(),
-                  margin: isHorizontal ? '0 0 6px 0' : '0 0 10px 0',
-                  lineHeight: isHorizontal ? 1.25 : 1.25,
+                  margin: (isHorizontal && !isSmallPhone) ? '0 0 6px 0' : '0 0 10px 0',
+                  lineHeight: 1.25,
                   fontFamily: "'Playfair Display', serif",
                   color: isLight ? '#111827' : '#ffffff',
-                  minHeight: (isHorizontal || isMobile || isFeatured) ? 'auto' : '62px'
+                  minHeight: (isHorizontal || isMobile || isFeatured || isSmallPhone) ? 'auto' : '62px'
                 }}
               >
                 {title}
@@ -295,10 +304,10 @@ export const BlogCard = ({
                     alignItems: 'center',
                     flexWrap: 'wrap',
                     gap: '6px',
-                    fontSize: isHorizontal ? '0.74rem' : '0.78rem',
+                    fontSize: (isHorizontal && !isSmallPhone) ? '0.74rem' : '0.78rem',
                     color: isLight ? '#6b7280' : 'rgba(255, 255, 255, 0.55)',
-                    fontFamily: "'Lora', serif",
-                    margin: isHorizontal ? '0 0 8px 0' : '0 0 14px 0',
+                    fontFamily: '"Noto Sans", sans-serif',
+                    margin: (isHorizontal && !isSmallPhone) ? '0 0 8px 0' : '0 0 14px 0',
                     lineHeight: 1.3
                   }}
                 >
@@ -321,12 +330,12 @@ export const BlogCard = ({
                 <p
                   style={{
                     color: isLight ? '#4b5563' : 'rgba(255,255,255,0.6)',
-                    fontSize: isHorizontal ? '0.84rem' : isFeatured ? '1.02rem' : '0.95rem',
-                    lineHeight: isHorizontal ? 1.45 : 1.6,
-                    margin: isHorizontal ? '0 0 10px 0' : isFeatured ? '0 0 16px 0' : '0 0 16px 0',
+                    fontSize: (isHorizontal && !isSmallPhone) ? '0.84rem' : isFeatured ? '1.02rem' : '0.95rem',
+                    lineHeight: (isHorizontal && !isSmallPhone) ? 1.45 : 1.6,
+                    margin: (isHorizontal && !isSmallPhone) ? '0 0 10px 0' : isFeatured ? '0 0 16px 0' : '0 0 16px 0',
                     fontFamily: "'Lora', serif",
                     display: '-webkit-box',
-                    WebkitLineClamp: isHorizontal ? 2 : 3,
+                    WebkitLineClamp: (isHorizontal && !isSmallPhone) ? 2 : 3,
                     WebkitBoxOrient: 'vertical',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -343,37 +352,27 @@ export const BlogCard = ({
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginTop: 'auto'
+                marginTop: isSmallPhone ? '12px' : 'auto'
               }}
             >
-              <button
+              <span
                 style={{
                   background: 'transparent',
-                  border: isDark ? '1px solid rgba(255,255,255,0.2)' : (isSepia ? '1px solid rgba(217, 119, 6, 0.4)' : '1px solid #d1d5db'),
-                  color: isDark ? 'white' : (isSepia ? '#78350f' : '#374151'),
-                  padding: isHorizontal ? '5px 14px' : '9px 18px',
-                  borderRadius: isHorizontal ? '20px' : '30px',
-                  fontFamily: "'Playfair Display', serif",
-                  fontSize: isHorizontal ? '0.78rem' : '0.88rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'background 0.2s, border-color 0.2s, transform 0.2s, color 0.2s'
-                }}
-                onMouseOver={e => {
-                  e.currentTarget.style.background = 'var(--brand-purple)';
-                  e.currentTarget.style.borderColor = 'var(--brand-purple)';
-                  e.currentTarget.style.color = '#ffffff';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                }}
-                onMouseOut={e => {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.2)' : (isSepia ? 'rgba(217, 119, 6, 0.4)' : '#d1d5db');
-                  e.currentTarget.style.color = isDark ? 'white' : (isSepia ? '#78350f' : '#374151');
-                  e.currentTarget.style.transform = 'translateY(0)';
+                  border: 'none',
+                  padding: 0,
+                  color: '#bd75ff',
+                  fontFamily: '"Noto Sans", sans-serif',
+                  fontSize: (isHorizontal && !isSmallPhone) ? '0.78rem' : '0.86rem',
+                  fontWeight: 400,
+                  textTransform: 'uppercase',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  cursor: 'pointer'
                 }}
               >
-                Read More
-              </button>
+                Read More ↗
+              </span>
             </div>
           </div>
         </div>

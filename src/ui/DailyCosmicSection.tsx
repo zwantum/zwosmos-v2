@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { getCosmicData, DailyCosmicData, DEFAULT_COSMIC_DATA } from '../lib/cosmicService';
+import { getActiveCosmicData, DailyCosmicData, DEFAULT_COSMIC_DATA } from '../lib/cosmicService';
 
 export const DailyCosmicSection: React.FC = () => {
   const { isLight, isSepia, isDark } = useTheme();
@@ -19,27 +19,36 @@ export const DailyCosmicSection: React.FC = () => {
 
   useEffect(() => {
     let mounted = true;
-    getCosmicData().then((data) => {
-      if (mounted && data) {
-        setCosmic(data);
-      }
-    });
+    const fetchLatest = () => {
+      getActiveCosmicData().then((data) => {
+        if (mounted && data) {
+          setCosmic(data);
+        }
+      });
+    };
+
+    fetchLatest();
 
     const handleUpdate = (e: any) => {
       if (e?.detail) {
         setCosmic(e.detail);
       } else {
-        getCosmicData().then((data) => {
-          if (mounted && data) setCosmic(data);
-        });
+        fetchLatest();
       }
     };
 
     window.addEventListener('zwosmos_daily_cosmic_updated', handleUpdate);
     window.addEventListener('storage', handleUpdate);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') fetchLatest();
+    });
+
+    // Check for scheduled rollover every 60 seconds
+    const interval = setInterval(fetchLatest, 60000);
 
     return () => {
       mounted = false;
+      clearInterval(interval);
       window.removeEventListener('zwosmos_daily_cosmic_updated', handleUpdate);
       window.removeEventListener('storage', handleUpdate);
     };
@@ -207,7 +216,7 @@ export const DailyCosmicSection: React.FC = () => {
               {/* Date Pill Tab */}
               <div
                 style={{
-                  background: isDark ? '#080711' : (isSepia ? '#fde8c8' : '#ffffff'),
+                  background: isDark ? '#4C0086' : (isSepia ? '#fde8c8' : '#ffffff'),
                   border: isSepia ? '1.5px solid rgba(217, 119, 6, 0.45)' : '1.5px solid var(--brand-purple)',
                   borderRadius: '20px',
                   padding: '14px 6px',
@@ -218,7 +227,7 @@ export const DailyCosmicSection: React.FC = () => {
                   transform: 'rotate(180deg)',
                   color: isSepia ? '#78350f' : (isLight ? '#111827' : '#ffffff'),
                   fontSize: '0.72rem',
-                  fontWeight: 700,
+                  fontWeight: 400,
                   letterSpacing: '1.2px',
                   textTransform: 'uppercase',
                   boxShadow: isLight ? '0 2px 8px rgba(0,0,0,0.1)' : '0 4px 12px rgba(0,0,0,0.6)',

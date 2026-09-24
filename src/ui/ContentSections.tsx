@@ -187,13 +187,13 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
           <div className="section-divider" />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: isSmallTab ? '20px' : '35px', flexWrap: 'wrap', gap: '15px' }}>
             <div>
-              <div style={{ color: 'var(--brand-purple)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <ZwosmosIcon size={12} color="var(--brand-purple)" />
+              <div style={{ color: '#bd75ff', fontFamily: '"Noto Sans", sans-serif', fontSize: '0.78rem', fontWeight: 400, letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <ZwosmosIcon size={12} color="#bd75ff" />
                 <span>Stellar Expeditions</span>
               </div>
               <h2 className="section-title" style={{ margin: 0, color: isLight ? '#111827' : '#ffffff' }}>Deep Space Chronicles</h2>
             </div>
-            <Link to="/universe" style={{ color: 'var(--brand-purple)', textDecoration: 'none', fontWeight: 600, letterSpacing: '2px', fontSize: '0.86rem' }}>
+            <Link to="/universe" style={{ color: '#bd75ff', fontFamily: '"Noto Sans", sans-serif', textDecoration: 'none', fontWeight: 400, letterSpacing: '3px', fontSize: '0.84rem' }}>
               VIEW ALL IN DEEP SPACE &rarr;
             </Link>
           </div>
@@ -225,13 +225,13 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
           <div className="section-divider" />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: isSmallTab ? '20px' : '35px', flexWrap: 'wrap', gap: '15px' }}>
             <div>
-              <div style={{ color: 'var(--brand-purple)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <ZwosmosIcon size={12} color="var(--brand-purple)" />
+              <div style={{ color: '#bd75ff', fontFamily: '"Noto Sans", sans-serif', fontSize: '0.78rem', fontWeight: 400, letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <ZwosmosIcon size={12} color="#bd75ff" />
                 <span>Astrophysical Instrumentation</span>
               </div>
               <h2 className="section-title" style={{ margin: 0, color: isLight ? '#111827' : '#ffffff' }}>Technology & Observatories</h2>
             </div>
-            <Link to="/telescopes-technology" style={{ color: 'var(--brand-purple)', textDecoration: 'none', fontWeight: 600, letterSpacing: '2px', fontSize: '0.86rem' }}>
+            <Link to="/telescopes-technology" style={{ color: '#bd75ff', fontFamily: '"Noto Sans", sans-serif', textDecoration: 'none', fontWeight: 400, letterSpacing: '3px', fontSize: '0.84rem' }}>
               VIEW ALL IN TECHNOLOGY &rarr;
             </Link>
           </div>
@@ -241,11 +241,11 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
               display: 'grid',
               gridTemplateColumns: isSmallPhone ? '1fr' : '1.12fr 1fr',
               gap: isSmallPhone ? '30px' : (isTablet ? '24px' : '30px'),
-              alignItems: 'stretch'
+              alignItems: isSmallPhone ? 'start' : 'stretch'
             }}
           >
             {/* Left Column: Large Featured Hero Card */}
-            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', height: isSmallPhone ? 'auto' : '100%' }}>
               <BlogCard
                 id={techFeatured.id}
                 category={techFeatured.category}
@@ -260,7 +260,7 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
             </div>
 
             {/* Right Column: Stacked Horizontal Cards (2 Cards) */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', height: '100%' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: isSmallPhone ? '30px' : '16px', height: isSmallPhone ? 'auto' : '100%' }}>
               <BlogCard
                 id={techStacked1.id}
                 category={techStacked1.category}
@@ -296,13 +296,13 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
           <div className="section-divider" />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: isSmallTab ? '20px' : '35px', flexWrap: 'wrap', gap: '15px' }}>
             <div>
-              <div style={{ color: 'var(--brand-purple)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <ZwosmosIcon size={12} color="var(--brand-purple)" />
+              <div style={{ color: '#bd75ff', fontFamily: '"Noto Sans", sans-serif', fontSize: '0.78rem', fontWeight: 400, letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <ZwosmosIcon size={12} color="#bd75ff" />
                 <span>Planetary Explorations</span>
               </div>
               <h2 className="section-title" style={{ margin: 0, color: isLight ? '#111827' : '#ffffff' }}>Solar System & Planetary Frontiers</h2>
             </div>
-            <Link to="/solar-system" style={{ color: 'var(--brand-purple)', textDecoration: 'none', fontWeight: 600, letterSpacing: '2px', fontSize: '0.86rem' }}>
+            <Link to="/solar-system" style={{ color: '#bd75ff', fontFamily: '"Noto Sans", sans-serif', textDecoration: 'none', fontWeight: 400, letterSpacing: '3px', fontSize: '0.84rem' }}>
               VIEW ALL IN SOLAR SYSTEM &rarr;
             </Link>
           </div>
@@ -311,8 +311,8 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
             style={{
               display: 'grid',
               gridTemplateColumns: (isSmallPhone || isSmallTab) ? '1fr' : (winWidth < 860 ? 'repeat(auto-fit, minmax(280px, 1fr))' : 'repeat(3, 1fr)'),
-              gap: isSmallPhone ? '28px' : isSmallTab ? '20px' : '18px',
-              alignItems: 'stretch'
+              gap: isSmallPhone ? '30px' : isSmallTab ? '20px' : '18px',
+              alignItems: isSmallPhone ? 'start' : 'stretch'
             }}
           >
             <BlogCard
@@ -361,8 +361,8 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
           {/* Section Yellow Accent Divider */}
           <div className="section-divider" />
           <div style={{ marginBottom: isLargeView ? '26px' : isSmallPhone ? '32px' : isSmallTab ? '38px' : '48px' }}>
-            <div style={{ color: 'var(--brand-purple)', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '2.5px', textTransform: 'uppercase', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <ZwosmosIcon size={12} color="var(--brand-purple)" />
+            <div style={{ color: '#bd75ff', fontFamily: '"Noto Sans", sans-serif', fontSize: '0.8rem', fontWeight: 400, letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <ZwosmosIcon size={12} color="#bd75ff" />
               <span>Cosmic Compendium</span>
             </div>
             <h2 className="section-title" style={{ margin: 0, color: isLight ? '#111827' : '#ffffff' }}>
@@ -517,15 +517,22 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
           {/* Section Yellow Accent Divider */}
           <div className="section-divider" />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '40px', flexWrap: 'wrap', gap: '15px' }}>
-            <h2 className="section-title" style={{ margin: 0, color: isLight ? '#111827' : '#ffffff' }}>The Reading Orbit</h2>
+            <div>
+              <div style={{ color: '#bd75ff', fontFamily: '"Noto Sans", sans-serif', fontSize: '0.78rem', fontWeight: 400, letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <ZwosmosIcon size={12} color="#bd75ff" />
+                <span>Reading Orbit</span>
+              </div>
+              <h2 className="section-title" style={{ margin: 0, color: isLight ? '#111827' : '#ffffff' }}>The Reading Orbit</h2>
+            </div>
             <Link
               to="/books"
               style={{
-                color: 'var(--brand-purple)',
+                color: '#bd75ff',
+                fontFamily: '"Noto Sans", sans-serif',
                 textDecoration: 'none',
-                fontWeight: 600,
-                letterSpacing: '2px',
-                fontSize: '0.9rem',
+                fontWeight: 400,
+                letterSpacing: '3px',
+                fontSize: '0.84rem',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
@@ -609,10 +616,10 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
                       transition: 'transform 0.45s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.45s ease'
                     }}
                   >
-                    <div style={{ fontSize: '0.95rem', textAlign: 'center', fontFamily: "'Orbitron', sans-serif", color: 'rgba(255,255,255,0.9)', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
+                    <div style={{ fontSize: '0.95rem', textAlign: 'center', fontFamily: '"Noto Sans", sans-serif', fontWeight: 700, color: 'rgba(255,255,255,0.9)', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
                       {book.title.toUpperCase()}
                     </div>
-                    <div style={{ marginTop: 'auto', fontSize: '0.7rem', textAlign: 'center', letterSpacing: '2px', color: 'rgba(255,255,255,0.5)' }}>
+                    <div style={{ marginTop: 'auto', fontSize: '0.7rem', textAlign: 'center', fontFamily: '"Noto Sans", sans-serif', letterSpacing: '2px', color: 'rgba(255,255,255,0.5)' }}>
                       {book.author.toUpperCase()}
                     </div>
                   </div>
@@ -622,12 +629,13 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%', flex: 1, minWidth: 0 }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                      <span style={{ color: book.accentColor || 'var(--brand-purple)', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '1px' }}>
+                      <span style={{ color: book.accentColor || 'var(--brand-purple)', fontFamily: '"Noto Sans", sans-serif', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '1px' }}>
                         {book.category}
                       </span>
                       {book.featured && (
                         <span style={{
                           fontSize: '0.65rem',
+                          fontFamily: '"Noto Sans", sans-serif',
                           textTransform: 'uppercase',
                           fontWeight: 700,
                           letterSpacing: '0.5px',
@@ -647,7 +655,7 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
                     <h4 style={{ fontSize: '1.35rem', margin: '0 0 5px 0', lineHeight: 1.15, fontFamily: "'Playfair Display', serif", color: isLight ? '#111827' : '#ffffff' }}>
                       {book.title}
                     </h4>
-                    <div style={{ color: isLight ? '#64748b' : 'rgba(255,255,255,0.6)', fontSize: '0.88rem', marginBottom: '12px', fontFamily: "'Lora', serif" }}>
+                    <div style={{ color: isLight ? '#64748b' : 'rgba(255,255,255,0.6)', fontSize: '0.88rem', marginBottom: '12px', fontFamily: '"Noto Sans", sans-serif' }}>
                       {book.author} {book.year ? `• ${book.year}` : ''}
                     </div>
                     <p style={{ color: isLight ? '#4b5563' : 'rgba(255,255,255,0.75)', fontSize: '0.92rem', lineHeight: 1.5, margin: 0, fontFamily: "'Lora', serif" }}>
@@ -668,9 +676,9 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
                           color: isSepia ? '#92400e' : (isLight ? '#111827' : 'white'),
                           padding: '8px 18px',
                           borderRadius: '22px',
-                          fontFamily: "'Playfair Display', serif",
+                          fontFamily: '"Noto Sans", sans-serif',
                           fontSize: '0.86rem',
-                          fontWeight: 600,
+                          fontWeight: 400,
                           textDecoration: 'none',
                           cursor: 'pointer',
                           display: 'inline-flex',
@@ -710,9 +718,9 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
                           color: isSepia ? '#92400e' : (isLight ? '#111827' : 'white'),
                           padding: '8px 18px',
                           borderRadius: '22px',
-                          fontFamily: "'Playfair Display', serif",
+                          fontFamily: '"Noto Sans", sans-serif',
                           fontSize: '0.86rem',
-                          fontWeight: 600,
+                          fontWeight: 400,
                           textDecoration: 'none',
                           cursor: 'pointer',
                           display: 'inline-flex',
