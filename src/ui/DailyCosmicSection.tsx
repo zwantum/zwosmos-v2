@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { getActiveCosmicData, DailyCosmicData, DEFAULT_COSMIC_DATA, getCachedCosmicData } from '../lib/cosmicService';
+import { getActiveCosmicData, DailyCosmicData, getCachedCosmicData } from '../lib/cosmicService';
 import { ShareCosmicModal } from './ShareCosmicModal';
 
 export const DailyCosmicSection: React.FC = () => {
