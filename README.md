@@ -6,7 +6,6 @@ A premium cosmic-themed blog and space exploration platform built with React, Th
 
 ---
 
-
 ## ✨ Features
 
 ### 🚀 Blog Platform
