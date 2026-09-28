@@ -351,7 +351,7 @@ export const HeroSection: React.FC = () => {
               <h1
                 style={{
                   fontFamily: "'Playfair Display', serif",
-                  fontSize: isSmallPhone ? '2.1rem' : isSmallTab ? '1.75rem' : '44px',
+                  fontSize: isSmallPhone ? '1.6rem' : isSmallTab ? '1.75rem' : '44px',
                   lineHeight: 1.22,
                   color: isLight ? '#111827' : '#ffffff',
                   textShadow: isLight ? 'none' : '0 2px 14px rgba(0, 0, 0, 0.75)',

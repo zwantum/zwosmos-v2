@@ -317,6 +317,43 @@ const Footer: React.FC<FooterProps> = ({ isLight: propIsLight }) => {
           })}
         </div>
 
+        {/* Editorial Directory Navigation */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: isSmallPhone ? '14px' : '22px',
+            marginBottom: '20px',
+            fontSize: '0.82rem',
+            fontFamily: '"Orbitron", sans-serif',
+            letterSpacing: '1px',
+            textTransform: 'uppercase'
+          }}
+        >
+          {[
+            { label: 'Stories', href: '/blog' },
+            { label: 'Books', href: '/books' },
+            { label: 'RSS Feed', href: '/rss' },
+            { label: 'Sitemap', href: '/sitemap' }
+          ].map(link => (
+            <Link
+              key={link.label}
+              to={link.href}
+              style={{
+                color: isLight ? '#64748b' : 'rgba(255, 255, 255, 0.65)',
+                textDecoration: 'none',
+                transition: 'color 0.2s ease'
+              }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'var(--brand-purple)')}
+              onMouseLeave={e => (e.currentTarget.style.color = isLight ? '#64748b' : 'rgba(255, 255, 255, 0.65)')}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
+
         {/* Copyright */}
         <div
           style={{

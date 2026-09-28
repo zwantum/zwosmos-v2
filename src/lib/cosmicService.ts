@@ -3,6 +3,7 @@ import { supabase } from './supabase';
 export interface DailyCosmicData {
   id?: string;
   astronomyTitle: string;
+  astronomySubtitle?: string;
   astronomyDate: string;
   astronomyContent: string;
   factTitle: string;
@@ -17,6 +18,7 @@ export interface CosmicEntry {
   id: string;
   type: CosmicEntryType;
   title: string;
+  subtitle?: string;
   /** Milestone date (e.g. "September 6, 2014").
    *  For fact entries this is the calendar date used for midnight IST rollover.
    *  NOT displayed on the frontend for 'fact' type.
@@ -33,6 +35,7 @@ export interface CosmicEntry {
 export const DEFAULT_COSMIC_DATA: DailyCosmicData = {
   id: 'current',
   astronomyTitle: 'This Day in Astronomy',
+  astronomySubtitle: 'Earth & Moon in a Single Frame',
   astronomyDate: 'September 18, 1977',
   astronomyContent: '<p>On this day in 1977, Voyager 1 looked back across millions of miles of deep space to capture the first-ever image of the Earth and Moon together in a single frame—a luminous blue jewel paired with its companion, poised against the silent cosmic abyss.</p>',
   factTitle: 'SPACE FACT OF THE DAY',
@@ -47,6 +50,7 @@ const DEFAULT_ENTRIES: CosmicEntry[] = [
     id: 'default-astronomy-1',
     type: 'astronomy',
     title: DEFAULT_COSMIC_DATA.astronomyTitle,
+    subtitle: DEFAULT_COSMIC_DATA.astronomySubtitle,
     astronomyDate: DEFAULT_COSMIC_DATA.astronomyDate,
     content: DEFAULT_COSMIC_DATA.astronomyContent,
     scheduledAt: null,
@@ -58,6 +62,7 @@ const DEFAULT_ENTRIES: CosmicEntry[] = [
     id: 'default-fact-1',
     type: 'fact',
     title: DEFAULT_COSMIC_DATA.factTitle,
+    subtitle: '',
     astronomyDate: '',
     content: DEFAULT_COSMIC_DATA.factContent,
     scheduledAt: null,
@@ -71,33 +76,78 @@ const DEFAULT_ENTRIES: CosmicEntry[] = [
    Midnight IST Rollover Helpers
    ========================================================================= */
 
-const MONTHS_LIST = [
+export const MONTHS_LIST = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
+export const MONTH_DAYS = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
 /**
- * Parse a milestone date string like "September 6, 2014" or "September 6"
- * and return { month (1-12), day }. Year is ignored — rollover matches
- * the same calendar day every year.
+ * Parse a milestone date string like "September 6, 2014", "6 September", "2026-09-25", etc.
+ * and return { month (1-12), day }.
  */
-function parseMilestoneDateForRollover(dateStr: string): { month: number; day: number } | null {
+export function parseMilestoneDateForRollover(dateStr: string): { month: number; day: number } | null {
   if (!dateStr) return null;
-  const m1 = dateStr.trim().match(/^([A-Za-z]+)\s+(\d{1,2})/);
+  const str = dateStr.trim();
+  
+  // "September 6, 2014" or "September 6"
+  const m1 = str.match(/^([A-Za-z]+)\s+(\d{1,2})/);
   if (m1) {
-    const monthIdx = MONTHS_LIST.findIndex(m => m.toLowerCase() === m1[1].toLowerCase());
+    const monthIdx = MONTHS_LIST.findIndex(m => m.toLowerCase().startsWith(m1[1].toLowerCase().slice(0, 3)));
     if (monthIdx !== -1) return { month: monthIdx + 1, day: parseInt(m1[2], 10) };
   }
-  const m2 = dateStr.trim().match(/^(\d{1,2})\s+([A-Za-z]+)/);
+  
+  // "6 September 2014" or "06-September"
+  const m2 = str.match(/^(\d{1,2})[\s\-]+([A-Za-z]+)/);
   if (m2) {
-    const monthIdx = MONTHS_LIST.findIndex(m => m.toLowerCase() === m2[2].toLowerCase());
+    const monthIdx = MONTHS_LIST.findIndex(m => m.toLowerCase().startsWith(m2[2].toLowerCase().slice(0, 3)));
     if (monthIdx !== -1) return { month: monthIdx + 1, day: parseInt(m2[1], 10) };
   }
+
+  // "2026-09-25" or "2026/09/25"
+  const m3 = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  if (m3) {
+    const mIdx = parseInt(m3[2], 10);
+    if (mIdx >= 1 && mIdx <= 12) return { month: mIdx, day: parseInt(m3[3], 10) };
+  }
+
+  // "25-09-2026" or "25/09/2026"
+  const m4 = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+  if (m4) {
+    const mIdx = parseInt(m4[2], 10);
+    if (mIdx >= 1 && mIdx <= 12) return { month: mIdx, day: parseInt(m4[1], 10) };
+  }
+
   return null;
 }
 
+/** Return day-of-year index (1 to 366) */
+export function getDayOfYearIndex(month: number, day: number): number {
+  let days = 0;
+  for (let i = 0; i < month - 1; i++) {
+    days += MONTH_DAYS[i];
+  }
+  return days + day;
+}
+
+/**
+ * Calculates how many days in the future a date is from today in IST.
+ * 0 = Today (Live), 1 = Tomorrow, 2 = Day after tomorrow, etc.
+ * Seamlessly handles the year rollover (e.g. Sept 25 -> Jan 1 is +98 days).
+ */
+export function getUpcomingSortDistance(dateStr: string, today: { month: number; day: number }): number {
+  const parsed = parseMilestoneDateForRollover(dateStr);
+  if (!parsed) return 9999;
+
+  const entryDayIdx = getDayOfYearIndex(parsed.month, parsed.day);
+  const todayDayIdx = getDayOfYearIndex(today.month, today.day);
+
+  return (entryDayIdx - todayDayIdx + 366) % 366;
+}
+
 /** Return today's month and day in IST (UTC+5:30). */
-function getTodayIST(): { month: number; day: number } {
+export function getTodayIST(): { month: number; day: number } {
   const now = new Date();
   const istDate = new Date(now.getTime() + (330 + now.getTimezoneOffset()) * 60 * 1000);
   return { month: istDate.getMonth() + 1, day: istDate.getDate() };
@@ -107,6 +157,7 @@ function mapRowToCosmic(row: any): DailyCosmicData {
   return {
     id: row.id || 'current',
     astronomyTitle: row.astronomy_title ?? row.astronomyTitle ?? DEFAULT_COSMIC_DATA.astronomyTitle,
+    astronomySubtitle: row.astronomy_subtitle ?? row.astronomySubtitle ?? row.subtitle ?? DEFAULT_COSMIC_DATA.astronomySubtitle,
     astronomyDate: row.astronomy_date ?? row.astronomyDate ?? DEFAULT_COSMIC_DATA.astronomyDate,
     astronomyContent: row.astronomy_content ?? row.astronomyContent ?? DEFAULT_COSMIC_DATA.astronomyContent,
     factTitle: row.fact_title ?? row.factTitle ?? DEFAULT_COSMIC_DATA.factTitle,
@@ -120,6 +171,7 @@ function mapRowToEntry(row: any): CosmicEntry {
     id: row.id,
     type: row.type,
     title: row.title,
+    subtitle: row.subtitle ?? row.astronomy_subtitle ?? row.astronomySubtitle ?? '',
     astronomyDate: row.astronomy_date ?? row.astronomyDate,
     content: row.content,
     scheduledAt: row.scheduled_at ?? row.scheduledAt ?? null,
@@ -210,6 +262,48 @@ export async function getCosmicEntries(type?: CosmicEntryType): Promise<CosmicEn
             .in('id', demotedIds);
         } catch {}
       }
+    } else if (liveEntries.length === 0 && entries.some(e => e.type === t)) {
+      // 1. Check if an entry matches today's date in IST
+      const today = getTodayIST();
+      let liveTarget = entries.find(e => {
+        if (e.type !== t) return false;
+        const parsed = parseMilestoneDateForRollover(e.astronomyDate || '');
+        return parsed && parsed.month === today.month && parsed.day === today.day;
+      });
+
+      // 2. Check if an entry matches the active daily_cosmic data on the homepage
+      if (!liveTarget) {
+        try {
+          const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
+          if (cached) {
+            const cosmic = JSON.parse(cached);
+            const activeDate = t === 'astronomy' ? cosmic.astronomyDate : '';
+            const activeContent = t === 'astronomy' ? cosmic.astronomyContent : cosmic.factContent;
+            liveTarget = entries.find(e => e.type === t && (
+              (activeDate && e.astronomyDate === activeDate) ||
+              (activeContent && (e.content === activeContent || (e.content && activeContent.includes(e.content.slice(0, 30)))))
+            ));
+          }
+        } catch {}
+      }
+
+      // 3. Check for any previously active archived entry
+      if (!liveTarget) {
+        liveTarget = entries.find(e => e.type === t && e.status === 'archived');
+      }
+
+      if (liveTarget) {
+        liveTarget.status = 'live';
+        liveTarget.updatedAt = new Date().toISOString();
+        if (supabase) {
+          try {
+            await supabase
+              .from('cosmic_entries')
+              .update({ status: 'live', updated_at: liveTarget.updatedAt })
+              .eq('id', liveTarget.id);
+          } catch {}
+        }
+      }
     }
   }
 
@@ -240,6 +334,7 @@ export async function saveCosmicEntry(
         ...(existing || DEFAULT_ENTRIES[0]),
         ...entryData,
         id: entryData.id!,
+        subtitle: entryData.subtitle !== undefined ? entryData.subtitle : existing?.subtitle || '',
         updatedAt: nowIso
       };
     } else {
@@ -247,6 +342,7 @@ export async function saveCosmicEntry(
         id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'entry_' + Date.now(),
         type: entryData.type,
         title: entryData.title,
+        subtitle: entryData.subtitle || '',
         astronomyDate: entryData.astronomyDate || '',
         content: entryData.content,
         scheduledAt: entryData.scheduledAt || null,
@@ -281,6 +377,7 @@ export async function saveCosmicEntry(
           id: entry.id,
           type: entry.type,
           title: entry.title,
+          subtitle: entry.subtitle || null,
           astronomy_date: entry.astronomyDate || null,
           content: entry.content,
           scheduled_at: entry.scheduledAt || null,
@@ -309,6 +406,7 @@ export async function saveCosmicEntry(
       if (entry.type === 'astronomy') {
         await updateCosmicData({
           astronomyTitle: entry.title,
+          astronomySubtitle: entry.subtitle || '',
           astronomyDate: entry.astronomyDate || '',
           astronomyContent: entry.content
         });
@@ -331,6 +429,7 @@ export async function saveCosmicEntriesBatch(
   entriesData: Array<{
     type: CosmicEntryType;
     title: string;
+    subtitle?: string;
     astronomyDate?: string;
     content: string;
     status?: CosmicEntryStatus;
@@ -354,6 +453,7 @@ export async function saveCosmicEntriesBatch(
         id: generatedId,
         type: item.type,
         title: item.title,
+        subtitle: item.subtitle || '',
         astronomyDate: item.astronomyDate || '',
         content: item.content,
         scheduledAt: null,
@@ -380,6 +480,7 @@ export async function saveCosmicEntriesBatch(
           id: entry.id,
           type: entry.type,
           title: entry.title,
+          subtitle: entry.subtitle || null,
           astronomy_date: entry.astronomyDate || null,
           content: entry.content,
           status: entry.status,
@@ -425,6 +526,10 @@ export async function setEntryLive(id: string): Promise<{ success: boolean; erro
 export async function deleteCosmicEntry(id: string): Promise<{ success: boolean; error?: string }> {
   try {
     const current = await getCosmicEntries();
+    const target = current.find(e => e.id === id);
+    const wasLive = target?.status === 'live';
+    const targetType = target?.type;
+
     const updated = current.filter(e => e.id !== id);
 
     try {
@@ -436,6 +541,14 @@ export async function deleteCosmicEntry(id: string): Promise<{ success: boolean;
         await supabase.from('cosmic_entries').delete().eq('id', id);
       } catch (err) {
         console.warn('Supabase delete warning for cosmic_entries:', err);
+      }
+    }
+
+    // If the deleted entry was live, promote the top remaining entry to live immediately
+    if (wasLive && targetType) {
+      const remaining = updated.filter(e => e.type === targetType);
+      if (remaining.length > 0) {
+        await setEntryLive(remaining[0].id);
       }
     }
 
@@ -452,6 +565,7 @@ export async function deleteCosmicEntry(id: string): Promise<{ success: boolean;
    homepage, the system checks all draft entries whose astronomyDate
    matches today's calendar month+day (IST). The newest matching draft is
    promoted to 'live', automatically archiving the previous live entry.
+   If no draft matches today, the active live entry from cosmic_entries is synced.
    ========================================================================= */
 
 export async function getActiveCosmicData(): Promise<DailyCosmicData> {
@@ -459,7 +573,7 @@ export async function getActiveCosmicData(): Promise<DailyCosmicData> {
   const entries = await getCosmicEntries();
 
   for (const type of ['astronomy', 'fact'] as CosmicEntryType[]) {
-    // Find draft entries whose milestone month+day matches today in IST
+    // 1. Check if a draft matches today in IST
     const todayMatches = entries
       .filter(e => {
         if (e.type !== type || e.status !== 'draft') return false;
@@ -470,8 +584,26 @@ export async function getActiveCosmicData(): Promise<DailyCosmicData> {
       .sort((a, b) => new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime());
 
     if (todayMatches.length > 0) {
-      // Promote the newest matching draft to live
+      // Promote today's matching draft to live
       await setEntryLive(todayMatches[0].id);
+    } else {
+      // 2. Ensure daily_cosmic accurately matches the currently marked 'live' entry
+      const liveEntry = entries.find(e => e.type === type && e.status === 'live');
+      if (liveEntry) {
+        if (type === 'astronomy') {
+          await updateCosmicData({
+            astronomyTitle: liveEntry.title,
+            astronomySubtitle: liveEntry.subtitle || '',
+            astronomyDate: liveEntry.astronomyDate || '',
+            astronomyContent: liveEntry.content
+          });
+        } else {
+          await updateCosmicData({
+            factTitle: liveEntry.title,
+            factContent: liveEntry.content
+          });
+        }
+      }
     }
   }
 
@@ -563,6 +695,7 @@ export async function updateCosmicData(
       const payload = {
         id: 'current',
         astronomy_title: merged.astronomyTitle,
+        astronomy_subtitle: merged.astronomySubtitle || null,
         astronomy_date: merged.astronomyDate,
         astronomy_content: merged.astronomyContent,
         fact_title: merged.factTitle,

@@ -1036,7 +1036,7 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, theme: pro
               { label: 'SPACE NEWS', href: '/space-news' },
               { label: 'EXPLORE', href: '/blog' },
               { label: 'SKYWATCHING', href: '/skywatching' },
-              { label: 'LEARN', href: '/learn' }
+              { label: 'EXPLAINERS', href: '/explainers' }
             ].map(item => {
               const isExplore = item.label === 'EXPLORE';
               return (

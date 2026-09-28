@@ -116,9 +116,10 @@ import CategoryPage from './ui/CategoryPage';
 import AuthorPage from './ui/AuthorPage';
 import TagPage from './ui/TagPage';
 import RssPage from './ui/RssPage';
+import SitemapPage from './ui/SitemapPage';
 import NotFoundPage from './ui/NotFoundPage';
 import ScrollToTopButton from './ui/ScrollToTopButton';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { BlogProvider } from '@zwantum/blog/react';
 import { blogClient } from './lib/blogClient';
@@ -178,6 +179,11 @@ function App() {
                 <Route path="/rss.xml" element={<RssPage />} />
                 <Route path="/rss" element={<RssPage />} />
 
+                {/* Sitemap Routes */}
+                <Route path="/sitemap" element={<SitemapPage />} />
+                <Route path="/sitemap.xml" element={<SitemapPage />} />
+                <Route path="/sitemap.html" element={<SitemapPage />} />
+
                 {/* Direct Top-Level Category Routes: domain/{category-name} */}
                 <Route path="/space-news" element={<CategoryPage slug="space-news" />} />
                 <Route path="/solar-system" element={<CategoryPage slug="solar-system" />} />
@@ -186,7 +192,8 @@ function App() {
                 <Route path="/space-exploration" element={<CategoryPage slug="space-exploration" />} />
                 <Route path="/skywatching" element={<CategoryPage slug="skywatching" />} />
                 <Route path="/space-culture" element={<CategoryPage slug="space-culture" />} />
-                <Route path="/learn" element={<CategoryPage slug="learn" />} />
+                <Route path="/explainers" element={<CategoryPage slug="explainers" />} />
+                <Route path="/learn" element={<Navigate to="/explainers" replace />} />
                 <Route path="/people-history" element={<CategoryPage slug="people-history" />} />
 
                 {/* Fallback category routes */}

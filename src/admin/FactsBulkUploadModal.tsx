@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   AlertCircle,
   Calendar,
-  Sparkles,
   Info
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -23,6 +22,7 @@ interface ParsedFactRow {
   rawDate: any;
   normalizedDate: string;
   title: string;
+  subtitle?: string;
   content: string;
   isValid: boolean;
   errors: string[];
@@ -38,6 +38,7 @@ interface FactsBulkUploadModalProps {
     entries: Array<{
       type: CosmicEntryType;
       title: string;
+      subtitle?: string;
       astronomyDate?: string;
       content: string;
       status?: CosmicEntryStatus;
@@ -84,16 +85,26 @@ export default function FactsBulkUploadModal({
   function normalizeExcelDate(val: any): string {
     if (!val) return '';
 
-    // Date object
+    // If it's a JS Date object (e.g. from SheetJS cellDates: true)
     if (val instanceof Date && !isNaN(val.getTime())) {
-      const m = MONTHS[val.getUTCMonth()];
-      const d = val.getUTCDate();
-      const y = val.getUTCFullYear();
+      // Use local date getters to prevent timezone offset shifts (e.g. IST UTC+5:30 shifting Jan 1 to Dec 31)
+      const m = MONTHS[val.getMonth()];
+      const d = val.getDate();
+      const y = val.getFullYear();
       return `${m} ${d}${y ? `, ${y}` : ''}`;
     }
 
-    // Number (Excel serial date number, e.g. 45560)
+    // If it's a numeric Excel serial date (e.g. 45560)
     if (typeof val === 'number') {
+      try {
+        if (XLSX.SSF && XLSX.SSF.parse_date_code) {
+          const parsed = XLSX.SSF.parse_date_code(val);
+          if (parsed && parsed.m >= 1 && parsed.m <= 12 && parsed.d >= 1) {
+            const m = MONTHS[parsed.m - 1];
+            return `${m} ${parsed.d}${parsed.y ? `, ${parsed.y}` : ''}`;
+          }
+        }
+      } catch {}
       const d = new Date(Math.round((val - 25569) * 86400 * 1000));
       if (!isNaN(d.getTime())) {
         const m = MONTHS[d.getUTCMonth()];
@@ -105,6 +116,30 @@ export default function FactsBulkUploadModal({
 
     const str = String(val).trim();
     if (!str) return '';
+
+    // Match "1 January 1801" or "01 January 2026" or "1 Jan 2026"
+    const dayMonthYear = str.match(/^(\d{1,2})[\s\-]+([A-Za-z]+)(?:[\s,]+(\d{2,4}))?/);
+    if (dayMonthYear) {
+      const day = parseInt(dayMonthYear[1], 10);
+      const monthStr = dayMonthYear[2].toLowerCase();
+      const mIdx = MONTHS.findIndex(m => m.toLowerCase().startsWith(monthStr.slice(0, 3)));
+      if (mIdx !== -1) {
+        const yr = dayMonthYear[3] ? `, ${dayMonthYear[3]}` : '';
+        return `${MONTHS[mIdx]} ${day}${yr}`;
+      }
+    }
+
+    // Match "January 1, 1801" or "Jan 1 2026" or "January 1"
+    const monthDayYear = str.match(/^([A-Za-z]+)[\s\-]+(\d{1,2})(?:[\s,]+(\d{2,4}))?/);
+    if (monthDayYear) {
+      const monthStr = monthDayYear[1].toLowerCase();
+      const day = parseInt(monthDayYear[2], 10);
+      const mIdx = MONTHS.findIndex(m => m.toLowerCase().startsWith(monthStr.slice(0, 3)));
+      if (mIdx !== -1) {
+        const yr = monthDayYear[3] ? `, ${monthDayYear[3]}` : '';
+        return `${MONTHS[mIdx]} ${day}${yr}`;
+      }
+    }
 
     // ISO format: YYYY-MM-DD or YYYY/MM/DD
     const iso = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
@@ -175,13 +210,16 @@ export default function FactsBulkUploadModal({
         // Flexible key matching
         let dateVal = '';
         let titleVal = '';
+        let subtitleVal = '';
         let contentVal = '';
 
         for (const [key, value] of Object.entries(row)) {
           const cleanKey = key.trim().toLowerCase();
           if (/^(date|astronomy_?date|milestone_?date|calendar_?date|day)/i.test(cleanKey)) {
             dateVal = value;
-          } else if (/^(title|headline|fact_?title|milestone_?title|name)/i.test(cleanKey)) {
+          } else if (/^(subtitle|event_?heading|heading|headline|sub_?title|event_?title|event)/i.test(cleanKey)) {
+            subtitleVal = String(value || '').trim();
+          } else if (/^(title|fact_?title|milestone_?title|name)/i.test(cleanKey)) {
             titleVal = String(value || '').trim();
           } else if (/^(content|text|fact|description|story|body)/i.test(cleanKey)) {
             contentVal = String(value || '').trim();
@@ -213,6 +251,7 @@ export default function FactsBulkUploadModal({
           rawDate: dateVal,
           normalizedDate,
           title: finalTitle,
+          subtitle: isAstronomy ? subtitleVal : undefined,
           content: formatContentToHtml(contentVal),
           isValid,
           errors,
@@ -275,19 +314,22 @@ export default function FactsBulkUploadModal({
     if (isAstronomy) {
       sampleData = [
         {
+          Date: 'September 24, 2014',
+          Title: 'This Day in Astronomy',
+          Subtitle: 'Mars Orbiter Mission (Mangalyaan)',
+          Content: "On September 24, 2014, ISRO's Mars Orbiter Mission (Mangalyaan) successfully entered orbit around Mars after a journey of about 298 days. India became the first Asian nation to reach Mars orbit."
+        },
+        {
           Date: 'September 25, 2024',
           Title: 'This Day in Astronomy',
+          Subtitle: 'Voyager 1 Earth-Moon Historic Image',
           Content: 'On this day in 1977, Voyager 1 captured the iconic Earth-Moon portrait in a single frame from deep space.'
         },
         {
           Date: 'September 26, 2024',
           Title: 'This Day in Astronomy',
+          Subtitle: 'Record Space Endurance Mission',
           Content: 'Cosmonaut Valery Polyakov completed a historic mission demonstrating long-duration human spaceflight resilience.'
-        },
-        {
-          Date: 'September 27, 2024',
-          Title: 'This Day in Astronomy',
-          Content: 'The SMART-1 spacecraft completed revolutionary solar-electric propulsion maneuvers on its journey to the Moon.'
         }
       ];
     } else {
@@ -313,11 +355,18 @@ export default function FactsBulkUploadModal({
     const ws = XLSX.utils.json_to_sheet(sampleData);
 
     // Set column widths
-    ws['!cols'] = [
-      { wch: 22 }, // Date
-      { wch: 26 }, // Title
-      { wch: 80 }  // Content
-    ];
+    ws['!cols'] = isAstronomy
+      ? [
+          { wch: 22 }, // Date
+          { wch: 24 }, // Title
+          { wch: 34 }, // Subtitle
+          { wch: 80 }  // Content
+        ]
+      : [
+          { wch: 22 }, // Date
+          { wch: 26 }, // Title
+          { wch: 80 }  // Content
+        ];
 
     const sheetName = isAstronomy ? 'Astronomy_Milestones' : 'Space_Facts';
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
@@ -345,6 +394,7 @@ export default function FactsBulkUploadModal({
       const payload = validRows.map(row => ({
         type: entryType, // Strictly the active module type
         title: row.title,
+        subtitle: row.subtitle,
         astronomyDate: row.normalizedDate,
         content: row.content,
         status: 'draft' as CosmicEntryStatus // Auto-rolls over at 12:00 AM IST on date!
@@ -550,7 +600,9 @@ export default function FactsBulkUploadModal({
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Info size={16} color="#2563eb" />
                 <span style={{ fontSize: '13px', fontWeight: 600, color: '#1e40af' }}>
-                  Excel Format: Only 3 Columns Needed (Date, Title, Content)
+                  {isAstronomy
+                    ? 'Excel Format: 4 Columns (Date, Title, Subtitle, Content)'
+                    : 'Excel Format: 3 Columns (Date, Title, Content)'}
                 </span>
                 <span style={{ fontSize: '11px', color: '#3b82f6', background: '#dbeafe', padding: '2px 8px', borderRadius: '10px' }}>
                   {showGuide ? 'Hide details' : 'Click to see accepted fields'}
@@ -582,6 +634,16 @@ export default function FactsBulkUploadModal({
                     Headline for the card (e.g. <em>{isAstronomy ? 'This Day in Astronomy' : 'SPACE FACT OF THE DAY'}</em>). Defaults automatically if left blank.
                   </span>
                 </div>
+
+                {isAstronomy && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '120px 90px 1fr', gap: '8px', padding: '6px 0', borderBottom: '1px solid #dbeafe' }}>
+                    <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>Subtitle</span>
+                    <span style={{ color: '#64748b' }}>Optional</span>
+                    <span>
+                      Specific event headline (e.g. <strong>Mars Orbiter Mission (Mangalyaan)</strong>). Displays right below "This Day in Astronomy".
+                    </span>
+                  </div>
+                )}
 
                 <div style={{ display: 'grid', gridTemplateColumns: '120px 90px 1fr', gap: '8px', padding: '6px 0' }}>
                   <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>Content</span>
@@ -727,7 +789,9 @@ export default function FactsBulkUploadModal({
                     <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #cbd5e1', position: 'sticky', top: 0, zIndex: 1 }}>
                       <th style={{ padding: '8px 10px', color: '#475569', fontWeight: 600, width: '40px' }}>#</th>
                       <th style={{ padding: '8px 10px', color: '#475569', fontWeight: 600, width: '160px' }}>Rollover Date</th>
-                      <th style={{ padding: '8px 10px', color: '#475569', fontWeight: 600, width: '180px' }}>Title</th>
+                      <th style={{ padding: '8px 10px', color: '#475569', fontWeight: 600, width: isAstronomy ? '200px' : '180px' }}>
+                        {isAstronomy ? 'Title & Subtitle' : 'Title'}
+                      </th>
                       <th style={{ padding: '8px 10px', color: '#475569', fontWeight: 600 }}>Content Snippet</th>
                       <th style={{ padding: '8px 10px', color: '#475569', fontWeight: 600, width: '90px' }}>Status</th>
                     </tr>
@@ -755,14 +819,18 @@ export default function FactsBulkUploadModal({
                             padding: '8px 10px',
                             fontWeight: 500,
                             color: '#334155',
-                            maxWidth: '180px',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
+                            maxWidth: isAstronomy ? '200px' : '180px',
+                            overflow: 'hidden'
                           }}
-                          title={row.title}
                         >
-                          {row.title}
+                          <div style={{ fontWeight: 600, color: '#0f172a', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }} title={row.title}>
+                            {row.title}
+                          </div>
+                          {row.subtitle && (
+                            <div style={{ fontSize: '11px', color: '#7c3aed', fontStyle: 'italic', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }} title={row.subtitle}>
+                              {row.subtitle}
+                            </div>
+                          )}
                         </td>
                         <td
                           style={{
@@ -841,7 +909,7 @@ export default function FactsBulkUploadModal({
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '8px',
+                justifyContent: 'center',
                 padding: '9px 22px',
                 borderRadius: '8px',
                 border: 'none',
@@ -854,7 +922,6 @@ export default function FactsBulkUploadModal({
                 transition: 'all 0.15s ease'
               }}
             >
-              <Sparkles size={15} />
               <span>
                 {isSaving
                   ? 'Importing...'

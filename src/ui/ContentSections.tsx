@@ -118,7 +118,7 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
     date: 'Sep 20, 2026',
     img: 'https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?q=80&w=1000&auto=format&fit=crop'
   });
-  const techStacked1 = mapToCard(getPostByCatSlug('learn'), {
+  const techStacked1 = mapToCard(getPostByCatSlug('explainers') || getPostByCatSlug('learn'), {
     id: 5,
     category: 'TECHNOLOGY',
     title: 'Submillimeter Telescopes: Piercing Cosmic Dust',
@@ -382,7 +382,7 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
               [
                 { title: 'Space News', desc: 'Latest space news and discoveries', href: '/space-news' },
                 { title: 'Space Exploration', desc: 'Missions, astronauts and spacecraft', href: '/space-exploration' },
-                { title: 'Learn', desc: 'Astronomy guides and science explainers', href: '/learn' }
+                { title: 'Explainers', desc: 'Astronomy guides & science primers', href: '/explainers' }
               ],
               // Column 2
               [

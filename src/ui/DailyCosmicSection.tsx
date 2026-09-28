@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { getActiveCosmicData, DailyCosmicData, DEFAULT_COSMIC_DATA } from '../lib/cosmicService';
+import { ShareCosmicModal } from './ShareCosmicModal';
 
 export const DailyCosmicSection: React.FC = () => {
   const { isLight, isSepia, isDark } = useTheme();
 
   const [winWidth, setWinWidth] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1200));
   const [cosmic, setCosmic] = useState<DailyCosmicData>(DEFAULT_COSMIC_DATA);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   useEffect(() => {
     const onResize = () => setWinWidth(window.innerWidth);
@@ -86,6 +88,7 @@ export const DailyCosmicSection: React.FC = () => {
   };
 
   return (
+    <>
     <section
       style={{
         position: 'relative',
@@ -237,9 +240,11 @@ export const DailyCosmicSection: React.FC = () => {
                 {cosmic.astronomyDate}
               </div>
 
-              {/* Calendar Icon Button */}
-              <div
-                title={cosmic.astronomyDate}
+              {/* Share Icon Button */}
+              <button
+                id="zw-this-day-share-btn"
+                title="Share This Day in Astronomy as image"
+                onClick={() => setShowShareModal(true)}
                 style={{
                   width: '32px',
                   height: '32px',
@@ -250,30 +255,44 @@ export const DailyCosmicSection: React.FC = () => {
                   justifyContent: 'center',
                   alignItems: 'center',
                   color: isSepia ? '#b45309' : (isLight ? 'var(--brand-purple)' : '#ffffff'),
-                  boxShadow: isLight ? '0 2px 8px rgba(0,0,0,0.1)' : '0 4px 12px rgba(0,0,0,0.6)'
+                  boxShadow: isLight ? '0 2px 8px rgba(0,0,0,0.1)' : '0 4px 12px rgba(0,0,0,0.6)',
+                  cursor: 'pointer',
+                  pointerEvents: 'all',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  padding: 0
+                }}
+                onMouseOver={e => {
+                  e.currentTarget.style.transform = 'scale(1.15)';
+                  e.currentTarget.style.boxShadow = isLight ? '0 4px 14px rgba(147,51,234,0.35)' : '0 4px 14px rgba(147,51,234,0.55)';
+                }}
+                onMouseOut={e => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.boxShadow = isLight ? '0 2px 8px rgba(0,0,0,0.1)' : '0 4px 12px rgba(0,0,0,0.6)';
                 }}
               >
+                {/* Share icon (upload arrow) */}
                 <svg
                   width="14"
                   height="14"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="2"
+                  strokeWidth="2.2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                  <line x1="16" y1="2" x2="16" y2="6" />
-                  <line x1="8" y1="2" x2="8" y2="6" />
-                  <line x1="3" y1="10" x2="21" y2="10" />
+                  <circle cx="18" cy="5" r="3"/>
+                  <circle cx="6" cy="12" r="3"/>
+                  <circle cx="18" cy="19" r="3"/>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
                 </svg>
-              </div>
+              </button>
             </div>
             {/* Dynamic Title */}
             <h3
               style={{
-                margin: '0 0 10px',
+                margin: '0 0 8px',
                 fontFamily: "'Playfair Display', serif",
                 fontSize: isMobile ? '1.35rem' : '1.6rem',
                 fontWeight: 700,
@@ -283,6 +302,23 @@ export const DailyCosmicSection: React.FC = () => {
             >
               {renderAstronomyTitle(cosmic.astronomyTitle)}
             </h3>
+
+            {/* Dynamic Event Subtitle / Small Heading (This Day in Astronomy only) */}
+            {cosmic.astronomySubtitle && cosmic.astronomySubtitle.trim() && (
+              <h4
+                style={{
+                  margin: '0 0 10px',
+                  fontFamily: "'Playfair Display', serif",
+                  fontSize: isMobile ? '1.02rem' : '1.15rem',
+                  fontWeight: 600,
+                  fontStyle: 'italic',
+                  color: isSepia ? '#92400e' : (isLight ? 'var(--brand-purple)' : '#bd75ff'),
+                  lineHeight: 1.3
+                }}
+              >
+                {cosmic.astronomySubtitle}
+              </h4>
+            )}
 
             {/* Dynamic Rich Text Description (Scrollable) */}
             <div
@@ -375,7 +411,15 @@ export const DailyCosmicSection: React.FC = () => {
         </div>
       </div>
     </section>
-  );
+
+    {/* Share Modal */}
+    {showShareModal && (
+      <ShareCosmicModal
+        cosmic={cosmic}
+        onClose={() => setShowShareModal(false)}
+      />
+    )}
+  </>);
 };
 
 export default DailyCosmicSection;

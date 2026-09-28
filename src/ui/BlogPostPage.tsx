@@ -330,9 +330,10 @@ const BlogPostPage: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
-            fontFamily: "'Playfair Display', serif",
+            fontFamily: '"Noto Sans", sans-serif',
             fontSize: isMobile ? '0.78rem' : '0.84rem',
-            fontWeight: 700,
+            fontWeight: 400,
+            textTransform: 'uppercase',
             letterSpacing: '0.6px',
             color: isLight ? '#111827' : '#ffffff',
             paddingRight: isMobile ? '8px' : '12px',
@@ -344,7 +345,7 @@ const BlogPostPage: React.FC = () => {
           }}
         >
           <ZwosmosIcon size={12} color={isSepia ? '#d97706' : '#bd75ff'} />
-          <span>Text Size</span>
+          <span>TEXT SIZE</span>
         </div>
 
         {/* Integrated Stepper Bar: - [Bars / A / Bars] + */}
@@ -465,7 +466,7 @@ const BlogPostPage: React.FC = () => {
             onMouseOver={e => {
               const letter = e.currentTarget.querySelector('.font-size-letter-a') as HTMLElement;
               if (letter) {
-                letter.style.color = 'var(--brand-purple)';
+                letter.style.color = isLight ? '#000000' : 'var(--brand-purple)';
                 letter.style.transform = 'scale(1.15)';
               }
             }}
@@ -473,7 +474,7 @@ const BlogPostPage: React.FC = () => {
               const letter = e.currentTarget.querySelector('.font-size-letter-a') as HTMLElement;
               if (letter) {
                 letter.style.color = fontLevel === 0
-                  ? (isLight ? 'var(--brand-purple)' : '#ffffff')
+                  ? (isLight ? '#000000' : '#ffffff')
                   : (isLight ? '#6b7280' : 'rgba(255, 255, 255, 0.6)');
                 letter.style.transform = 'scale(1)';
               }
@@ -482,11 +483,11 @@ const BlogPostPage: React.FC = () => {
             <span
               className="font-size-letter-a"
               style={{
-                fontFamily: "'Playfair Display', serif",
+                fontFamily: '"Noto Sans", sans-serif',
                 fontSize: isMobile ? '1.12rem' : '1.24rem',
-                fontWeight: 700,
+                fontWeight: 400,
                 color: fontLevel === 0
-                  ? (isLight ? 'var(--brand-purple)' : '#ffffff')
+                  ? (isLight ? '#000000' : '#ffffff')
                   : (isLight ? '#6b7280' : 'rgba(255, 255, 255, 0.6)'),
                 textShadow: (fontLevel === 0 && !isLight)
                   ? '0 0 10px rgba(168, 85, 247, 0.75)'

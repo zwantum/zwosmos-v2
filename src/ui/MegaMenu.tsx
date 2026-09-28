@@ -73,10 +73,10 @@ export const MEGA_MENU_ITEMS = {
       img: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=300&auto=format&fit=crop'
     },
     {
-      id: 'learn',
-      title: 'Learn',
-      desc: 'Astronomy guides and science explainers',
-      href: '/learn',
+      id: 'explainers',
+      title: 'Explainers',
+      desc: 'Astronomy guides & science primers',
+      href: '/explainers',
       img: 'https://images.unsplash.com/photo-1516339901601-2e1b62dc0c45?q=80&w=300&auto=format&fit=crop'
     },
     {
@@ -511,6 +511,53 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
             }}
           >
             Explore. Learn. Be Inspired.
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              marginTop: '6px',
+              fontSize: '0.72rem',
+              fontFamily: '"Orbitron", sans-serif',
+              letterSpacing: '0.5px'
+            }}
+          >
+            <Link
+              to="/books"
+              onClick={onClose}
+              style={{
+                color: currentIsDark ? '#c084fc' : (isSepia ? '#d97706' : '#9333ea'),
+                textDecoration: 'none',
+                transition: 'opacity 0.2s'
+              }}
+            >
+              BOOKS
+            </Link>
+            <span style={{ color: currentIsDark ? '#475569' : '#cbd5e1' }}>•</span>
+            <Link
+              to="/rss"
+              onClick={onClose}
+              style={{
+                color: currentIsDark ? '#c084fc' : (isSepia ? '#d97706' : '#9333ea'),
+                textDecoration: 'none',
+                transition: 'opacity 0.2s'
+              }}
+            >
+              RSS
+            </Link>
+            <span style={{ color: currentIsDark ? '#475569' : '#cbd5e1' }}>•</span>
+            <Link
+              to="/sitemap"
+              onClick={onClose}
+              style={{
+                color: currentIsDark ? '#c084fc' : (isSepia ? '#d97706' : '#9333ea'),
+                textDecoration: 'none',
+                transition: 'opacity 0.2s'
+              }}
+            >
+              SITEMAP
+            </Link>
           </div>
         </div>
 

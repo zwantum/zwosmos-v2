@@ -29,14 +29,14 @@ export interface SiteSettings {
 
 export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   id: 'global',
-  siteTitle: 'Zwosmos - Exploring the Cosmos & Deep Space',
-  siteDescription: 'Deep space explorations, astrophysical discoveries, cosmic mechanics, and astronomical wonders from across the universe.',
+  siteTitle: 'Zwosmos | Astronomy, Space News & Skywatching',
+  siteDescription: 'Explore astronomy, space news, skywatching guides, cosmic discoveries, missions, telescopes and stories from across the universe with Zwosmos.',
   siteUrl: 'https://zwosmos.com',
-  ogImage: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&auto=format&fit=crop&q=80',
+  ogImage: 'https://quwukfdlvkyerrjsnieb.supabase.co/storage/v1/object/public/media/1790570690988_zwosmosastronomywebsite_homepage.png',
   twitterHandle: '@zwosmos',
   twitterCard: 'summary_large_image',
   keywords: 'astronomy, astrophysics, cosmology, space exploration, stargazing, universe, black holes, james webb',
-  authorName: 'Zwosmos Editorial Team',
+  authorName: 'Zwosmos Editorial',
   rssTitle: 'Zwosmos - Cosmic Dispatch Feed',
   rssDescription: 'Latest cosmology, space discoveries, and astronomical observations from Zwosmos.',
   rssLanguage: 'en-US',
@@ -46,7 +46,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   socialTwitter: 'https://twitter.com/zwosmos',
   socialLinkedin: 'https://linkedin.com/company/zwosmos',
   socialYoutube: 'https://youtube.com/@zwosmos',
-  copyrightText: '© 2026 Zwosmos. All rights reserved.',
+  copyrightText: '© 2025 - 2026 Zwosmos. All rights reserved.',
   enableDropCap: true
 };
 
@@ -115,9 +115,13 @@ function getLocalSettings(): SiteSettings {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
+      const ogImage = (!parsed.ogImage || parsed.ogImage.includes('photo-1451187580459-43490279c0fa'))
+        ? DEFAULT_SITE_SETTINGS.ogImage
+        : parsed.ogImage;
       return {
         ...DEFAULT_SITE_SETTINGS,
         ...parsed,
+        ogImage,
         siteTitle: normalizeTitle(parsed.siteTitle ?? DEFAULT_SITE_SETTINGS.siteTitle),
         rssTitle: normalizeTitle(parsed.rssTitle ?? DEFAULT_SITE_SETTINGS.rssTitle),
         enableDropCap: parsed.enableDropCap !== undefined ? !!parsed.enableDropCap : true

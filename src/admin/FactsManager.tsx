@@ -26,6 +26,8 @@ import {
   setEntryLive,
   deleteCosmicEntry,
   getActiveCosmicData,
+  getTodayIST,
+  getUpcomingSortDistance,
   DailyCosmicData,
   DEFAULT_COSMIC_DATA,
   CosmicEntry,
@@ -117,6 +119,7 @@ export default function FactsManager() {
   // Form State (for Create or Edit)
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formTitle, setFormTitle] = useState('');
+  const [formSubtitle, setFormSubtitle] = useState('');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [formContent, setFormContent] = useState('');
 
@@ -171,6 +174,7 @@ export default function FactsManager() {
   const handleStartCreate = (type: CosmicEntryType) => {
     setEditingId(null);
     setIsEditingTitle(false);
+    setFormSubtitle('');
     setMonthPart('');
     setDayPart('');
     setYearPart('');
@@ -189,6 +193,7 @@ export default function FactsManager() {
     setEditingId(entry.id);
     setIsEditingTitle(false);
     setFormTitle(entry.title);
+    setFormSubtitle(entry.subtitle || '');
     setFormContent(entry.content);
 
     // Populate date parts for both astronomy and fact entries
@@ -235,6 +240,7 @@ export default function FactsManager() {
         id: editingId || undefined,
         type: activeSubTab as CosmicEntryType,
         title: formTitle,
+        subtitle: activeSubTab === 'astronomy' ? formSubtitle.trim() : undefined,
         astronomyDate: astronomyDateStr || undefined,
         content: formContent,
         scheduledAt: null,
@@ -302,6 +308,8 @@ export default function FactsManager() {
   };
 
   // Filtered & sorted entries for active tab
+  const todayIST = getTodayIST();
+
   const allTabEntries = entries
     .filter(e => e.type === activeSubTab)
     .filter(e => {
@@ -309,10 +317,16 @@ export default function FactsManager() {
       return e.status === filterStatus;
     })
     .sort((a, b) => {
-      // 1. Live entries first
-      if (a.status === 'live') return -1;
-      if (b.status === 'live') return 1;
-      // 2. Drafts by milestone date then updated date
+      // 1. Live entry ALWAYS comes first (#1)
+      if (a.status === 'live' && b.status !== 'live') return -1;
+      if (b.status === 'live' && a.status !== 'live') return 1;
+
+      // 2. Upcoming schedule order starting from today -> tomorrow -> upcoming calendar dates
+      const distA = getUpcomingSortDistance(a.astronomyDate || '', todayIST);
+      const distB = getUpcomingSortDistance(b.astronomyDate || '', todayIST);
+      if (distA !== distB) return distA - distB;
+
+      // 3. Fallback tie-break by updatedAt
       return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
     });
 
@@ -713,10 +727,17 @@ export default function FactsManager() {
                             )}
                           </div>
 
-                          {/* Title */}
-                          <h4 style={{ margin: '2px 0 0', fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
-                            {entry.title}
-                          </h4>
+                          {/* Title & Subtitle */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            <h4 style={{ margin: '2px 0 0', fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
+                              {entry.title}
+                            </h4>
+                            {entry.subtitle && (
+                              <span style={{ fontSize: '12px', fontWeight: 600, color: '#7c3aed', fontStyle: 'italic' }}>
+                                {entry.subtitle}
+                              </span>
+                            )}
+                          </div>
 
                           {/* Content Snippet */}
                           <p
@@ -997,6 +1018,36 @@ export default function FactsManager() {
                     : 'Title is locked by default. Click "Edit Title" to modify it.'}
                 </span>
               </div>
+
+              {/* Event Heading / Subtitle (Only in This Day in Astronomy) */}
+              {activeSubTab === 'astronomy' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>
+                    Event Heading / Subtitle <span style={{ fontSize: '11px', fontWeight: 400, color: '#64748b' }}>(Optional small headline)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formSubtitle}
+                    onChange={(e) => setFormSubtitle(e.target.value)}
+                    placeholder="e.g. Mars Orbiter Mission (Mangalyaan), Voyager 1 Earth-Moon Photo"
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                    Displays as a small headline directly below "This Day in Astronomy" on the homepage.
+                  </span>
+                </div>
+              )}
 
               {/* Milestone Date Pickers — Astronomy shows label; Fact shows same pickers but with rollover note */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -1358,7 +1409,7 @@ export default function FactsManager() {
 
                   <h3
                     style={{
-                      margin: '0 0 10px',
+                      margin: '0 0 8px',
                       fontFamily: "'Playfair Display', serif",
                       fontSize: '1.55rem',
                       fontWeight: 700,
@@ -1368,6 +1419,22 @@ export default function FactsManager() {
                   >
                     {currentLiveCosmic.astronomyTitle}
                   </h3>
+
+                  {currentLiveCosmic.astronomySubtitle && currentLiveCosmic.astronomySubtitle.trim() && (
+                    <div
+                      style={{
+                        margin: '0 0 10px',
+                        fontFamily: "'Playfair Display', serif",
+                        fontSize: '1.1rem',
+                        fontWeight: 600,
+                        fontStyle: 'italic',
+                        color: '#bd75ff',
+                        lineHeight: 1.3
+                      }}
+                    >
+                      {currentLiveCosmic.astronomySubtitle}
+                    </div>
+                  )}
 
                   <div
                     className="zw-cosmic-rich-content zw-cosmic-scrollable"

@@ -63,10 +63,16 @@ export const CATEGORY_MAP: Record<string, CategoryInfo> = {
     desc: 'Space books, cinema, philosophy, art, and the cultural reverberations of our quest to understand humanity’s place in the cosmos.',
     heroImg: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1600&auto=format&fit=crop'
   },
+  'explainers': {
+    name: 'Explainers',
+    slug: 'explainers',
+    desc: 'Astronomy guides & science primers',
+    heroImg: 'https://images.unsplash.com/photo-1502134249126-9f3755a50d78?q=80&w=1600&auto=format&fit=crop'
+  },
   'learn': {
-    name: 'Learn',
-    slug: 'learn',
-    desc: 'Astronomy guides, scientific explainers, astrophysical mechanics, and fundamental physics made engaging and accessible.',
+    name: 'Explainers',
+    slug: 'explainers',
+    desc: 'Astronomy guides & science primers',
     heroImg: 'https://images.unsplash.com/photo-1502134249126-9f3755a50d78?q=80&w=1600&auto=format&fit=crop'
   },
   'people-history': {
@@ -77,7 +83,17 @@ export const CATEGORY_MAP: Record<string, CategoryInfo> = {
   }
 };
 
-export const ALL_CATEGORIES_LIST = Object.values(CATEGORY_MAP);
+export const ALL_CATEGORIES_LIST = [
+  CATEGORY_MAP['space-news'],
+  CATEGORY_MAP['solar-system'],
+  CATEGORY_MAP['telescopes-technology'],
+  CATEGORY_MAP['universe'],
+  CATEGORY_MAP['space-exploration'],
+  CATEGORY_MAP['skywatching'],
+  CATEGORY_MAP['space-culture'],
+  CATEGORY_MAP['explainers'],
+  CATEGORY_MAP['people-history']
+];
 
 export const ALL_BLOG_POSTS: BlogPost[] = [
   // 1. Space News
@@ -293,11 +309,11 @@ export const ALL_BLOG_POSTS: BlogPost[] = [
     readTime: '6 min read'
   },
 
-  // 8. Learn
+  // 8. Explainers
   {
     id: 15,
-    category: 'Learn',
-    categorySlug: 'learn',
+    category: 'Explainers',
+    categorySlug: 'explainers',
     title: 'Gravitational Lensing: Nature’s Cosmic Magnifying Glass',
     desc: 'Explore how General Relativity predicts the bending of light by massive galaxies, revealing ancient protogalaxies at the edge of time.',
     authorName: 'Marie Curie',
@@ -309,8 +325,8 @@ export const ALL_BLOG_POSTS: BlogPost[] = [
   },
   {
     id: 16,
-    category: 'Learn',
-    categorySlug: 'learn',
+    category: 'Explainers',
+    categorySlug: 'explainers',
     title: 'Stellar Nucleosynthesis: How Dying Stars Forged Us',
     desc: 'From core hydrogen fusion to the violent nucleosynthesis of supernovae, discover how the periodic table was minted in stellar furnaces.',
     authorName: 'Dr. Elena Vance',
@@ -350,7 +366,11 @@ export const ALL_BLOG_POSTS: BlogPost[] = [
 
 export const getCategoryBySlug = (slug?: string): CategoryInfo => {
   if (!slug) return CATEGORY_MAP['space-news'];
-  return CATEGORY_MAP[slug] || {
+  const s = slug.toLowerCase();
+  if (s === 'learn' || s === 'explainers') {
+    return CATEGORY_MAP['explainers'];
+  }
+  return CATEGORY_MAP[s] || {
     name: slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
     slug,
     desc: 'Explore curated articles and observational dispatches in this astronomical topic.',
@@ -360,5 +380,9 @@ export const getCategoryBySlug = (slug?: string): CategoryInfo => {
 
 export const getPostsByCategorySlug = (slug?: string): BlogPost[] => {
   if (!slug) return ALL_BLOG_POSTS;
-  return ALL_BLOG_POSTS.filter(p => p.categorySlug.toLowerCase() === slug.toLowerCase());
+  const s = slug.toLowerCase();
+  return ALL_BLOG_POSTS.filter(p => {
+    const pSlug = p.categorySlug.toLowerCase();
+    return pSlug === s || ((s === 'explainers' || s === 'learn') && (pSlug === 'explainers' || pSlug === 'learn'));
+  });
 };

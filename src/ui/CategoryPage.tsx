@@ -24,7 +24,8 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ slug: propSlug }) =>
   const isLight = !isDark;
   const isSepia = theme === 'sepia';
   const { categorySlug } = useParams<{ categorySlug?: string }>();
-  const activeSlug = propSlug || categorySlug || 'space-news';
+  const rawSlug = propSlug || categorySlug || 'space-news';
+  const activeSlug = rawSlug.toLowerCase() === 'learn' ? 'explainers' : rawSlug;
 
   const [currentPage, setCurrentPage] = useState<number>(1);
   const { posts: livePosts, loading } = useBlogPosts();
@@ -63,13 +64,20 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ slug: propSlug }) =>
   // Posts belonging strictly to this category (only real live posts, no mock fallback)
   const categoryPosts = useMemo(() => {
     if (activeLivePosts && activeLivePosts.length > 0) {
+      const isExplainers = activeSlug.toLowerCase() === 'explainers' || activeSlug.toLowerCase() === 'learn';
       const matched = activeLivePosts.filter((p: any) => {
         return (
           p.categories?.some(
-            (c: any) =>
-              c.slug?.toLowerCase() === activeSlug.toLowerCase() ||
-              c.slug?.toLowerCase() === currentCategory.slug.toLowerCase() ||
-              c.name?.toLowerCase() === currentCategory.name.toLowerCase()
+            (c: any) => {
+              const cSlug = c.slug?.toLowerCase();
+              const cName = c.name?.toLowerCase();
+              return (
+                cSlug === activeSlug.toLowerCase() ||
+                cSlug === currentCategory.slug.toLowerCase() ||
+                cName === currentCategory.name.toLowerCase() ||
+                (isExplainers && (cSlug === 'learn' || cSlug === 'explainers' || cName === 'learn' || cName === 'explainers'))
+              );
+            }
           ) || false
         );
       });

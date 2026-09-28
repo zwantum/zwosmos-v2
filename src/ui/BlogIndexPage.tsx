@@ -19,7 +19,7 @@ const BLOG_CATEGORIES = [
   { label: 'Space Exploration', value: 'Space Exploration' },
   { label: 'Skywatching', value: 'Skywatching' },
   { label: 'Space Culture', value: 'Space Culture' },
-  { label: 'Learn', value: 'Learn' },
+  { label: 'Explainers', value: 'Explainers' },
   { label: 'People & History', value: 'People & History' }
 ];
 
@@ -117,7 +117,12 @@ const BlogIndexPage: React.FC = () => {
   // Filtered posts based on category and search query
   const filteredPosts = useMemo(() => {
     return allPosts.filter((post: any) => {
-      const matchesCat = selectedCategory === 'ALL' || post.category.toLowerCase() === selectedCategory.toLowerCase();
+      const postCat = (post.category || '').toLowerCase();
+      const selCat = selectedCategory.toLowerCase();
+      const isExplainersMatch =
+        (selCat === 'explainers' || selCat === 'learn') &&
+        (postCat === 'explainers' || postCat === 'learn');
+      const matchesCat = selectedCategory === 'ALL' || postCat === selCat || isExplainersMatch;
       const query = searchQuery.trim().toLowerCase();
       if (!query) return matchesCat;
       const matchesSearch =

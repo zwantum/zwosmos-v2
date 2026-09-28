@@ -78,6 +78,9 @@ export function applySEOMeta(options: SEOMetaOptions = {}, siteSettings: SiteSet
   setMetaTag('property', 'og:url', url);
   setMetaTag('property', 'og:type', type);
   setMetaTag('property', 'og:image', image);
+  if (image && image.startsWith('https://')) {
+    setMetaTag('property', 'og:image:secure_url', image);
+  }
   setMetaTag('property', 'og:image:alt', title);
   setMetaTag('property', 'og:locale', 'en_US');
 
