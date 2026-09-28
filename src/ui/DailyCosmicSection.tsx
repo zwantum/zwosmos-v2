@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { getActiveCosmicData, DailyCosmicData, DEFAULT_COSMIC_DATA } from '../lib/cosmicService';
+import { getActiveCosmicData, DailyCosmicData, DEFAULT_COSMIC_DATA, getCachedCosmicData } from '../lib/cosmicService';
 import { ShareCosmicModal } from './ShareCosmicModal';
 
 export const DailyCosmicSection: React.FC = () => {
   const { isLight, isSepia, isDark } = useTheme();
 
   const [winWidth, setWinWidth] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1200));
-  const [cosmic, setCosmic] = useState<DailyCosmicData>(DEFAULT_COSMIC_DATA);
+  const [cosmic, setCosmic] = useState<DailyCosmicData>(() => getCachedCosmicData());
   const [showShareModal, setShowShareModal] = useState(false);
 
   useEffect(() => {

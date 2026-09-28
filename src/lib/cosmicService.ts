@@ -35,15 +35,34 @@ export interface CosmicEntry {
 export const DEFAULT_COSMIC_DATA: DailyCosmicData = {
   id: 'current',
   astronomyTitle: 'This Day in Astronomy',
-  astronomySubtitle: 'Earth & Moon in a Single Frame',
-  astronomyDate: 'September 18, 1977',
-  astronomyContent: '<p>On this day in 1977, Voyager 1 looked back across millions of miles of deep space to capture the first-ever image of the Earth and Moon together in a single frame—a luminous blue jewel paired with its companion, poised against the silent cosmic abyss.</p>',
+  astronomySubtitle: 'A World Between Planets',
+  astronomyDate: 'January 1, 2026',
+  astronomyContent: "<p>On 1 January 1801, Giuseppe Piazzi noticed a faint object while mapping stars at Palermo Observatory in Sicily. Its changing position revealed that it belonged to our Solar System. The object was Ceres, the first body discovered in the region now called the asteroid belt. Initially regarded as a planet, it was later classified as an asteroid and, in 2006, a dwarf planet. More than two centuries after Piazzi's observation, NASA's Dawn spacecraft entered orbit around Ceres, turning a wandering point of light into a richly detailed world of craters, mountains and bright deposits.</p>",
   factTitle: 'SPACE FACT OF THE DAY',
   factContent: '<p>If two pieces of the same type of metal touch in the vacuum of space, they will bond permanently into a single solid piece through cold welding. On Earth, a thin oxide film keeps metal atoms apart, but in the pure void, the atoms have no idea they belong to different pieces.</p>'
 };
 
 const LOCAL_STORAGE_KEY = 'zwosmos_daily_cosmic';
 const LOCAL_STORAGE_ENTRIES_KEY = 'zwosmos_cosmic_entries';
+
+/**
+ * Synchronous local cache reader for instantaneous, flash-free initial render.
+ */
+export function getCachedCosmicData(): DailyCosmicData {
+  if (typeof window !== 'undefined') {
+    try {
+      const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        // Invalidate old legacy fallback if found in local storage
+        if (parsed.astronomyDate !== 'September 18, 1977') {
+          return mapRowToCosmic(parsed);
+        }
+      }
+    } catch {}
+  }
+  return DEFAULT_COSMIC_DATA;
+}
 
 const DEFAULT_ENTRIES: CosmicEntry[] = [
   {
@@ -587,21 +606,36 @@ export async function getActiveCosmicData(): Promise<DailyCosmicData> {
       // Promote today's matching draft to live
       await setEntryLive(todayMatches[0].id);
     } else {
-      // 2. Ensure daily_cosmic accurately matches the currently marked 'live' entry
+      // 2. Ensure daily_cosmic accurately matches the currently marked 'live' entry only if changed
       const liveEntry = entries.find(e => e.type === type && e.status === 'live');
       if (liveEntry) {
+        const currentData = getCachedCosmicData();
         if (type === 'astronomy') {
-          await updateCosmicData({
-            astronomyTitle: liveEntry.title,
-            astronomySubtitle: liveEntry.subtitle || '',
-            astronomyDate: liveEntry.astronomyDate || '',
-            astronomyContent: liveEntry.content
-          });
+          const isDifferent =
+            currentData.astronomyTitle !== liveEntry.title ||
+            (currentData.astronomySubtitle || '') !== (liveEntry.subtitle || '') ||
+            currentData.astronomyDate !== (liveEntry.astronomyDate || '') ||
+            currentData.astronomyContent !== liveEntry.content;
+
+          if (isDifferent) {
+            await updateCosmicData({
+              astronomyTitle: liveEntry.title,
+              astronomySubtitle: liveEntry.subtitle || '',
+              astronomyDate: liveEntry.astronomyDate || '',
+              astronomyContent: liveEntry.content
+            });
+          }
         } else {
-          await updateCosmicData({
-            factTitle: liveEntry.title,
-            factContent: liveEntry.content
-          });
+          const isDifferent =
+            currentData.factTitle !== liveEntry.title ||
+            currentData.factContent !== liveEntry.content;
+
+          if (isDifferent) {
+            await updateCosmicData({
+              factTitle: liveEntry.title,
+              factContent: liveEntry.content
+            });
+          }
         }
       }
     }
