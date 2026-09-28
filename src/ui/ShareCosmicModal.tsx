@@ -66,13 +66,33 @@ export const ShareCosmicModal: React.FC<ShareCosmicModalProps> = ({ cosmic, onCl
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  // Generate PNG from the card element
+  // Generate PNG from the card element with full SVG template composited
   const generatePng = useCallback(async (): Promise<Blob | null> => {
     if (!cardRef.current) return null;
     setIsGenerating(true);
+    const card = cardRef.current;
+    const cardBgImg = card.querySelector('img');
+
     try {
-      const canvas = await html2canvas(cardRef.current, {
-        scale: 2,
+      // 1. Ensure the background SVG image is loaded and ready to draw
+      const svgImg = new Image();
+      svgImg.crossOrigin = 'anonymous';
+      svgImg.src = svgBg;
+      await new Promise<void>((resolve, reject) => {
+        if (svgImg.complete && svgImg.naturalWidth > 0) {
+          resolve();
+        } else {
+          svgImg.onload = () => resolve();
+          svgImg.onerror = () => reject(new Error('Failed to load background SVG'));
+        }
+      });
+
+      // 2. Hide the SVG img in the card DOM temporarily so html2canvas renders only the sharp text overlay
+      if (cardBgImg) cardBgImg.style.visibility = 'hidden';
+
+      const scale = 1200 / card.offsetWidth;
+      const textCanvas = await html2canvas(card, {
+        scale: scale,
         useCORS: true,
         allowTaint: true,
         backgroundColor: null,
@@ -83,16 +103,49 @@ export const ShareCosmicModal: React.FC<ShareCosmicModalProps> = ({ cosmic, onCl
           if (el) el.style.transform = 'none';
         }
       });
+
+      // Restore SVG visibility in the live DOM
+      if (cardBgImg) cardBgImg.style.visibility = 'visible';
+
+      // 3. Composite onto native high-res 1200×1500 canvas
+      const finalCanvas = document.createElement('canvas');
+      finalCanvas.width = 1200;
+      finalCanvas.height = 1500;
+      const ctx = finalCanvas.getContext('2d');
+      if (!ctx) return null;
+
+      // Rounded clipping path matching card's border radius
+      const r = 50;
+      ctx.beginPath();
+      ctx.moveTo(r, 0);
+      ctx.lineTo(1200 - r, 0);
+      ctx.quadraticCurveTo(1200, 0, 1200, r);
+      ctx.lineTo(1200, 1500 - r);
+      ctx.quadraticCurveTo(1200, 1500, 1200 - r, 1500);
+      ctx.lineTo(r, 1500);
+      ctx.quadraticCurveTo(0, 1500, 0, 1500 - r);
+      ctx.lineTo(0, r);
+      ctx.quadraticCurveTo(0, 0, r, 0);
+      ctx.closePath();
+      ctx.clip();
+
+      // Draw SVG base template (includes "THIS DAY IN ASTRONOMY", glowing planet, stars, sunset, footer)
+      ctx.drawImage(svgImg, 0, 0, 1200, 1500);
+
+      // Draw dynamic text overlay (Date, Subtitle, and Content) perfectly positioned on top
+      ctx.drawImage(textCanvas, 0, 0, 1200, 1500);
+
       return await new Promise<Blob | null>((resolve) => {
-        canvas.toBlob((blob) => resolve(blob), 'image/png', 1.0);
+        finalCanvas.toBlob((blob) => resolve(blob), 'image/png', 1.0);
       });
     } catch (err) {
-      console.error('html2canvas error:', err);
+      console.error('generatePng composite error:', err);
       return null;
     } finally {
+      if (cardBgImg) cardBgImg.style.visibility = 'visible';
       setIsGenerating(false);
     }
-  }, []);
+  }, [svgBg]);
 
   const showToast = (msg: string) => {
     setTooltip(msg);
