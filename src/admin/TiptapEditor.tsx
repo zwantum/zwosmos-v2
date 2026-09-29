@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
@@ -9,7 +9,7 @@ import { Color } from '@tiptap/extension-color';
 import { TextStyle } from '@tiptap/extension-text-style';
 import FontFamily from '@tiptap/extension-font-family';
 import { 
-  Bold, Italic, Strikethrough, Code, Link as LinkIcon, Image as ImageIcon, 
+  Bold, Italic, Underline as UnderlineIcon, Strikethrough, Code, Link as LinkIcon, Image as ImageIcon, 
   List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify, 
   Quote, Minus, Undo, Redo, Palette, X
 } from 'lucide-react';
@@ -27,10 +27,13 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px' }: T
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [isLinkBoxOpen, setIsLinkBoxOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
+  const lastEmittedRef = useRef(value);
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        heading: { levels: [1, 2, 3, 4, 5, 6] }
+      }),
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Underline,
       Link.configure({ openOnClick: false }),
@@ -41,14 +44,18 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px' }: T
     ],
     content: value,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+      const html = editor.getHTML();
+      lastEmittedRef.current = html;
+      onChange(html);
     },
   });
 
   useEffect(() => {
-    if (editor && value !== undefined) {
-      if (editor.getHTML() !== value && !editor.isFocused) {
-        editor.commands.setContent(value);
+    if (!editor) return;
+    if (value !== undefined && value !== lastEmittedRef.current) {
+      lastEmittedRef.current = value;
+      if (editor.getHTML() !== value) {
+        editor.commands.setContent(value, false);
       }
     }
   }, [value, editor]);
@@ -179,6 +186,7 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px' }: T
         {/* Formatting Actions */}
         <button
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().toggleBold().run()}
           style={toolbarBtnStyle(editor.isActive('bold'))}
           title="Bold (Ctrl+B)"
@@ -187,6 +195,7 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px' }: T
         </button>
         <button
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().toggleItalic().run()}
           style={toolbarBtnStyle(editor.isActive('italic'))}
           title="Italic (Ctrl+I)"
@@ -195,6 +204,16 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px' }: T
         </button>
         <button
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
+          style={toolbarBtnStyle(editor.isActive('underline'))}
+          title="Underline (Ctrl+U)"
+        >
+          <UnderlineIcon size={15} />
+        </button>
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().toggleStrike().run()}
           style={toolbarBtnStyle(editor.isActive('strike'))}
           title="Strikethrough"
@@ -203,6 +222,7 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px' }: T
         </button>
         <button
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().toggleCode().run()}
           style={toolbarBtnStyle(editor.isActive('code'))}
           title="Code"
@@ -228,6 +248,7 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px' }: T
         {/* Links (Inline Bar - NO window.prompt alert) */}
         <button
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={handleToggleLinkBox}
           style={toolbarBtnStyle(editor.isActive('link') || isLinkBoxOpen)}
           title="Insert Link"
@@ -238,6 +259,7 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px' }: T
         {/* Image from Blog Media Gallery */}
         <button
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => setIsMediaModalOpen(true)}
           style={toolbarBtnStyle(false)}
           title="Choose from Blog Media Gallery"
@@ -250,6 +272,7 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px' }: T
         {/* Lists */}
         <button
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           style={toolbarBtnStyle(editor.isActive('bulletList'))}
           title="Bullet List"
@@ -258,6 +281,7 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px' }: T
         </button>
         <button
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
           style={toolbarBtnStyle(editor.isActive('orderedList'))}
           title="Numbered List"
@@ -270,6 +294,7 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px' }: T
         {/* Alignment */}
         <button
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().setTextAlign('left').run()}
           style={toolbarBtnStyle(editor.isActive({ textAlign: 'left' }))}
           title="Align Left"
@@ -278,6 +303,7 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px' }: T
         </button>
         <button
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().setTextAlign('center').run()}
           style={toolbarBtnStyle(editor.isActive({ textAlign: 'center' }))}
           title="Align Center"
@@ -286,6 +312,7 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px' }: T
         </button>
         <button
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().setTextAlign('right').run()}
           style={toolbarBtnStyle(editor.isActive({ textAlign: 'right' }))}
           title="Align Right"
@@ -294,6 +321,7 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px' }: T
         </button>
         <button
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().setTextAlign('justify').run()}
           style={toolbarBtnStyle(editor.isActive({ textAlign: 'justify' }))}
           title="Justify"
@@ -306,6 +334,7 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px' }: T
         {/* Blockquote & Horizontal Rule */}
         <button
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
           style={toolbarBtnStyle(editor.isActive('blockquote'))}
           title="Blockquote"
@@ -314,6 +343,7 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px' }: T
         </button>
         <button
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().setHorizontalRule().run()}
           style={toolbarBtnStyle(false)}
           title="Horizontal Rule"
@@ -325,6 +355,7 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px' }: T
         <div style={{ display: 'flex', marginLeft: 'auto', gap: '4px' }}>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().undo().run()}
             disabled={!editor.can().undo()}
             style={{ ...toolbarBtnStyle(false), opacity: editor.can().undo() ? 1 : 0.4 }}
@@ -334,6 +365,7 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px' }: T
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().redo().run()}
             disabled={!editor.can().redo()}
             style={{ ...toolbarBtnStyle(false), opacity: editor.can().redo() ? 1 : 0.4 }}
@@ -441,7 +473,14 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px' }: T
       )}
 
       {/* Clean White Editor Content Area */}
-      <div style={{ background: '#ffffff', color: '#0f172a', minHeight }}>
+      <div
+        style={{ background: '#ffffff', color: '#0f172a', minHeight, cursor: 'text' }}
+        onClick={() => {
+          if (editor && !editor.isFocused) {
+            editor.commands.focus();
+          }
+        }}
+      >
         <EditorContent editor={editor} className="tiptap-white-editor" style={{ minHeight }} />
       </div>
 

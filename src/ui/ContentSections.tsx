@@ -173,7 +173,7 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
         backgroundColor: 'transparent',
         background: 'transparent',
         marginTop: '0',
-        paddingTop: isDesktop ? '16px' : isLargeView ? '10px' : isSmallPhone ? '20px' : isSmallTab ? '4px' : '35px',
+        paddingTop: isDesktop ? '16px' : isLargeView ? '10px' : isSmallPhone ? '0px' : isSmallTab ? '4px' : '35px',
         position: 'relative',
         zIndex: 10
       }}

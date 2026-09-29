@@ -13,7 +13,8 @@ import {
   Sparkles,
   X,
   FileCode,
-  Type
+  Type,
+  Search
 } from 'lucide-react';
 import { settingsService, DEFAULT_SITE_SETTINGS, SiteSettings } from '../lib/settingsService';
 import { blogClient } from '../lib/blogClient';
@@ -24,7 +25,7 @@ export default function SettingsManager() {
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SITE_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeSubTab, setActiveSubTab] = useState<'og' | 'rss' | 'brand' | 'reading'>('og');
+  const [activeSubTab, setActiveSubTab] = useState<'seo' | 'og' | 'rss' | 'brand' | 'reading'>('seo');
   const [previewPlatform, setPreviewPlatform] = useState<'twitter' | 'facebook'>('twitter');
 
   // Media Library & Upload States
@@ -56,7 +57,7 @@ export default function SettingsManager() {
     setSaving(true);
     try {
       await settingsService.updateSettings(settings);
-      pushNotify('Settings saved successfully! Open Graph & RSS updated.', { type: 'success' });
+      pushNotify('Settings saved successfully! SEO & Open Graph updated.', { type: 'success' });
     } catch (err: any) {
       console.error('Save settings error:', err);
       pushNotify('Failed to save settings: ' + (err.message || 'Unknown error'), { type: 'error' });
@@ -151,7 +152,7 @@ export default function SettingsManager() {
             Site Settings &amp; SEO
           </h1>
           <p style={{ color: '#64748b', fontSize: '13.5px', margin: 0 }}>
-            Configure Open Graph meta tags, social share banners, RSS feed syndication, and brand metadata.
+            Configure Website SEO meta, Open Graph social share cards, RSS syndication, and brand metadata.
           </p>
         </div>
 
@@ -193,9 +194,33 @@ export default function SettingsManager() {
           gap: '8px',
           borderBottom: '1px solid #e2e8f0',
           paddingBottom: '12px',
-          marginBottom: '24px'
+          marginBottom: '24px',
+          flexWrap: 'wrap'
         }}
       >
+        <button
+          onClick={() => setActiveSubTab('seo')}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            background: activeSubTab === 'seo' ? '#ffcc00' : '#ffffff',
+            color: activeSubTab === 'seo' ? '#0f172a' : '#64748b',
+            border: '1px solid',
+            borderColor: activeSubTab === 'seo' ? '#ffcc00' : '#e2e8f0',
+            padding: '8px 16px',
+            borderRadius: '8px',
+            fontSize: '13px',
+            fontWeight: activeSubTab === 'seo' ? 600 : 500,
+            cursor: 'pointer',
+            boxShadow: activeSubTab === 'seo' ? '0 2px 8px rgba(255, 204, 0, 0.35)' : 'none',
+            transition: 'all 0.15s ease'
+          }}
+        >
+          <Search size={15} color={activeSubTab === 'seo' ? '#0f172a' : '#64748b'} />
+          <span>Website SEO Meta</span>
+        </button>
+
         <button
           onClick={() => setActiveSubTab('og')}
           style={{
@@ -216,7 +241,7 @@ export default function SettingsManager() {
           }}
         >
           <Share2 size={15} color={activeSubTab === 'og' ? '#0f172a' : '#64748b'} />
-          <span>Open Graph &amp; SEO Meta</span>
+          <span>Open Graph &amp; Social Share</span>
         </button>
 
         <button
@@ -299,7 +324,282 @@ export default function SettingsManager() {
       />
 
       {/* ========================================================================= */}
-      {/* 1. OPEN GRAPH & SEO SECTION */}
+      {/* 1. WEBSITE SEO META SECTION */}
+      {/* ========================================================================= */}
+      {activeSubTab === 'seo' && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 420px', gap: '24px', alignItems: 'flex-start' }}>
+          {/* Left Column: Form Fields */}
+          <div
+            style={{
+              background: '#ffffff',
+              border: '1px solid #e2e8f0',
+              borderRadius: '14px',
+              padding: '24px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px'
+            }}
+          >
+            {/* Info Notice Banner */}
+            <div
+              style={{
+                padding: '12px 16px',
+                background: '#eff6ff',
+                border: '1px solid #bfdbfe',
+                borderRadius: '10px',
+                fontSize: '12.5px',
+                color: '#1e40af',
+                lineHeight: 1.5,
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '10px'
+              }}
+            >
+              <Search size={16} style={{ flexShrink: 0, marginTop: '2px', color: '#2563eb' }} />
+              <div>
+                <strong>Website Search Engine Optimization (SEO)</strong>
+              </div>
+            </div>
+
+            {/* Site Title */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>
+                  Website Title
+                </label>
+                <span style={{ fontSize: '11px', color: (settings.siteTitle?.length || 0) > 60 ? '#f59e0b' : '#64748b' }}>
+                  {settings.siteTitle?.length || 0} / 60 chars recommended
+                </span>
+              </div>
+              <input
+                type="text"
+                value={settings.siteTitle}
+                onChange={e => handleChange('siteTitle', e.target.value)}
+                placeholder="Zwosmos | Astronomy, Space News & Skywatching"
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '14px',
+                  boxSizing: 'border-box'
+                }}
+              />
+              <span style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', display: 'block' }}>
+                Appears in browser tabs and as the main clickable headline in Google Search results.
+              </span>
+            </div>
+
+            {/* Site Description */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>
+                  Website Meta Description
+                </label>
+                <span style={{ fontSize: '11px', color: (settings.siteDescription?.length || 0) > 160 ? '#f59e0b' : '#64748b' }}>
+                  {settings.siteDescription?.length || 0} / 160 chars recommended
+                </span>
+              </div>
+              <textarea
+                rows={3}
+                value={settings.siteDescription}
+                onChange={e => handleChange('siteDescription', e.target.value)}
+                placeholder="Explore astronomy, space news, skywatching guides, cosmic discoveries..."
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '13.5px',
+                  lineHeight: 1.5,
+                  boxSizing: 'border-box',
+                  resize: 'vertical'
+                }}
+              />
+              <span style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', display: 'block' }}>
+                The search snippet indexed by Google, Bing, and search crawlers under your page title.
+              </span>
+            </div>
+
+            {/* Canonical Site URL */}
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#0f172a', marginBottom: '6px' }}>
+                Canonical Website URL
+              </label>
+              <input
+                type="url"
+                value={settings.siteUrl}
+                onChange={e => handleChange('siteUrl', e.target.value)}
+                placeholder="https://zwosmos.com"
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '14px',
+                  boxSizing: 'border-box'
+                }}
+              />
+              <span style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', display: 'block' }}>
+                Tells search engines the authoritative domain to prevent duplicate URL penalties.
+              </span>
+            </div>
+
+            {/* Meta Keywords & Default Author */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#0f172a', marginBottom: '6px' }}>
+                  Meta Keywords (comma separated)
+                </label>
+                <input
+                  type="text"
+                  value={settings.keywords}
+                  onChange={e => handleChange('keywords', e.target.value)}
+                  placeholder="astronomy, astrophysics, cosmology..."
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '13px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#0f172a', marginBottom: '6px' }}>
+                  Default Editorial Author
+                </label>
+                <input
+                  type="text"
+                  value={settings.authorName}
+                  onChange={e => handleChange('authorName', e.target.value)}
+                  placeholder="Zwosmos Editorial"
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '13.5px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Live Google Search SERP Simulator */}
+          <div style={{ position: 'sticky', top: '24px' }}>
+            <div
+              style={{
+                background: '#ffffff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '14px',
+                padding: '20px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '14px' }}>
+                <Search size={16} color="#2563eb" />
+                <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
+                  Live Google Search SERP Preview
+                </span>
+              </div>
+
+              {/* Realistic Google Search Card */}
+              <div
+                style={{
+                  background: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '10px',
+                  padding: '16px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                  fontFamily: 'Arial, sans-serif'
+                }}
+              >
+                {/* Google Domain Row */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                  <div
+                    style={{
+                      width: '26px',
+                      height: '26px',
+                      borderRadius: '50%',
+                      background: '#f1f5f9',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      color: '#0f172a'
+                    }}
+                  >
+                    🪐
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '13px', color: '#202124', fontWeight: 400, lineHeight: 1.2 }}>
+                      Zwosmos
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#4d5156', lineHeight: 1.2 }}>
+                      {settings.siteUrl || 'https://zwosmos.com'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Google Blue Title */}
+                <div
+                  style={{
+                    fontSize: '18px',
+                    fontWeight: 400,
+                    color: '#1a0dab',
+                    lineHeight: 1.3,
+                    marginBottom: '6px',
+                    cursor: 'pointer',
+                    wordBreak: 'break-word'
+                  }}
+                >
+                  {settings.siteTitle || 'Zwosmos | Astronomy, Space News & Skywatching'}
+                </div>
+
+                {/* Google Snippet Description */}
+                <div
+                  style={{
+                    fontSize: '13px',
+                    color: '#4d5156',
+                    lineHeight: 1.5,
+                    display: '-webkit-box',
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden'
+                  }}
+                >
+                  {settings.siteDescription || 'Explore astronomy, space news, skywatching guides, cosmic discoveries, missions, telescopes and stories from across the universe with Zwosmos.'}
+                </div>
+              </div>
+
+              {/* Note */}
+              <div
+                style={{
+                  marginTop: '16px',
+                  padding: '12px',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '10px',
+                  fontSize: '11.5px',
+                  color: '#64748b',
+                  lineHeight: 1.4
+                }}
+              >
+                💡 <strong>Google Search Tips:</strong> Keep your site title under 60 characters and description under 160 characters to avoid truncation with ellipses (...) on search result pages.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 2. OPEN GRAPH & SOCIAL SHARE SECTION */}
       {/* ========================================================================= */}
       {activeSubTab === 'og' && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 420px', gap: '24px', alignItems: 'flex-start' }}>
@@ -316,16 +616,42 @@ export default function SettingsManager() {
               gap: '20px'
             }}
           >
-            {/* Site Title / OG Title */}
+            {/* Info Notice Banner */}
+            <div
+              style={{
+                padding: '12px 16px',
+                background: '#fefce8',
+                border: '1px solid #fef08a',
+                borderRadius: '10px',
+                fontSize: '12.5px',
+                color: '#854d0e',
+                lineHeight: 1.5,
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '10px'
+              }}
+            >
+              <Share2 size={16} style={{ flexShrink: 0, marginTop: '2px', color: '#ca8a04' }} />
+              <div>
+                <strong>Open Graph &amp; Social Sharing:</strong> These values configure the rich preview cards generated when your website or links are shared on <strong>Twitter/X, WhatsApp, LinkedIn, Discord, and Facebook</strong>.
+              </div>
+            </div>
+
+            {/* OG Title */}
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#0f172a', marginBottom: '6px' }}>
-                Site Title &amp; Open Graph Title (og:title)
-              </label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>
+                  Open Graph Title (og:title &amp; twitter:title)
+                </label>
+                <span style={{ fontSize: '11px', color: '#64748b' }}>
+                  {settings.ogTitle?.length || 0} characters
+                </span>
+              </div>
               <input
                 type="text"
-                value={settings.siteTitle}
-                onChange={e => handleChange('siteTitle', e.target.value)}
-                placeholder="Zwosmos - Exploring the Cosmos & Deep Space"
+                value={settings.ogTitle}
+                onChange={e => handleChange('ogTitle', e.target.value)}
+                placeholder="Zwosmos - Exploring Deep Space & Universe Wonders"
                 style={{
                   width: '100%',
                   padding: '10px 14px',
@@ -336,20 +662,25 @@ export default function SettingsManager() {
                 }}
               />
               <span style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', display: 'block' }}>
-                Appears as the primary link headline when shared on Twitter/X, WhatsApp, Discord, LinkedIn, and Facebook.
+                The bold link headline displayed on Twitter/X, WhatsApp, LinkedIn, Discord, and Facebook cards.
               </span>
             </div>
 
-            {/* Site Description / OG Description */}
+            {/* OG Description */}
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#0f172a', marginBottom: '6px' }}>
-                Site Description (og:description &amp; meta description)
-              </label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>
+                  Open Graph Description (og:description &amp; twitter:description)
+                </label>
+                <span style={{ fontSize: '11px', color: '#64748b' }}>
+                  {settings.ogDescription?.length || 0} characters
+                </span>
+              </div>
               <textarea
                 rows={3}
-                value={settings.siteDescription}
-                onChange={e => handleChange('siteDescription', e.target.value)}
-                placeholder="Deep space explorations, astrophysical discoveries, cosmic mechanics..."
+                value={settings.ogDescription}
+                onChange={e => handleChange('ogDescription', e.target.value)}
+                placeholder="Discover cosmic missions, astronomical breakthroughs, night sky guides, and universe stories on Zwosmos."
                 style={{
                   width: '100%',
                   padding: '10px 14px',
@@ -362,29 +693,8 @@ export default function SettingsManager() {
                 }}
               />
               <span style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', display: 'block' }}>
-                Recommended length: 140–160 characters for optimal Google &amp; social card snippet preview.
+                The social card snippet description shown underneath the headline.
               </span>
-            </div>
-
-            {/* Canonical Site URL */}
-            <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#0f172a', marginBottom: '6px' }}>
-                Canonical Website URL (og:url)
-              </label>
-              <input
-                type="url"
-                value={settings.siteUrl}
-                onChange={e => handleChange('siteUrl', e.target.value)}
-                placeholder="https://zwosmos.com"
-                style={{
-                  width: '100%',
-                  padding: '10px 14px',
-                  borderRadius: '8px',
-                  border: '1px solid #cbd5e1',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
-              />
             </div>
 
             {/* Default OG Image Upload & Picker */}
@@ -400,7 +710,7 @@ export default function SettingsManager() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <ImageIcon size={18} color="#2563eb" />
                   <span style={{ fontSize: '13.5px', fontWeight: 700, color: '#0f172a' }}>
-                    Default Open Graph Banner (og:image)
+                    Default Open Graph Banner (og:image &amp; twitter:image)
                   </span>
                 </div>
                 <span style={{ fontSize: '11px', color: '#64748b' }}>
@@ -487,7 +797,7 @@ export default function SettingsManager() {
                     </button>
                   </div>
                   <span style={{ fontSize: '11.5px', color: '#64748b' }}>
-                    Used as the default preview when homepage, books, or pages without an article image are shared.
+                    Used as the default preview banner when the homepage, books, or pages without an article image are shared.
                   </span>
                 </div>
               </div>
@@ -501,7 +811,7 @@ export default function SettingsManager() {
                   type="url"
                   value={settings.ogImage}
                   onChange={e => handleChange('ogImage', e.target.value)}
-                  placeholder="https://images.unsplash.com/..."
+                  placeholder="https://..."
                   style={{
                     width: '100%',
                     padding: '8px 12px',
@@ -556,49 +866,6 @@ export default function SettingsManager() {
                   <option value="summary_large_image">Large Image Card (Recommended)</option>
                   <option value="summary">Small Thumbnail Card</option>
                 </select>
-              </div>
-            </div>
-
-            {/* Meta Keywords & Default Author */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#0f172a', marginBottom: '6px' }}>
-                  Meta Keywords (comma separated)
-                </label>
-                <input
-                  type="text"
-                  value={settings.keywords}
-                  onChange={e => handleChange('keywords', e.target.value)}
-                  placeholder="astronomy, astrophysics, cosmology..."
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
-                    fontSize: '13px',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#0f172a', marginBottom: '6px' }}>
-                  Default Editorial Author
-                </label>
-                <input
-                  type="text"
-                  value={settings.authorName}
-                  onChange={e => handleChange('authorName', e.target.value)}
-                  placeholder="Zwosmos Editorial Team"
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
-                    fontSize: '13.5px',
-                    boxSizing: 'border-box'
-                  }}
-                />
               </div>
             </div>
           </div>
@@ -690,10 +957,10 @@ export default function SettingsManager() {
                       {cleanSiteUrl}
                     </div>
                     <div style={{ fontSize: '14px', fontWeight: 700, color: '#e7e9ea', lineHeight: 1.3, marginBottom: '4px' }}>
-                      {settings.siteTitle || 'Zwosmos'}
+                      {settings.ogTitle || settings.siteTitle || 'Zwosmos'}
                     </div>
                     <div style={{ fontSize: '12px', color: '#71767b', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                      {settings.siteDescription || 'Description will appear here.'}
+                      {settings.ogDescription || settings.siteDescription || 'Description will appear here.'}
                     </div>
                   </div>
                 </div>
@@ -721,10 +988,10 @@ export default function SettingsManager() {
                       {cleanSiteUrl}
                     </div>
                     <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', margin: '4px 0 2px 0', lineHeight: 1.3 }}>
-                      {settings.siteTitle || 'Zwosmos'}
+                      {settings.ogTitle || settings.siteTitle || 'Zwosmos'}
                     </div>
                     <div style={{ fontSize: '12px', color: '#64748b', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                      {settings.siteDescription}
+                      {settings.ogDescription || settings.siteDescription}
                     </div>
                   </div>
                 </div>

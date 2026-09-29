@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useMobile } from '../contexts/MobileContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -105,12 +105,16 @@ const BlogPostPage: React.FC = () => {
 
   const activePost = post || cachedPost || (allLivePosts?.find(p => p.slug === id || p.id === id) ?? null);
 
+  const prevIdRef = useRef<string | null>(null);
   useLayoutEffect(() => {
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-    const rootEl = document.getElementById('root');
-    if (rootEl) rootEl.scrollTop = 0;
+    if (prevIdRef.current !== null && prevIdRef.current !== id) {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      const rootEl = document.getElementById('root');
+      if (rootEl) rootEl.scrollTop = 0;
+    }
+    prevIdRef.current = id ?? null;
   }, [id]);
 
   // Transform live posts to unified interface (no mock fallback posts)
@@ -142,16 +146,24 @@ const BlogPostPage: React.FC = () => {
   // Dynamic Open Graph & Article SEO for Facebook, Twitter/X, LinkedIn, Discord
   const articleTitle = activePost?.title || '';
   const articleDesc = activePost?.excerpt || '';
-  const articleImage = activePost?.featured_image?.url || activePost?.custom_fields?.featured_image_url || '';
+  const articleImage =
+    activePost?.featured_image?.url ||
+    activePost?.custom_fields?.featured_image_url ||
+    activePost?.seo?.og_image_url ||
+    '';
   const articleAuthor = activePost?.author?.name || 'Zwosmos';
   const articlePublishedAt = activePost?.published_at;
   const articleCategory = activePost?.categories?.[0]?.name || 'Space News';
   const articleTags = activePost?.tags?.map((t: any) => (typeof t === 'string' ? t : t?.name)).filter(Boolean) || [];
+  const articleUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/blog/${activePost?.slug || id || ''}`
+    : `https://zwosmos.com/blog/${activePost?.slug || id || ''}`;
 
   useSEO({
     title: articleTitle ? (articleTitle.includes('Zwosmos') ? articleTitle : `${articleTitle} | Zwosmos`) : undefined,
     description: articleDesc || undefined,
     image: articleImage || undefined,
+    url: articleUrl,
     type: 'article',
     author: articleAuthor,
     publishedTime: articlePublishedAt || undefined,
@@ -645,14 +657,45 @@ const BlogPostPage: React.FC = () => {
         <ZwosmosIcon size={12} color={isSepia ? '#d97706' : '#bd75ff'} /> Share:
       </span>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+        {/* WhatsApp */}
         <button
-          onClick={() =>
+          onClick={() => {
+            const url = typeof window !== 'undefined' ? `${window.location.origin}/blog/${activePost?.slug || id || ''}` : `https://zwosmos.com/blog/${activePost?.slug || id || ''}`;
             window.open(
-              `https://twitter.com/intent/tweet?text=${encodeURIComponent(postData.title)}&url=${encodeURIComponent(window.location.href)}`,
+              `https://api.whatsapp.com/send?text=${encodeURIComponent(postData.title + '\n\n' + url)}`,
               '_blank'
-            )
-          }
+            );
+          }}
+          title="Share on WhatsApp"
+          style={{
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            border: isLight ? '1px solid rgba(0,0,0,0.12)' : '1px solid rgba(255,255,255,0.15)',
+            background: '#25D366',
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            fontSize: '0.88rem',
+            transition: 'transform 0.2s',
+            boxShadow: '0 2px 6px rgba(37, 211, 102, 0.25)'
+          }}
+        >
+          <i className="fa-brands fa-whatsapp"></i>
+        </button>
+
+        {/* Twitter / X */}
+        <button
+          onClick={() => {
+            const url = typeof window !== 'undefined' ? `${window.location.origin}/blog/${activePost?.slug || id || ''}` : `https://zwosmos.com/blog/${activePost?.slug || id || ''}`;
+            window.open(
+              `https://twitter.com/intent/tweet?text=${encodeURIComponent(postData.title)}&url=${encodeURIComponent(url)}`,
+              '_blank'
+            );
+          }}
           title="Share on X"
           style={{
             width: '32px',
@@ -673,13 +716,15 @@ const BlogPostPage: React.FC = () => {
           <i className="fa-brands fa-x-twitter"></i>
         </button>
 
+        {/* Facebook */}
         <button
-          onClick={() =>
+          onClick={() => {
+            const url = typeof window !== 'undefined' ? `${window.location.origin}/blog/${activePost?.slug || id || ''}` : `https://zwosmos.com/blog/${activePost?.slug || id || ''}`;
             window.open(
-              `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`,
+              `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
               '_blank'
-            )
-          }
+            );
+          }}
           title="Share on Facebook"
           style={{
             width: '32px',
@@ -700,13 +745,15 @@ const BlogPostPage: React.FC = () => {
           <i className="fa-brands fa-facebook-f"></i>
         </button>
 
+        {/* LinkedIn */}
         <button
-          onClick={() =>
+          onClick={() => {
+            const url = typeof window !== 'undefined' ? `${window.location.origin}/blog/${activePost?.slug || id || ''}` : `https://zwosmos.com/blog/${activePost?.slug || id || ''}`;
             window.open(
-              `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`,
+              `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
               '_blank'
-            )
-          }
+            );
+          }}
           title="Share on LinkedIn"
           style={{
             width: '32px',
@@ -720,16 +767,47 @@ const BlogPostPage: React.FC = () => {
             justifyContent: 'center',
             cursor: 'pointer',
             fontSize: '0.82rem',
-            transition: 'all 0.2s ease',
+            transition: 'transform 0.2s',
             boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
           }}
         >
           <i className="fa-brands fa-linkedin-in"></i>
         </button>
 
+        {/* Telegram */}
         <button
           onClick={() => {
-            navigator.clipboard.writeText(window.location.href);
+            const url = typeof window !== 'undefined' ? `${window.location.origin}/blog/${activePost?.slug || id || ''}` : `https://zwosmos.com/blog/${activePost?.slug || id || ''}`;
+            window.open(
+              `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(postData.title)}`,
+              '_blank'
+            );
+          }}
+          title="Share on Telegram"
+          style={{
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            border: isLight ? '1px solid rgba(0,0,0,0.12)' : '1px solid rgba(255,255,255,0.15)',
+            background: '#229ED9',
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            fontSize: '0.85rem',
+            transition: 'transform 0.2s',
+            boxShadow: '0 2px 6px rgba(34, 158, 217, 0.25)'
+          }}
+        >
+          <i className="fa-brands fa-telegram"></i>
+        </button>
+
+        {/* Copy Link */}
+        <button
+          onClick={() => {
+            const url = typeof window !== 'undefined' ? `${window.location.origin}/blog/${activePost?.slug || id || ''}` : `https://zwosmos.com/blog/${activePost?.slug || id || ''}`;
+            navigator.clipboard.writeText(url);
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
           }}
@@ -1380,14 +1458,50 @@ const BlogPostPage: React.FC = () => {
       </span>
 
       {/* Circular Icon-Only Buttons */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+        {/* WhatsApp */}
         <button
-          onClick={() =>
+          onClick={() => {
+            const url = typeof window !== 'undefined' ? `${window.location.origin}/blog/${activePost?.slug || id || ''}` : `https://zwosmos.com/blog/${activePost?.slug || id || ''}`;
             window.open(
-              `https://twitter.com/intent/tweet?text=${encodeURIComponent(postData.title)}&url=${encodeURIComponent(window.location.href)}`,
+              `https://api.whatsapp.com/send?text=${encodeURIComponent(postData.title + '\n\n' + url)}`,
               '_blank'
-            )
-          }
+            );
+          }}
+          title="Share on WhatsApp"
+          style={{
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            border: isLight ? '1px solid rgba(0,0,0,0.12)' : '1px solid rgba(255,255,255,0.15)',
+            background: '#25D366',
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            fontSize: '0.88rem',
+            transition: 'all 0.2s ease',
+            boxShadow: '0 2px 6px rgba(37, 211, 102, 0.25)'
+          }}
+          onMouseOver={e => {
+            e.currentTarget.style.transform = 'translateY(-2px) scale(1.05)';
+          }}
+          onMouseOut={e => {
+            e.currentTarget.style.transform = 'translateY(0) scale(1)';
+          }}
+        >
+          <i className="fa-brands fa-whatsapp"></i>
+        </button>
+
+        <button
+          onClick={() => {
+            const url = typeof window !== 'undefined' ? `${window.location.origin}/blog/${activePost?.slug || id || ''}` : `https://zwosmos.com/blog/${activePost?.slug || id || ''}`;
+            window.open(
+              `https://twitter.com/intent/tweet?text=${encodeURIComponent(postData.title)}&url=${encodeURIComponent(url)}`,
+              '_blank'
+            );
+          }}
           title="Share on X"
           style={{
             width: '32px',
@@ -1415,12 +1529,13 @@ const BlogPostPage: React.FC = () => {
         </button>
 
         <button
-          onClick={() =>
+          onClick={() => {
+            const url = typeof window !== 'undefined' ? `${window.location.origin}/blog/${activePost?.slug || id || ''}` : `https://zwosmos.com/blog/${activePost?.slug || id || ''}`;
             window.open(
-              `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`,
+              `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
               '_blank'
-            )
-          }
+            );
+          }}
           title="Share on Facebook"
           style={{
             width: '32px',
@@ -1448,12 +1563,13 @@ const BlogPostPage: React.FC = () => {
         </button>
 
         <button
-          onClick={() =>
+          onClick={() => {
+            const url = typeof window !== 'undefined' ? `${window.location.origin}/blog/${activePost?.slug || id || ''}` : `https://zwosmos.com/blog/${activePost?.slug || id || ''}`;
             window.open(
-              `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`,
+              `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
               '_blank'
-            )
-          }
+            );
+          }}
           title="Share on LinkedIn"
           style={{
             width: '32px',
@@ -1478,6 +1594,41 @@ const BlogPostPage: React.FC = () => {
           }}
         >
           <i className="fa-brands fa-linkedin-in"></i>
+        </button>
+
+        {/* Telegram */}
+        <button
+          onClick={() => {
+            const url = typeof window !== 'undefined' ? `${window.location.origin}/blog/${activePost?.slug || id || ''}` : `https://zwosmos.com/blog/${activePost?.slug || id || ''}`;
+            window.open(
+              `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(postData.title)}`,
+              '_blank'
+            );
+          }}
+          title="Share on Telegram"
+          style={{
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            border: isLight ? '1px solid rgba(0,0,0,0.12)' : '1px solid rgba(255,255,255,0.15)',
+            background: '#229ED9',
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            fontSize: '0.85rem',
+            transition: 'all 0.2s ease',
+            boxShadow: '0 2px 6px rgba(34, 158, 217, 0.25)'
+          }}
+          onMouseOver={e => {
+            e.currentTarget.style.transform = 'translateY(-2px) scale(1.05)';
+          }}
+          onMouseOut={e => {
+            e.currentTarget.style.transform = 'translateY(0) scale(1)';
+          }}
+        >
+          <i className="fa-brands fa-telegram"></i>
         </button>
 
         <button

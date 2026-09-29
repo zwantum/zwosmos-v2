@@ -1,7 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { LayoutDashboard, FileText, Database, BookOpen, Settings as SettingsIcon, LogOut } from 'lucide-react';
+import {
+  LayoutDashboard,
+  FileText,
+  Database,
+  BookOpen,
+  Settings as SettingsIcon,
+  LogOut,
+  ChevronLeft,
+  ChevronRight
+} from 'lucide-react';
 import BlogsManager from './BlogsManager';
 import FactsManager from './FactsManager';
 import BooksManager from './BooksManager';
@@ -14,6 +23,25 @@ const VALID_TABS: AdminTab[] = ['blogs', 'facts', 'books', 'settings'];
 
 export default function AdminDashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Collapsed / minified sidebar state with localStorage persistence
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('zwosmos_admin_sidebar_collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleSidebar = () => {
+    setIsCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('zwosmos_admin_sidebar_collapsed', String(next));
+      } catch {}
+      return next;
+    });
+  };
 
   const getInitialTab = (): AdminTab => {
     // 1. Try URL search parameter ?tab=...
@@ -77,207 +105,226 @@ export default function AdminDashboard() {
     }
   };
 
+  const navItems = [
+    { key: 'blogs' as AdminTab, label: 'Blogs', icon: FileText },
+    { key: 'facts' as AdminTab, label: 'Facts', icon: Database },
+    { key: 'books' as AdminTab, label: 'Books', icon: BookOpen },
+    { key: 'settings' as AdminTab, label: 'Settings', icon: SettingsIcon },
+  ];
+
   return (
     <div
       className="admin-dashboard"
       style={{
         display: 'flex',
-        minHeight: '100vh',
+        height: '100vh',
+        maxHeight: '100vh',
+        overflow: 'hidden',
         background: '#f8fafc',
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
       }}
     >
       <PushNotificationContainer />
-      {/* Sidebar - Matching Light Blog Theme */}
+      {/* Sidebar - Sticky, Collapsible / Minified, Independent Height */}
       <aside
         style={{
-          width: '240px',
+          width: isCollapsed ? '76px' : '240px',
+          height: '100vh',
+          position: 'sticky',
+          top: 0,
           background: '#ffffff',
           borderRight: '1px solid #e2e8f0',
-          padding: '24px 16px',
+          padding: isCollapsed ? '20px 10px' : '24px 16px',
           display: 'flex',
           flexDirection: 'column',
-          flexShrink: 0
+          flexShrink: 0,
+          boxSizing: 'border-box',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          zIndex: 10,
+          transition: 'width 0.22s cubic-bezier(0.4, 0, 0.2, 1), padding 0.22s cubic-bezier(0.4, 0, 0.2, 1)'
         }}
       >
-        {/* Brand Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '28px', paddingLeft: '6px' }}>
-          <div
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '12px',
-              background: '#ffcc00',
-              color: '#0f172a',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 14px rgba(255, 204, 0, 0.4)',
-            }}
-          >
-            <LayoutDashboard size={20} />
-          </div>
-          <div>
-            <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', lineHeight: 1.15, letterSpacing: '-0.02em' }}>
-              Admin
+        {/* Brand Header & Toggle */}
+        {!isCollapsed ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '24px', paddingLeft: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '10px',
+                  background: '#ffcc00',
+                  color: '#0f172a',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 3px 10px rgba(255, 204, 0, 0.4)',
+                  flexShrink: 0
+                }}
+              >
+                <LayoutDashboard size={19} />
+              </div>
+              <div>
+                <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', lineHeight: 1.15, letterSpacing: '-0.02em' }}>
+                  Admin
+                </div>
+                <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px', fontWeight: 400 }}>
+                  Zwosmos Portal
+                </div>
+              </div>
             </div>
-            <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px', fontWeight: 400 }}>
-              Zwosmos Portal
-            </div>
+
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              title="Collapse sidebar"
+              aria-label="Collapse sidebar"
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                border: '1px solid #e2e8f0',
+                background: '#ffffff',
+                color: '#64748b',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#f1f5f9';
+                e.currentTarget.style.color = '#0f172a';
+                e.currentTarget.style.borderColor = '#cbd5e1';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#ffffff';
+                e.currentTarget.style.color = '#64748b';
+                e.currentTarget.style.borderColor = '#e2e8f0';
+              }}
+            >
+              <ChevronLeft size={18} strokeWidth={2.2} />
+            </button>
           </div>
-        </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', paddingBottom: '24px' }}>
+            <div
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '10px',
+                background: '#ffcc00',
+                color: '#0f172a',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 3px 10px rgba(255, 204, 0, 0.4)',
+                flexShrink: 0
+              }}
+            >
+              <LayoutDashboard size={20} />
+            </div>
+
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              title="Expand sidebar"
+              aria-label="Expand sidebar"
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                border: '1px solid #e2e8f0',
+                background: '#ffffff',
+                color: '#64748b',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#f1f5f9';
+                e.currentTarget.style.color = '#0f172a';
+                e.currentTarget.style.borderColor = '#cbd5e1';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#ffffff';
+                e.currentTarget.style.color = '#64748b';
+                e.currentTarget.style.borderColor = '#e2e8f0';
+              }}
+            >
+              <ChevronRight size={18} strokeWidth={2.2} />
+            </button>
+          </div>
+        )}
 
         {/* Navigation Items */}
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
-          <button
-            onClick={() => handleTabChange('blogs')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '10px 14px',
-              background: activeTab === 'blogs' ? '#ffcc00' : 'transparent',
-              color: activeTab === 'blogs' ? '#0f172a' : '#64748b',
-              border: 'none',
-              borderRadius: '10px',
-              cursor: 'pointer',
-              textAlign: 'left',
-              fontSize: '14px',
-              fontWeight: activeTab === 'blogs' ? 600 : 500,
-              boxShadow: activeTab === 'blogs' ? '0 2px 8px rgba(255, 204, 0, 0.35)' : 'none',
-              transition: 'all 0.15s ease'
-            }}
-            onMouseEnter={(e) => {
-              if (activeTab !== 'blogs') {
-                e.currentTarget.style.background = '#f8fafc';
-                e.currentTarget.style.color = '#0f172a';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (activeTab !== 'blogs') {
-                e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.color = '#64748b';
-              }
-            }}
-          >
-            <FileText size={18} />
-            <span>Blogs</span>
-          </button>
-
-          <button
-            onClick={() => handleTabChange('facts')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '10px 14px',
-              background: activeTab === 'facts' ? '#ffcc00' : 'transparent',
-              color: activeTab === 'facts' ? '#0f172a' : '#64748b',
-              border: 'none',
-              borderRadius: '10px',
-              cursor: 'pointer',
-              textAlign: 'left',
-              fontSize: '14px',
-              fontWeight: activeTab === 'facts' ? 600 : 500,
-              boxShadow: activeTab === 'facts' ? '0 2px 8px rgba(255, 204, 0, 0.35)' : 'none',
-              transition: 'all 0.15s ease'
-            }}
-            onMouseEnter={(e) => {
-              if (activeTab !== 'facts') {
-                e.currentTarget.style.background = '#f8fafc';
-                e.currentTarget.style.color = '#0f172a';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (activeTab !== 'facts') {
-                e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.color = '#64748b';
-              }
-            }}
-          >
-            <Database size={18} />
-            <span>Facts</span>
-          </button>
-
-          <button
-            onClick={() => handleTabChange('books')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '10px 14px',
-              background: activeTab === 'books' ? '#ffcc00' : 'transparent',
-              color: activeTab === 'books' ? '#0f172a' : '#64748b',
-              border: 'none',
-              borderRadius: '10px',
-              cursor: 'pointer',
-              textAlign: 'left',
-              fontSize: '14px',
-              fontWeight: activeTab === 'books' ? 600 : 500,
-              boxShadow: activeTab === 'books' ? '0 2px 8px rgba(255, 204, 0, 0.35)' : 'none',
-              transition: 'all 0.15s ease'
-            }}
-            onMouseEnter={(e) => {
-              if (activeTab !== 'books') {
-                e.currentTarget.style.background = '#f8fafc';
-                e.currentTarget.style.color = '#0f172a';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (activeTab !== 'books') {
-                e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.color = '#64748b';
-              }
-            }}
-          >
-            <BookOpen size={18} />
-            <span>Books</span>
-          </button>
-
-          <button
-            onClick={() => handleTabChange('settings')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '10px 14px',
-              background: activeTab === 'settings' ? '#ffcc00' : 'transparent',
-              color: activeTab === 'settings' ? '#0f172a' : '#64748b',
-              border: 'none',
-              borderRadius: '10px',
-              cursor: 'pointer',
-              textAlign: 'left',
-              fontSize: '14px',
-              fontWeight: activeTab === 'settings' ? 600 : 500,
-              boxShadow: activeTab === 'settings' ? '0 2px 8px rgba(255, 204, 0, 0.35)' : 'none',
-              transition: 'all 0.15s ease'
-            }}
-            onMouseEnter={(e) => {
-              if (activeTab !== 'settings') {
-                e.currentTarget.style.background = '#f8fafc';
-                e.currentTarget.style.color = '#0f172a';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (activeTab !== 'settings') {
-                e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.color = '#64748b';
-              }
-            }}
-          >
-            <SettingsIcon size={18} />
-            <span>Settings</span>
-          </button>
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1, alignItems: isCollapsed ? 'center' : 'stretch' }}>
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.key;
+            return (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => handleTabChange(item.key)}
+                title={item.label}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: isCollapsed ? 'center' : 'flex-start',
+                  gap: isCollapsed ? '0px' : '12px',
+                  padding: isCollapsed ? '10px 0' : '10px 14px',
+                  width: isCollapsed ? '46px' : '100%',
+                  height: isCollapsed ? '46px' : 'auto',
+                  background: isActive ? '#ffcc00' : 'transparent',
+                  color: isActive ? '#0f172a' : '#64748b',
+                  border: 'none',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  fontSize: '14px',
+                  fontWeight: isActive ? 600 : 500,
+                  boxShadow: isActive ? '0 2px 8px rgba(255, 204, 0, 0.35)' : 'none',
+                  transition: 'all 0.15s ease',
+                  boxSizing: 'border-box'
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.background = '#f8fafc';
+                    e.currentTarget.style.color = '#0f172a';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.color = '#64748b';
+                  }
+                }}
+              >
+                <Icon size={20} />
+                {!isCollapsed && <span>{item.label}</span>}
+              </button>
+            );
+          })}
         </nav>
 
         {/* Logout Button */}
         <button
+          type="button"
           onClick={handleLogout}
+          title="Logout"
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '10px',
-            padding: '10px 14px',
+            justifyContent: isCollapsed ? 'center' : 'flex-start',
+            gap: isCollapsed ? '0px' : '10px',
+            padding: isCollapsed ? '10px 0' : '10px 14px',
+            width: isCollapsed ? '46px' : '100%',
+            height: isCollapsed ? '46px' : 'auto',
+            margin: isCollapsed ? 'auto auto 0 auto' : 'auto 0 0 0',
             background: '#ffffff',
             border: '1px solid #e2e8f0',
             borderRadius: '10px',
@@ -286,8 +333,8 @@ export default function AdminDashboard() {
             textAlign: 'left',
             fontSize: '13px',
             fontWeight: 500,
-            marginTop: 'auto',
-            transition: 'all 0.15s ease'
+            transition: 'all 0.15s ease',
+            boxSizing: 'border-box'
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = '#fff1f2';
@@ -300,17 +347,19 @@ export default function AdminDashboard() {
             e.currentTarget.style.color = '#64748b';
           }}
         >
-          <LogOut size={16} />
-          <span>Logout</span>
+          <LogOut size={18} />
+          {!isCollapsed && <span>Logout</span>}
         </button>
       </aside>
 
-      {/* Main Content Area */}
+      {/* Main Content Area - Scrollable Independently */}
       <main
         style={{
           flex: 1,
+          height: '100vh',
           padding: '24px 28px',
           overflowY: 'auto',
+          overflowX: 'hidden',
           background: '#f8fafc',
           color: '#0f172a',
           boxSizing: 'border-box'

@@ -512,53 +512,6 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
           >
             Explore. Learn. Be Inspired.
           </div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              marginTop: '6px',
-              fontSize: '0.72rem',
-              fontFamily: '"Orbitron", sans-serif',
-              letterSpacing: '0.5px'
-            }}
-          >
-            <Link
-              to="/books"
-              onClick={onClose}
-              style={{
-                color: currentIsDark ? '#c084fc' : (isSepia ? '#d97706' : '#9333ea'),
-                textDecoration: 'none',
-                transition: 'opacity 0.2s'
-              }}
-            >
-              BOOKS
-            </Link>
-            <span style={{ color: currentIsDark ? '#475569' : '#cbd5e1' }}>•</span>
-            <Link
-              to="/rss"
-              onClick={onClose}
-              style={{
-                color: currentIsDark ? '#c084fc' : (isSepia ? '#d97706' : '#9333ea'),
-                textDecoration: 'none',
-                transition: 'opacity 0.2s'
-              }}
-            >
-              RSS
-            </Link>
-            <span style={{ color: currentIsDark ? '#475569' : '#cbd5e1' }}>•</span>
-            <Link
-              to="/sitemap"
-              onClick={onClose}
-              style={{
-                color: currentIsDark ? '#c084fc' : (isSepia ? '#d97706' : '#9333ea'),
-                textDecoration: 'none',
-                transition: 'opacity 0.2s'
-              }}
-            >
-              SITEMAP
-            </Link>
-          </div>
         </div>
 
         {/* Right: Dynamic Social Media Icons (Configured via Dashboard Settings) */}

@@ -1,5 +1,16 @@
 {
     "rewrites": [
+        {
+            "source": "/blog/:slug*",
+            "has": [
+                {
+                    "type": "header",
+                    "key": "user-agent",
+                    "value": ".*(facebook|Facebook|Facebot|twitter|Twitter|Twitterbot|linkedin|LinkedIn|LinkedInBot|whatsapp|WhatsApp|telegram|Telegram|discord|Discord|slack|Slack|pinterest|Pinterest|Google|google|Googlebot|bing|Bing|bingbot|Applebot|applebot|crawler|Crawler|spider|Spider|bot|Bot|preview|Preview|Skype|skype).*"
+                }
+            ],
+            "destination": "/api/og-blog?slug=:slug*"
+        },
         { "source": "/(.*)", "destination": "/index.html" }
     ],
     "headers": [

@@ -426,6 +426,9 @@ html[data-theme="sepia"] .section-title {
     padding-top: 30px !important;
     padding-bottom: 30px !important;
   }
+  .content-section:first-of-type {
+    padding-top: 14px !important;
+  }
 }
 
 /* Large tab view section padding (801px - 1024px) */
@@ -1011,6 +1014,10 @@ html[data-theme='sepia'] .zw-cosmic-rich-content i {
 .zw-cosmic-rich-content strong,
 .zw-cosmic-rich-content b {
   font-weight: 700 !important;
+}
+
+.zw-cosmic-rich-content u {
+  text-decoration: underline !important;
 }
 
 body.dark-theme .zw-cosmic-rich-content strong,

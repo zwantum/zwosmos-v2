@@ -6,6 +6,7 @@ import { BlogCard } from './BlogCard';
 import Header from './Header';
 import Footer from './Footer';
 import ZwosmosIcon from './ZwosmosIcon';
+import MoonPhaseStrip from './MoonPhaseStrip';
 import {
   getCategoryBySlug
 } from '../data/blogData';
@@ -196,7 +197,7 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ slug: propSlug }) =>
             }}
           >
             <ZwosmosIcon size={12} color="#bd75ff" />
-            <span>Cosmic Compendium</span>
+            <span>{activeSlug === 'skywatching' ? 'Skywatching / Lunar Guide' : 'Cosmic Compendium'}</span>
             <ZwosmosIcon size={12} color="#bd75ff" />
           </div>
 
@@ -209,7 +210,7 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ slug: propSlug }) =>
               color: isLight ? '#111827' : '#ffffff'
             }}
           >
-            {currentCategory.name}
+            {activeSlug === 'skywatching' ? 'The Moon, day by day.' : currentCategory.name}
           </h1>
 
           <p
@@ -222,13 +223,25 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ slug: propSlug }) =>
               lineHeight: 1.65
             }}
           >
-            {currentCategory.desc}
+            {activeSlug === 'skywatching'
+              ? 'A little piece of the night sky, always current. Follow the Moon’s changing face wherever you are.'
+              : currentCategory.desc}
           </p>
         </div>
 
         {/* ========================================================================= */}
-        {/* 3. STORIES COUNTER                                                        */}
+        {/* 3. MOON PHASE STRIP (Skywatching only)                                    */}
         {/* ========================================================================= */}
+        {activeSlug === 'skywatching' && (
+          <div style={{ marginBottom: isMobile ? '35px' : '48px' }}>
+            <MoonPhaseStrip />
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* 4. STORIES COUNTER + GRID (Hidden on Skywatching — standalone page)       */}
+        {/* ========================================================================= */}
+        {activeSlug !== 'skywatching' && (<>
         <div style={{ marginBottom: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div
             style={{
@@ -487,6 +500,7 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ slug: propSlug }) =>
             </button>
           </div>
         )}
+        </>)}
       </div>
 
       <Footer />

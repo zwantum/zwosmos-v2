@@ -18,33 +18,29 @@ CREATE TABLE IF NOT EXISTS public.cosmic_entries (
 ALTER TABLE public.cosmic_entries ENABLE ROW LEVEL SECURITY;
 
 -- Allow public read access to cosmic_entries
+DROP POLICY IF EXISTS "Allow public read access to cosmic_entries" ON public.cosmic_entries;
 CREATE POLICY "Allow public read access to cosmic_entries"
   ON public.cosmic_entries
   FOR SELECT
   USING (true);
 
 -- Allow authenticated users to manage cosmic_entries
+DROP POLICY IF EXISTS "Allow authenticated users to manage cosmic_entries" ON public.cosmic_entries;
 CREATE POLICY "Allow authenticated users to manage cosmic_entries"
   ON public.cosmic_entries
   FOR ALL
   USING (true)
   WITH CHECK (true);
 
--- Seed initial records from current defaults
+-- Seed initial records from current defaults (only if not already present)
 INSERT INTO public.cosmic_entries (type, title, astronomy_date, content, status)
-VALUES 
-(
+SELECT 
   'astronomy',
   'This Day in Astronomy',
   'September 18, 1977',
   '<p>On this day in 1977, Voyager 1 looked back across millions of miles of deep space to capture the first-ever image of the Earth and Moon together in a single frame—a luminous blue jewel paired with its companion, poised against the silent cosmic abyss.</p>',
   'live'
-),
-(
-  'fact',
-  'SPACE FACT OF THE DAY',
-  '',
-  '<p>If two pieces of the same type of metal touch in the vacuum of space, they will bond permanently into a single solid piece through cold welding. On Earth, a thin oxide film keeps metal atoms apart, but in the pure void, the atoms have no idea they belong to different pieces.</p>',
-  'live'
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.cosmic_entries WHERE type = 'astronomy' AND astronomy_date = 'September 18, 1977'
 );
 

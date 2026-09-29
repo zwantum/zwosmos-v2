@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useLayoutEffect } from 'react';
+import React, { useState, useMemo, useLayoutEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useMobile } from '../contexts/MobileContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -23,13 +23,17 @@ const AuthorPage: React.FC = () => {
     authorSlug ? { authorSlug } : undefined
   );
 
+  const prevAuthorRef = useRef<string | null>(null);
   useLayoutEffect(() => {
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-    const rootEl = document.getElementById('root');
-    if (rootEl) rootEl.scrollTop = 0;
-    setCurrentPage(1);
+    if (prevAuthorRef.current !== null && prevAuthorRef.current !== authorSlug) {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      const rootEl = document.getElementById('root');
+      if (rootEl) rootEl.scrollTop = 0;
+      setCurrentPage(1);
+    }
+    prevAuthorRef.current = authorSlug ?? null;
   }, [authorSlug]);
 
   // Extract author info from the first post

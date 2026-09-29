@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useLayoutEffect } from 'react';
+import React, { useState, useMemo, useLayoutEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useMobile } from '../contexts/MobileContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -32,13 +32,17 @@ const TagPage: React.FC = () => {
 
   const tagName = tagMeta?.name || (tagSlug ? tagSlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : '');
 
+  const prevTagRef = useRef<string | null>(null);
   useLayoutEffect(() => {
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-    const rootEl = document.getElementById('root');
-    if (rootEl) rootEl.scrollTop = 0;
-    setCurrentPage(1);
+    if (prevTagRef.current !== null && prevTagRef.current !== tagSlug) {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      const rootEl = document.getElementById('root');
+      if (rootEl) rootEl.scrollTop = 0;
+      setCurrentPage(1);
+    }
+    prevTagRef.current = tagSlug ?? null;
   }, [tagSlug]);
 
   // Map posts to display format

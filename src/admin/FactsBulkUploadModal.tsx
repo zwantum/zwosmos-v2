@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
   Upload,
   Download,
@@ -6,11 +6,16 @@ import {
   FileSpreadsheet,
   CheckCircle2,
   AlertCircle,
+  AlertTriangle,
   Calendar,
-  Info
+  Info,
+  RefreshCw,
+  CopyPlus,
+  SkipForward,
+  Layers
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { CosmicEntryType, CosmicEntryStatus } from '../lib/cosmicService';
+import { CosmicEntry, CosmicEntryType, CosmicEntryStatus, parseMilestoneDateForRollover } from '../lib/cosmicService';
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -33,7 +38,8 @@ interface FactsBulkUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   entryType: CosmicEntryType; // Strictly 'astronomy' or 'fact' based on active tab
-  onSuccess: (count: number) => void;
+  existingEntries?: CosmicEntry[];
+  onSuccess: (count: number, updatedCount?: number, insertedCount?: number) => void;
   onBatchSave: (
     entries: Array<{
       type: CosmicEntryType;
@@ -42,14 +48,16 @@ interface FactsBulkUploadModalProps {
       astronomyDate?: string;
       content: string;
       status?: CosmicEntryStatus;
-    }>
-  ) => Promise<{ success: boolean; count: number; error?: string }>;
+    }>,
+    conflictAction?: 'update' | 'skip' | 'duplicate'
+  ) => Promise<{ success: boolean; count: number; updatedCount?: number; insertedCount?: number; error?: string }>;
 }
 
 export default function FactsBulkUploadModal({
   isOpen,
   onClose,
   entryType,
+  existingEntries = [],
   onSuccess,
   onBatchSave
 }: FactsBulkUploadModalProps) {
@@ -59,11 +67,59 @@ export default function FactsBulkUploadModal({
   const [isSaving, setIsSaving] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [showGuide, setShowGuide] = useState(false);
+  const [conflictAction, setConflictAction] = useState<'update' | 'skip' | 'duplicate'>('update');
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const isAstronomy = entryType === 'astronomy';
   const moduleLabel = isAstronomy ? 'This Day in Astronomy' : 'Space Fact of the Day';
+
+  // Map existing entries: by calendar date for astronomy, by clean content for facts
+  const existingMatchesMap = useMemo(() => {
+    const map = new Map<string, CosmicEntry>();
+    for (const e of existingEntries) {
+      if (e.type !== entryType) continue;
+      if (isAstronomy) {
+        const parsed = parseMilestoneDateForRollover(e.astronomyDate || '');
+        if (parsed) {
+          const key = `${parsed.month}_${parsed.day}`;
+          if (!map.has(key) || e.status === 'live') {
+            map.set(key, e);
+          }
+        }
+      } else {
+        const cleanContent = e.content.replace(/<[^>]*>?/gm, '').toLowerCase().replace(/\s+/g, ' ').trim().slice(0, 80);
+        if (cleanContent && (!map.has(cleanContent) || e.status === 'live')) {
+          map.set(cleanContent, e);
+        }
+      }
+    }
+    return map;
+  }, [existingEntries, entryType, isAstronomy]);
+
+  // Identify how many valid rows in the uploaded file match an existing entry
+  const { matchingCount, newCount } = useMemo(() => {
+    let matching = 0;
+    let newItems = 0;
+    for (const row of parsedRows) {
+      if (!row.isValid) continue;
+      if (isAstronomy) {
+        const parsed = parseMilestoneDateForRollover(row.normalizedDate);
+        if (parsed) {
+          const key = `${parsed.month}_${parsed.day}`;
+          if (existingMatchesMap.has(key)) matching++;
+          else newItems++;
+        } else {
+          newItems++;
+        }
+      } else {
+        const cleanContent = row.content.replace(/<[^>]*>?/gm, '').toLowerCase().replace(/\s+/g, ' ').trim().slice(0, 80);
+        if (cleanContent && existingMatchesMap.has(cleanContent)) matching++;
+        else newItems++;
+      }
+    }
+    return { matchingCount: matching, newCount: newItems };
+  }, [parsedRows, existingMatchesMap, isAstronomy]);
 
   // Reset when opened
   React.useEffect(() => {
@@ -73,6 +129,7 @@ export default function FactsBulkUploadModal({
       setUploadError(null);
       setIsSaving(false);
       setShowGuide(false);
+      setConflictAction('update');
     }
   }, [isOpen, entryType]);
 
@@ -104,7 +161,7 @@ export default function FactsBulkUploadModal({
             return `${m} ${parsed.d}${parsed.y ? `, ${parsed.y}` : ''}`;
           }
         }
-      } catch {}
+      } catch { }
       const d = new Date(Math.round((val - 25569) * 86400 * 1000));
       if (!isNaN(d.getTime())) {
         const m = MONTHS[d.getUTCMonth()];
@@ -208,28 +265,64 @@ export default function FactsBulkUploadModal({
         const warnings: string[] = [];
 
         // Flexible key matching
+        const rowEntries = Object.entries(row);
         let dateVal = '';
         let titleVal = '';
         let subtitleVal = '';
         let contentVal = '';
 
-        for (const [key, value] of Object.entries(row)) {
+        for (const [key, value] of rowEntries) {
           const cleanKey = key.trim().toLowerCase();
+          const strVal = String(value ?? '').trim();
+          if (!strVal) continue;
+
           if (/^(date|astronomy_?date|milestone_?date|calendar_?date|day)/i.test(cleanKey)) {
             dateVal = value;
-          } else if (/^(subtitle|event_?heading|heading|headline|sub_?title|event_?title|event)/i.test(cleanKey)) {
-            subtitleVal = String(value || '').trim();
-          } else if (/^(title|fact_?title|milestone_?title|name)/i.test(cleanKey)) {
-            titleVal = String(value || '').trim();
-          } else if (/^(content|text|fact|description|story|body)/i.test(cleanKey)) {
-            contentVal = String(value || '').trim();
+          } else if (/^(content|text|fact_?body|fact_?content|description|story|body|paragraph|detail|details)/i.test(cleanKey)) {
+            contentVal = strVal;
+          } else if (/^(title|topic|topics|category|categories|theme|themes|heading|headline|subject|subjects|name|type|fact_?title|fact_?topic|topic_?name|category_?name|tag|tags)/i.test(cleanKey)) {
+            titleVal = strVal;
+          } else if (/^(subtitle|event_?heading|sub_?title|event_?title|event)/i.test(cleanKey)) {
+            subtitleVal = strVal;
           }
         }
 
-        // Normalize date
-        const normalizedDate = normalizeExcelDate(dateVal);
-        if (!normalizedDate) {
-          errors.push('Missing calendar/milestone date');
+        // Smart column fallback for Space Facts (2-column files):
+        // Automatically maps the 2 columns if headers differ from standard names
+        if (!isAstronomy) {
+          const nonDateCols = rowEntries.filter(([k, v]) => !/^(date|day)/i.test(k.trim()) && String(v ?? '').trim() !== '');
+          if (!contentVal || !titleVal) {
+            if (nonDateCols.length === 2) {
+              const val0 = String(nonDateCols[0][1] ?? '').trim();
+              const val1 = String(nonDateCols[1][1] ?? '').trim();
+              // Whichever column has longer text is content; the other is title/topic
+              if (val0.length > val1.length) {
+                if (!contentVal) contentVal = val0;
+                if (!titleVal) titleVal = val1;
+              } else {
+                if (!contentVal) contentVal = val1;
+                if (!titleVal) titleVal = val0;
+              }
+            } else if (nonDateCols.length > 0) {
+              if (contentVal && !titleVal) {
+                const other = nonDateCols.find(([, v]) => String(v ?? '').trim() !== contentVal);
+                if (other) titleVal = String(other[1] ?? '').trim();
+              }
+              if (titleVal && !contentVal) {
+                const other = nonDateCols.find(([, v]) => String(v ?? '').trim() !== titleVal);
+                if (other) contentVal = String(other[1] ?? '').trim();
+              }
+            }
+          }
+        }
+
+        // Normalize date (only required for astronomy)
+        let normalizedDate = '';
+        if (isAstronomy) {
+          normalizedDate = normalizeExcelDate(dateVal);
+          if (!normalizedDate) {
+            errors.push('Missing calendar/milestone date');
+          }
         }
 
         // Content
@@ -237,11 +330,24 @@ export default function FactsBulkUploadModal({
           errors.push('Missing fact content');
         }
 
-        // Title defaults
-        let finalTitle = titleVal;
-        if (!finalTitle) {
-          finalTitle = isAstronomy ? 'This Day in Astronomy' : 'SPACE FACT OF THE DAY';
-          warnings.push(`Default title "${finalTitle}" applied`);
+        // Title & Subtitle Mapping
+        let finalTitle = '';
+        let finalSubtitle: string | undefined = undefined;
+
+        if (isAstronomy) {
+          // "This Day in Astronomy" is constant for all astronomy facts
+          finalTitle = 'This Day in Astronomy';
+
+          // Map the user's Title or Subtitle column to subtitle (the event headline)
+          if (titleVal && !/^this\s*day\s*in\s*astronomy$/i.test(titleVal)) {
+            finalSubtitle = titleVal;
+          } else if (subtitleVal) {
+            finalSubtitle = subtitleVal;
+          }
+        } else {
+          // For Space Fact: Use the exact title/topic from this individual row!
+          finalTitle = titleVal || subtitleVal || 'Space Fact';
+          finalSubtitle = finalTitle;
         }
 
         const isValid = errors.length === 0;
@@ -251,7 +357,7 @@ export default function FactsBulkUploadModal({
           rawDate: dateVal,
           normalizedDate,
           title: finalTitle,
-          subtitle: isAstronomy ? subtitleVal : undefined,
+          subtitle: finalSubtitle,
           content: formatContentToHtml(contentVal),
           isValid,
           errors,
@@ -315,39 +421,41 @@ export default function FactsBulkUploadModal({
       sampleData = [
         {
           Date: 'September 24, 2014',
-          Title: 'This Day in Astronomy',
-          Subtitle: 'Mars Orbiter Mission (Mangalyaan)',
+          Title: 'Mars Orbiter Mission (Mangalyaan)',
           Content: "On September 24, 2014, ISRO's Mars Orbiter Mission (Mangalyaan) successfully entered orbit around Mars after a journey of about 298 days. India became the first Asian nation to reach Mars orbit."
         },
         {
           Date: 'September 25, 2024',
-          Title: 'This Day in Astronomy',
-          Subtitle: 'Voyager 1 Earth-Moon Historic Image',
+          Title: 'Voyager 1 Earth-Moon Historic Image',
           Content: 'On this day in 1977, Voyager 1 captured the iconic Earth-Moon portrait in a single frame from deep space.'
         },
         {
           Date: 'September 26, 2024',
-          Title: 'This Day in Astronomy',
-          Subtitle: 'Record Space Endurance Mission',
+          Title: 'Record Space Endurance Mission',
           Content: 'Cosmonaut Valery Polyakov completed a historic mission demonstrating long-duration human spaceflight resilience.'
         }
       ];
     } else {
       sampleData = [
         {
-          Date: 'September 25',
-          Title: 'SPACE FACT OF THE DAY',
-          Content: 'If two pieces of the same type of metal touch in the vacuum of space, they bond permanently via cold welding.'
+          Title: 'You & the Cosmos',
+          Content: 'Your cupped hands, at this very moment, contain roughly 40,000 photons left over from the Big Bang - the cosmic microwave background fills every cubic centimeter of the universe with about 400 of them.'
         },
         {
-          Date: 'September 26',
-          Title: 'SPACE FACT OF THE DAY',
-          Content: 'A single day on Venus is longer than a Venusian year, lasting 243 Earth days to complete one slow retrograde rotation.'
+          Title: 'The Scale of Everything',
+          Content: 'If the Sun were hollow, about 1.3 million Earths could fit inside it - yet lined up side by side, only 109 Earths would span its diameter.'
         },
         {
-          Date: 'September 27',
-          Title: 'SPACE FACT OF THE DAY',
-          Content: 'Neutron stars spin up to 600 times per second and are so dense that a teaspoon of their matter would weigh 6 billion tons on Earth.'
+          Title: 'Solar System & Planets',
+          Content: 'A day on Venus is longer than a year on Venus: it takes 243 Earth days to rotate once on its axis, but only 225 Earth days to orbit the Sun.'
+        },
+        {
+          Title: 'Black Holes & Singularities',
+          Content: 'At the event horizon of a supermassive black hole, gravitational tidal forces can be gentle enough that you could cross it without being immediately spaghettified.'
+        },
+        {
+          Title: 'Deep Space & Galaxies',
+          Content: 'The Andromeda Galaxy is hurtling toward our Milky Way at roughly 110 kilometers per second; in about 4.5 billion years, both will merge into a single giant elliptical galaxy.'
         }
       ];
     }
@@ -357,16 +465,14 @@ export default function FactsBulkUploadModal({
     // Set column widths
     ws['!cols'] = isAstronomy
       ? [
-          { wch: 22 }, // Date
-          { wch: 24 }, // Title
-          { wch: 34 }, // Subtitle
-          { wch: 80 }  // Content
-        ]
+        { wch: 22 }, // Date
+        { wch: 34 }, // Title
+        { wch: 80 }  // Content
+      ]
       : [
-          { wch: 22 }, // Date
-          { wch: 26 }, // Title
-          { wch: 80 }  // Content
-        ];
+        { wch: 30 }, // Title (Topic)
+        { wch: 85 }  // Content
+      ];
 
     const sheetName = isAstronomy ? 'Astronomy_Milestones' : 'Space_Facts';
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
@@ -400,10 +506,10 @@ export default function FactsBulkUploadModal({
         status: 'draft' as CosmicEntryStatus // Auto-rolls over at 12:00 AM IST on date!
       }));
 
-      const res = await onBatchSave(payload);
+      const res = await onBatchSave(payload, conflictAction);
 
       if (res.success) {
-        onSuccess(res.count);
+        onSuccess(res.count, res.updatedCount, res.insertedCount);
         onClose();
       } else {
         alert('Failed to complete bulk upload: ' + (res.error || 'Unknown error'));
@@ -481,7 +587,7 @@ export default function FactsBulkUploadModal({
               <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#64748b' }}>
                 {isAstronomy
                   ? 'Batch upload upcoming astronomy milestones. Auto-rolls over at 12:00 AM IST on the assigned date.'
-                  : 'Batch upload upcoming space facts. Auto-rolls over at 12:00 AM IST on the assigned date.'}
+                  : 'Batch upload space facts (Title & Content). Cycles at 12:00 AM IST with non-consecutive topic shuffle and zero dates needed.'}
               </p>
             </div>
           </div>
@@ -601,8 +707,8 @@ export default function FactsBulkUploadModal({
                 <Info size={16} color="#2563eb" />
                 <span style={{ fontSize: '13px', fontWeight: 600, color: '#1e40af' }}>
                   {isAstronomy
-                    ? 'Excel Format: 4 Columns (Date, Title, Subtitle, Content)'
-                    : 'Excel Format: 3 Columns (Date, Title, Content)'}
+                    ? 'Excel Format: 3 Columns (Date, Title, Content)'
+                    : 'Excel Format: 2 Columns (Title, Content) - No Dates Needed'}
                 </span>
                 <span style={{ fontSize: '11px', color: '#3b82f6', background: '#dbeafe', padding: '2px 8px', borderRadius: '10px' }}>
                   {showGuide ? 'Hide details' : 'Click to see accepted fields'}
@@ -612,26 +718,31 @@ export default function FactsBulkUploadModal({
 
             {showGuide && (
               <div style={{ marginTop: '6px', fontSize: '12px', color: '#1e3a8a', lineHeight: 1.6 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '120px 90px 1fr', gap: '8px', padding: '6px 0', borderBottom: '1px solid #dbeafe', fontWeight: 700 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isAstronomy ? '120px 90px 1fr' : '140px 90px 1fr', gap: '8px', padding: '6px 0', borderBottom: '1px solid #dbeafe', fontWeight: 700 }}>
                   <span>Column Name</span>
                   <span>Required?</span>
-                  <span>Accepted Formats & Description</span>
+                  <span>Description</span>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '120px 90px 1fr', gap: '8px', padding: '6px 0', borderBottom: '1px solid #dbeafe' }}>
-                  <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>Date</span>
-                  <span style={{ color: '#dc2626', fontWeight: 700 }}>Required</span>
-                  <span>
-                    Calendar date for 12:00 AM IST auto-rollover. Supports:
-                    <strong style={{ marginLeft: '4px' }}>September 25, 2024</strong>, <strong>September 25</strong>, <strong>2024-09-25</strong>, or Excel date cells.
-                  </span>
-                </div>
+                {isAstronomy && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '120px 90px 1fr', gap: '8px', padding: '6px 0', borderBottom: '1px solid #dbeafe' }}>
+                    <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>Date</span>
+                    <span style={{ color: '#dc2626', fontWeight: 700 }}>Required</span>
+                    <span>
+                      Calendar date for 12:00 AM IST auto-rollover (e.g. <strong>September 25, 2024</strong>, <strong>September 25</strong>, or Excel dates).
+                    </span>
+                  </div>
+                )}
 
-                <div style={{ display: 'grid', gridTemplateColumns: '120px 90px 1fr', gap: '8px', padding: '6px 0', borderBottom: '1px solid #dbeafe' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isAstronomy ? '120px 90px 1fr' : '140px 90px 1fr', gap: '8px', padding: '6px 0', borderBottom: '1px solid #dbeafe' }}>
                   <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>Title</span>
-                  <span style={{ color: '#64748b' }}>Optional</span>
+                  <span style={{ color: isAstronomy ? '#64748b' : '#dc2626', fontWeight: isAstronomy ? 400 : 700 }}>
+                    {isAstronomy ? 'Optional' : 'Required'}
+                  </span>
                   <span>
-                    Headline for the card (e.g. <em>{isAstronomy ? 'This Day in Astronomy' : 'SPACE FACT OF THE DAY'}</em>). Defaults automatically if left blank.
+                    {isAstronomy
+                      ? 'Specific event headline (e.g. Mars Orbiter Mission). Mapped to subtitle below "This Day in Astronomy".'
+                      : 'Topic / category name (e.g. "You & the Cosmos", "The Scale of Everything"). Displays as the subtitle below "Space Fact of the Day".'}
                   </span>
                 </div>
 
@@ -640,12 +751,12 @@ export default function FactsBulkUploadModal({
                     <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>Subtitle</span>
                     <span style={{ color: '#64748b' }}>Optional</span>
                     <span>
-                      Specific event headline (e.g. <strong>Mars Orbiter Mission (Mangalyaan)</strong>). Displays right below "This Day in Astronomy".
+                      Alternative column name for the event headline.
                     </span>
                   </div>
                 )}
 
-                <div style={{ display: 'grid', gridTemplateColumns: '120px 90px 1fr', gap: '8px', padding: '6px 0' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isAstronomy ? '120px 90px 1fr' : '140px 90px 1fr', gap: '8px', padding: '6px 0' }}>
                   <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>Content</span>
                   <span style={{ color: '#dc2626', fontWeight: 700 }}>Required</span>
                   <span>
@@ -655,6 +766,45 @@ export default function FactsBulkUploadModal({
               </div>
             )}
           </div>
+
+          {/* Smart Multi-Topic Mapping Banner for Space Facts */}
+          {!isAstronomy && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                background: '#f5f3ff',
+                padding: '14px 18px',
+                borderRadius: '10px',
+                border: '1px solid #ddd6fe'
+              }}
+            >
+              <div
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  background: '#ede9fe',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#7c3aed',
+                  flexShrink: 0
+                }}
+              >
+                <Layers size={18} />
+              </div>
+              <div>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: '#5b21b6', display: 'block' }}>
+                  All-in-One Multi-Topic Import
+                </span>
+                <span style={{ fontSize: '12px', color: '#6d28d9', lineHeight: 1.45 }}>
+                  Upload all 365 facts together in a single Excel file. Each row automatically uses its own individual Title/Topic from your sheet (e.g. across your 10–15 categories).
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Upload Drop Zone */}
           <div
@@ -740,6 +890,145 @@ export default function FactsBulkUploadModal({
             </div>
           )}
 
+          {/* Conflict Resolution Selector (shown when matching existing entries detected) */}
+          {parsedRows.length > 0 && matchingCount > 0 && (
+            <div
+              style={{
+                padding: '16px 20px',
+                borderRadius: '12px',
+                background: '#fffbeb',
+                border: '1.5px solid #fde68a',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <AlertTriangle size={18} color="#d97706" style={{ flexShrink: 0 }} />
+                <span style={{ fontSize: '13px', fontWeight: 700, color: '#92400e' }}>
+                  {isAstronomy
+                    ? `Existing Dates Detected (${matchingCount} overlapping ${matchingCount === 1 ? 'date' : 'dates'})`
+                    : `Existing Facts Detected (${matchingCount} matching ${matchingCount === 1 ? 'fact' : 'facts'})`}
+                </span>
+              </div>
+              <p style={{ margin: 0, fontSize: '12px', color: '#78350f', lineHeight: 1.5 }}>
+                {matchingCount} of the {validCount} entries in your Excel match {isAstronomy ? 'calendar dates' : 'fact contents'} already stored in your system. How would you like to handle them?
+              </p>
+
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
+                  gap: '10px'
+                }}
+              >
+                {/* Option 1: Update Existing Data (Recommended) */}
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '10px',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    background: conflictAction === 'update' ? '#ffffff' : '#fef3c7',
+                    border: `1.5px solid ${conflictAction === 'update' ? '#d97706' : '#fde68a'}`,
+                    cursor: 'pointer',
+                    boxShadow: conflictAction === 'update' ? '0 2px 6px rgba(217, 119, 6, 0.15)' : 'none',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="conflictAction"
+                    value="update"
+                    checked={conflictAction === 'update'}
+                    onChange={() => setConflictAction('update')}
+                    style={{ marginTop: '3px', accentColor: '#d97706' }}
+                  />
+                  <div>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#92400e', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <RefreshCw size={13} />
+                      <span>Update existing data (Recommended)</span>
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#78350f', marginTop: '2px', lineHeight: 1.4 }}>
+                      {isAstronomy
+                        ? 'Overwrites facts for existing dates with the new Excel content without creating duplicate rows.'
+                        : 'Updates matching existing facts with the new Excel content without creating duplicate rows.'}
+                    </div>
+                  </div>
+                </label>
+
+                {/* Option 2: Skip Existing */}
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '10px',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    background: conflictAction === 'skip' ? '#ffffff' : '#fef3c7',
+                    border: `1.5px solid ${conflictAction === 'skip' ? '#d97706' : '#fde68a'}`,
+                    cursor: 'pointer',
+                    boxShadow: conflictAction === 'skip' ? '0 2px 6px rgba(217, 119, 6, 0.15)' : 'none',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="conflictAction"
+                    value="skip"
+                    checked={conflictAction === 'skip'}
+                    onChange={() => setConflictAction('skip')}
+                    style={{ marginTop: '3px', accentColor: '#d97706' }}
+                  />
+                  <div>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#92400e', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <SkipForward size={13} />
+                      <span>Skip existing entries</span>
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#78350f', marginTop: '2px', lineHeight: 1.4 }}>
+                      Only imports the {newCount} new entries, leaving all {matchingCount} existing entries untouched.
+                    </div>
+                  </div>
+                </label>
+
+                {/* Option 3: Add as Duplicates */}
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '10px',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    background: conflictAction === 'duplicate' ? '#ffffff' : '#fef3c7',
+                    border: `1.5px solid ${conflictAction === 'duplicate' ? '#d97706' : '#fde68a'}`,
+                    cursor: 'pointer',
+                    boxShadow: conflictAction === 'duplicate' ? '0 2px 6px rgba(217, 119, 6, 0.15)' : 'none',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="conflictAction"
+                    value="duplicate"
+                    checked={conflictAction === 'duplicate'}
+                    onChange={() => setConflictAction('duplicate')}
+                    style={{ marginTop: '3px', accentColor: '#d97706' }}
+                  />
+                  <div>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#92400e', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <CopyPlus size={13} />
+                      <span>Add as duplicates</span>
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#78350f', marginTop: '2px', lineHeight: 1.4 }}>
+                      Adds all {validCount} rows regardless.
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </div>
+          )}
+
           {/* Parsed Preview Table */}
           {parsedRows.length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -761,8 +1050,13 @@ export default function FactsBulkUploadModal({
                     Total Rows: {parsedRows.length}
                   </span>
                   <span style={{ color: '#10b981', fontWeight: 600 }}>
-                    ✓ {validCount} Ready to Import
+                    ✓ {validCount} Valid
                   </span>
+                  {matchingCount > 0 && (
+                    <span style={{ color: '#d97706', fontWeight: 600 }}>
+                      ⚡ {matchingCount} existing entries ({conflictAction === 'update' ? 'will update' : conflictAction === 'skip' ? 'will skip' : 'will duplicate'})
+                    </span>
+                  )}
                   {invalidCount > 0 && (
                     <span style={{ color: '#ef4444', fontWeight: 600 }}>
                       ⚠ {invalidCount} Invalid (will be skipped)
@@ -771,7 +1065,7 @@ export default function FactsBulkUploadModal({
                 </div>
 
                 <span style={{ fontSize: '11px', color: '#64748b' }}>
-                  Will auto-promote to live at 12:00 AM IST on their date
+                  {isAstronomy ? 'Auto-rolls over at 12:00 AM IST on date' : 'Auto-rolls over at 12:00 AM IST'}
                 </span>
               </div>
 
@@ -788,78 +1082,117 @@ export default function FactsBulkUploadModal({
                   <thead>
                     <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #cbd5e1', position: 'sticky', top: 0, zIndex: 1 }}>
                       <th style={{ padding: '8px 10px', color: '#475569', fontWeight: 600, width: '40px' }}>#</th>
-                      <th style={{ padding: '8px 10px', color: '#475569', fontWeight: 600, width: '160px' }}>Rollover Date</th>
-                      <th style={{ padding: '8px 10px', color: '#475569', fontWeight: 600, width: isAstronomy ? '200px' : '180px' }}>
-                        {isAstronomy ? 'Title & Subtitle' : 'Title'}
+                      {isAstronomy && (
+                        <th style={{ padding: '8px 10px', color: '#475569', fontWeight: 600, width: '170px' }}>Rollover Date</th>
+                      )}
+                      <th style={{ padding: '8px 10px', color: '#475569', fontWeight: 600, width: isAstronomy ? '200px' : '220px' }}>
+                        {isAstronomy ? 'Title & Subtitle' : 'Topic / Title'}
                       </th>
                       <th style={{ padding: '8px 10px', color: '#475569', fontWeight: 600 }}>Content Snippet</th>
-                      <th style={{ padding: '8px 10px', color: '#475569', fontWeight: 600, width: '90px' }}>Status</th>
+                      <th style={{ padding: '8px 10px', color: '#475569', fontWeight: 600, width: '100px' }}>Action / Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {parsedRows.map((row, idx) => (
-                      <tr
-                        key={idx}
-                        style={{
-                          borderBottom: '1px solid #f1f5f9',
-                          background: row.isValid ? '#ffffff' : '#fef2f2'
-                        }}
-                      >
-                        <td style={{ padding: '8px 10px', color: '#64748b', fontWeight: 500 }}>
-                          {row.rowNumber}
-                        </td>
-                        <td style={{ padding: '8px 10px', fontWeight: 600, color: '#0f172a' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                            <Calendar size={13} color="#ffcc00" />
-                            <span>{row.normalizedDate || <em style={{ color: '#ef4444' }}>Missing</em>}</span>
-                          </div>
-                        </td>
-                        <td
+                    {parsedRows.map((row, idx) => {
+                      let isExisting = false;
+                      if (isAstronomy) {
+                        const p = parseMilestoneDateForRollover(row.normalizedDate);
+                        const key = p ? `${p.month}_${p.day}` : null;
+                        isExisting = Boolean(key && existingMatchesMap.has(key));
+                      } else {
+                        const cleanContent = row.content.replace(/<[^>]*>?/gm, '').toLowerCase().replace(/\s+/g, ' ').trim().slice(0, 80);
+                        isExisting = Boolean(cleanContent && existingMatchesMap.has(cleanContent));
+                      }
+
+                      return (
+                        <tr
+                          key={idx}
                           style={{
-                            padding: '8px 10px',
-                            fontWeight: 500,
-                            color: '#334155',
-                            maxWidth: isAstronomy ? '200px' : '180px',
-                            overflow: 'hidden'
+                            borderBottom: '1px solid #f1f5f9',
+                            background: !row.isValid
+                              ? '#fef2f2'
+                              : isExisting && conflictAction === 'skip'
+                                ? '#f8fafc'
+                                : isExisting && conflictAction === 'update'
+                                  ? '#f0fdf4'
+                                  : '#ffffff'
                           }}
                         >
-                          <div style={{ fontWeight: 600, color: '#0f172a', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }} title={row.title}>
-                            {row.title}
-                          </div>
-                          {row.subtitle && (
-                            <div style={{ fontSize: '11px', color: '#7c3aed', fontStyle: 'italic', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }} title={row.subtitle}>
-                              {row.subtitle}
+                          <td style={{ padding: '8px 10px', color: '#64748b', fontWeight: 500 }}>
+                            {row.rowNumber}
+                          </td>
+                          {isAstronomy && (
+                            <td style={{ padding: '8px 10px', fontWeight: 600, color: '#0f172a' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <Calendar size={13} color="#ffcc00" />
+                                <span>{row.normalizedDate || <em style={{ color: '#ef4444' }}>Missing</em>}</span>
+                              </div>
+                            </td>
+                          )}
+                          <td
+                            style={{
+                              padding: '8px 10px',
+                              fontWeight: 500,
+                              color: '#334155',
+                              maxWidth: isAstronomy ? '200px' : '220px',
+                              overflow: 'hidden'
+                            }}
+                          >
+                            <div style={{ fontWeight: 600, color: '#0f172a', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }} title={row.title}>
+                              {row.title}
                             </div>
-                          )}
-                        </td>
-                        <td
-                          style={{
-                            padding: '8px 10px',
-                            color: '#64748b',
-                            maxWidth: '260px',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
-                          }}
-                          title={row.content.replace(/<[^>]*>?/gm, '')}
-                        >
-                          {row.content.replace(/<[^>]*>?/gm, '')}
-                        </td>
-                        <td style={{ padding: '8px 10px' }}>
-                          {row.isValid ? (
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', color: '#10b981', fontWeight: 600 }}>
-                              <CheckCircle2 size={13} />
-                              <span>Valid</span>
-                            </span>
-                          ) : (
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', color: '#ef4444', fontWeight: 600 }} title={row.errors.join(', ')}>
-                              <AlertCircle size={13} />
-                              <span>Invalid</span>
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                            {isAstronomy && row.subtitle && (
+                              <div style={{ fontSize: '11px', color: '#7c3aed', fontStyle: 'italic', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }} title={row.subtitle}>
+                                {row.subtitle}
+                              </div>
+                            )}
+                          </td>
+                          <td
+                            style={{
+                              padding: '8px 10px',
+                              color: '#64748b',
+                              maxWidth: '260px',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis'
+                            }}
+                            title={row.content.replace(/<[^>]*>?/gm, '')}
+                          >
+                            {row.content.replace(/<[^>]*>?/gm, '')}
+                          </td>
+                          <td style={{ padding: '8px 10px' }}>
+                            {!row.isValid ? (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', color: '#ef4444', fontWeight: 600 }} title={row.errors.join(', ')}>
+                                <AlertCircle size={13} />
+                                <span>Invalid</span>
+                              </span>
+                            ) : isExisting ? (
+                              conflictAction === 'update' ? (
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', color: '#16a34a', fontWeight: 600, fontSize: '11px', background: '#dcfce7', padding: '2px 6px', borderRadius: '4px' }}>
+                                  <RefreshCw size={11} />
+                                  <span>Update</span>
+                                </span>
+                              ) : conflictAction === 'skip' ? (
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', color: '#64748b', fontWeight: 600, fontSize: '11px', background: '#e2e8f0', padding: '2px 6px', borderRadius: '4px' }}>
+                                  <SkipForward size={11} />
+                                  <span>Skip</span>
+                                </span>
+                              ) : (
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', color: '#b45309', fontWeight: 600, fontSize: '11px', background: '#fef3c7', padding: '2px 6px', borderRadius: '4px' }}>
+                                  <CopyPlus size={11} />
+                                  <span>Duplicate</span>
+                                </span>
+                              )
+                            ) : (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', color: '#10b981', fontWeight: 600, fontSize: '11px', background: '#ecfdf5', padding: '2px 6px', borderRadius: '4px' }}>
+                                <CheckCircle2 size={13} />
+                                <span>New</span>
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -879,9 +1212,27 @@ export default function FactsBulkUploadModal({
           }}
         >
           <div style={{ fontSize: '12px', color: '#64748b' }}>
-            {validCount > 0
-              ? `Ready to import ${validCount} entries into ${moduleLabel}.`
-              : `Please upload an Excel file for ${moduleLabel}.`}
+            {validCount > 0 ? (
+              matchingCount > 0 ? (
+                conflictAction === 'update' ? (
+                  <span>
+                    Will update <strong>{matchingCount}</strong> existing {isAstronomy ? (matchingCount === 1 ? 'date' : 'dates') : (matchingCount === 1 ? 'fact' : 'facts')} and add <strong>{newCount}</strong> new {newCount === 1 ? 'entry' : 'entries'} (zero duplicates).
+                  </span>
+                ) : conflictAction === 'skip' ? (
+                  <span>
+                    Will skip <strong>{matchingCount}</strong> existing entries and only add <strong>{newCount}</strong> new entries.
+                  </span>
+                ) : (
+                  <span>
+                    Will add all <strong>{validCount}</strong> entries, creating duplicates for {matchingCount} existing entries.
+                  </span>
+                )
+              ) : (
+                `Ready to import ${validCount} entries into ${moduleLabel}.`
+              )
+            ) : (
+              `Please upload an Excel file for ${moduleLabel}.`
+            )}
           </div>
 
           <div style={{ display: 'flex', gap: '10px' }}>
@@ -905,7 +1256,7 @@ export default function FactsBulkUploadModal({
             <button
               type="button"
               onClick={handleConfirmUpload}
-              disabled={validCount === 0 || isSaving}
+              disabled={validCount === 0 || isSaving || (conflictAction === 'skip' && newCount === 0)}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -913,12 +1264,24 @@ export default function FactsBulkUploadModal({
                 padding: '9px 22px',
                 borderRadius: '8px',
                 border: 'none',
-                background: validCount === 0 || isSaving ? '#cbd5e1' : '#ffcc00',
-                color: validCount === 0 || isSaving ? '#94a3b8' : '#0f172a',
+                background:
+                  validCount === 0 || isSaving || (conflictAction === 'skip' && newCount === 0)
+                    ? '#cbd5e1'
+                    : '#ffcc00',
+                color:
+                  validCount === 0 || isSaving || (conflictAction === 'skip' && newCount === 0)
+                    ? '#94a3b8'
+                    : '#0f172a',
                 fontSize: '13px',
                 fontWeight: 700,
-                cursor: validCount === 0 || isSaving ? 'not-allowed' : 'pointer',
-                boxShadow: validCount > 0 && !isSaving ? '0 2px 8px rgba(255, 204, 0, 0.4)' : 'none',
+                cursor:
+                  validCount === 0 || isSaving || (conflictAction === 'skip' && newCount === 0)
+                    ? 'not-allowed'
+                    : 'pointer',
+                boxShadow:
+                  validCount > 0 && !isSaving && !(conflictAction === 'skip' && newCount === 0)
+                    ? '0 2px 8px rgba(255, 204, 0, 0.4)'
+                    : 'none',
                 transition: 'all 0.15s ease'
               }}
             >
@@ -926,8 +1289,16 @@ export default function FactsBulkUploadModal({
                 {isSaving
                   ? 'Importing...'
                   : validCount > 0
-                  ? `Import ${validCount} Entries`
-                  : 'Import Entries'}
+                    ? matchingCount > 0
+                      ? conflictAction === 'update'
+                        ? `Update & Import (${matchingCount} updated, ${newCount} new)`
+                        : conflictAction === 'skip'
+                          ? newCount > 0
+                            ? `Import ${newCount} New Entries (${matchingCount} skipped)`
+                            : 'No New Entries to Import'
+                          : `Import All ${validCount} Entries`
+                      : `Import ${validCount} Entries`
+                    : 'Import Entries'}
               </span>
             </button>
           </div>

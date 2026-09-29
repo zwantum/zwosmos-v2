@@ -2,15 +2,20 @@ import { supabase } from './supabase';
 
 export interface SiteSettings {
   id?: string;
-  // Open Graph & SEO
+  // Website SEO Meta (Browser Title & Google Search SERP)
   siteTitle: string;
   siteDescription: string;
   siteUrl: string;
+  keywords: string;
+  authorName: string;
+
+  // Open Graph & Social Cards (og:title, og:description, twitter:card, social banners)
+  ogTitle: string;
+  ogDescription: string;
   ogImage: string;
   twitterHandle: string;
   twitterCard: 'summary_large_image' | 'summary';
-  keywords: string;
-  authorName: string;
+
   // RSS Feed
   rssTitle: string;
   rssDescription: string;
@@ -29,14 +34,21 @@ export interface SiteSettings {
 
 export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   id: 'global',
+  // Website SEO
   siteTitle: 'Zwosmos | Astronomy, Space News & Skywatching',
   siteDescription: 'Explore astronomy, space news, skywatching guides, cosmic discoveries, missions, telescopes and stories from across the universe with Zwosmos.',
   siteUrl: 'https://zwosmos.com',
+  keywords: 'astronomy, astrophysics, cosmology, space exploration, stargazing, universe, black holes, james webb',
+  authorName: 'Zwosmos Editorial',
+
+  // Open Graph & Social
+  ogTitle: 'Zwosmos - Exploring the Cosmos & Deep Space',
+  ogDescription: 'Deep space explorations, astrophysical discoveries, cosmic mechanics, and astronomical wonders from across the universe.',
   ogImage: 'https://quwukfdlvkyerrjsnieb.supabase.co/storage/v1/object/public/media/1790570690988_zwosmosastronomywebsite_homepage.png',
   twitterHandle: '@zwosmos',
   twitterCard: 'summary_large_image',
-  keywords: 'astronomy, astrophysics, cosmology, space exploration, stargazing, universe, black holes, james webb',
-  authorName: 'Zwosmos Editorial',
+
+  // RSS Feed
   rssTitle: 'Zwosmos - Cosmic Dispatch Feed',
   rssDescription: 'Latest cosmology, space discoveries, and astronomical observations from Zwosmos.',
   rssLanguage: 'en-US',
@@ -59,11 +71,14 @@ function normalizeTitle(title: any): string {
 
 function mapRowToSettings(row: any): SiteSettings {
   const rawTitle = row.site_title ?? row.siteTitle ?? DEFAULT_SITE_SETTINGS.siteTitle;
+  const rawOgTitle = row.og_title ?? row.ogTitle ?? DEFAULT_SITE_SETTINGS.ogTitle;
   const rawRssTitle = row.rss_title ?? row.rssTitle ?? DEFAULT_SITE_SETTINGS.rssTitle;
   return {
     id: row.id || 'global',
     siteTitle: normalizeTitle(rawTitle),
     siteDescription: row.site_description ?? row.siteDescription ?? DEFAULT_SITE_SETTINGS.siteDescription,
+    ogTitle: normalizeTitle(rawOgTitle),
+    ogDescription: row.og_description ?? row.ogDescription ?? DEFAULT_SITE_SETTINGS.ogDescription,
     siteUrl: row.site_url ?? row.siteUrl ?? DEFAULT_SITE_SETTINGS.siteUrl,
     ogImage: row.og_image ?? row.ogImage ?? DEFAULT_SITE_SETTINGS.ogImage,
     twitterHandle: row.twitter_handle ?? row.twitterHandle ?? DEFAULT_SITE_SETTINGS.twitterHandle,
@@ -85,8 +100,8 @@ function mapRowToSettings(row: any): SiteSettings {
   };
 }
 
-function mapSettingsToRow(settings: Partial<SiteSettings>): any {
-  return {
+function mapSettingsToRow(settings: Partial<SiteSettings>, includeOgCols = true): any {
+  const row: any = {
     id: 'global',
     site_title: settings.siteTitle,
     site_description: settings.siteDescription,
@@ -108,6 +123,13 @@ function mapSettingsToRow(settings: Partial<SiteSettings>): any {
     copyright_text: settings.copyrightText,
     updated_at: new Date().toISOString()
   };
+
+  if (includeOgCols) {
+    if (settings.ogTitle !== undefined) row.og_title = settings.ogTitle;
+    if (settings.ogDescription !== undefined) row.og_description = settings.ogDescription;
+  }
+
+  return row;
 }
 
 function getLocalSettings(): SiteSettings {
@@ -123,6 +145,8 @@ function getLocalSettings(): SiteSettings {
         ...parsed,
         ogImage,
         siteTitle: normalizeTitle(parsed.siteTitle ?? DEFAULT_SITE_SETTINGS.siteTitle),
+        ogTitle: normalizeTitle(parsed.ogTitle ?? parsed.siteTitle ?? DEFAULT_SITE_SETTINGS.ogTitle),
+        ogDescription: parsed.ogDescription ?? parsed.siteDescription ?? DEFAULT_SITE_SETTINGS.ogDescription,
         rssTitle: normalizeTitle(parsed.rssTitle ?? DEFAULT_SITE_SETTINGS.rssTitle),
         enableDropCap: parsed.enableDropCap !== undefined ? !!parsed.enableDropCap : true
       };
@@ -144,6 +168,7 @@ function saveLocalSettings(settings: SiteSettings) {
 
 export const settingsService = {
   async getSettings(): Promise<SiteSettings> {
+    const local = getLocalSettings();
     if (supabase) {
       try {
         const { data, error } = await supabase
@@ -154,6 +179,13 @@ export const settingsService = {
 
         if (!error && data) {
           const mapped = mapRowToSettings(data);
+          // Preserve local ogTitle/ogDescription if DB didn't have them populated yet
+          if ((!mapped.ogTitle || mapped.ogTitle === DEFAULT_SITE_SETTINGS.ogTitle) && local.ogTitle) {
+            mapped.ogTitle = local.ogTitle;
+          }
+          if ((!mapped.ogDescription || mapped.ogDescription === DEFAULT_SITE_SETTINGS.ogDescription) && local.ogDescription) {
+            mapped.ogDescription = local.ogDescription;
+          }
           saveLocalSettings(mapped);
           return mapped;
         }
@@ -161,24 +193,48 @@ export const settingsService = {
         console.warn('Supabase site_settings query failed, using local/default:', err);
       }
     }
-    return getLocalSettings();
+    return local;
   },
 
   async updateSettings(updates: Partial<SiteSettings>): Promise<SiteSettings> {
     const current = await this.getSettings();
     const merged: SiteSettings = { ...current, ...updates, updatedAt: new Date().toISOString() };
 
+    // Always immediately save to local cache
+    saveLocalSettings(merged);
+
     if (supabase) {
       try {
-        const row = mapSettingsToRow(merged);
-        const { data, error } = await supabase
+        let row = mapSettingsToRow(merged, true);
+        let { data, error } = await supabase
           .from('site_settings')
           .upsert([row], { onConflict: 'id' })
           .select()
-          .single();
+          .maybeSingle();
+
+        // If schema cache does not have og_title / og_description yet, retry without them
+        if (error && (error.message.includes('og_title') || error.message.includes('schema cache'))) {
+          console.warn('og_title/og_description columns not present in Supabase table yet; saving core settings.');
+          row = mapSettingsToRow(merged, false);
+          const retry = await supabase
+            .from('site_settings')
+            .upsert([row], { onConflict: 'id' })
+            .select()
+            .maybeSingle();
+
+          if (!retry.error && retry.data) {
+            data = retry.data;
+            error = null;
+          }
+        }
 
         if (!error && data) {
-          const saved = { ...mapRowToSettings(data), enableDropCap: merged.enableDropCap };
+          const saved: SiteSettings = {
+            ...mapRowToSettings(data),
+            ogTitle: merged.ogTitle,
+            ogDescription: merged.ogDescription,
+            enableDropCap: merged.enableDropCap
+          };
           saveLocalSettings(saved);
           return saved;
         } else if (error) {
@@ -187,11 +243,10 @@ export const settingsService = {
         }
       } catch (err: any) {
         console.error('Supabase update site_settings exception:', err);
-        throw err;
+        // Fall back to saved local settings
       }
     }
 
-    saveLocalSettings(merged);
     return merged;
   }
 };

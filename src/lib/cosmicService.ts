@@ -7,6 +7,7 @@ export interface DailyCosmicData {
   astronomyDate: string;
   astronomyContent: string;
   factTitle: string;
+  factSubtitle?: string;
   factContent: string;
   updatedAt?: string;
 }
@@ -20,8 +21,8 @@ export interface CosmicEntry {
   title: string;
   subtitle?: string;
   /** Milestone date (e.g. "September 6, 2014").
-   *  For fact entries this is the calendar date used for midnight IST rollover.
-   *  NOT displayed on the frontend for 'fact' type.
+   *  For 'astronomy' type, used for calendar date matching at midnight IST.
+   *  NOT required or used for 'fact' type.
    */
   astronomyDate?: string;
   content: string;
@@ -32,14 +33,28 @@ export interface CosmicEntry {
   updatedAt: string;
 }
 
+export const FACT_TOPIC_PRESETS: string[] = [
+  'You & the Cosmos',
+  'The Scale of Everything',
+  'Solar System & Planets',
+  'Stars & Supernovae',
+  'Black Holes & Singularities',
+  'Deep Space & Galaxies',
+  'Origins of the Universe',
+  'Exoplanets & Cosmic Habitats',
+  'Space Exploration & Technology',
+  'Cosmic Physics & The Quantum Void'
+];
+
 export const DEFAULT_COSMIC_DATA: DailyCosmicData = {
   id: 'current',
   astronomyTitle: 'This Day in Astronomy',
   astronomySubtitle: 'A World Between Planets',
   astronomyDate: 'January 1, 2026',
   astronomyContent: "<p>On 1 January 1801, Giuseppe Piazzi noticed a faint object while mapping stars at Palermo Observatory in Sicily. Its changing position revealed that it belonged to our Solar System. The object was Ceres, the first body discovered in the region now called the asteroid belt. Initially regarded as a planet, it was later classified as an asteroid and, in 2006, a dwarf planet. More than two centuries after Piazzi's observation, NASA's Dawn spacecraft entered orbit around Ceres, turning a wandering point of light into a richly detailed world of craters, mountains and bright deposits.</p>",
-  factTitle: 'SPACE FACT OF THE DAY',
-  factContent: '<p>If two pieces of the same type of metal touch in the vacuum of space, they will bond permanently into a single solid piece through cold welding. On Earth, a thin oxide film keeps metal atoms apart, but in the pure void, the atoms have no idea they belong to different pieces.</p>'
+  factTitle: '',
+  factSubtitle: '',
+  factContent: ''
 };
 
 const LOCAL_STORAGE_KEY = 'zwosmos_daily_cosmic';
@@ -54,7 +69,18 @@ export function getCachedCosmicData(): DailyCosmicData {
       const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (cached) {
         const parsed = JSON.parse(cached);
-        // Invalidate old legacy fallback if found in local storage
+        // Purge old legacy fallback facts from local storage
+        if (
+          parsed.factTitle === 'SPACE FACT OF THE DAY' ||
+          (parsed.factTitle === 'Space Fact of the Day' && !parsed.factSubtitle) ||
+          parsed.factContent?.includes('cold welding') ||
+          parsed.factContent?.includes('roughly 40,000 photons') ||
+          parsed.factContent?.includes('twinkle')
+        ) {
+          parsed.factTitle = '';
+          parsed.factSubtitle = '';
+          parsed.factContent = '';
+        }
         if (parsed.astronomyDate !== 'September 18, 1977') {
           return mapRowToCosmic(parsed);
         }
@@ -72,18 +98,6 @@ const DEFAULT_ENTRIES: CosmicEntry[] = [
     subtitle: DEFAULT_COSMIC_DATA.astronomySubtitle,
     astronomyDate: DEFAULT_COSMIC_DATA.astronomyDate,
     content: DEFAULT_COSMIC_DATA.astronomyContent,
-    scheduledAt: null,
-    status: 'live',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: 'default-fact-1',
-    type: 'fact',
-    title: DEFAULT_COSMIC_DATA.factTitle,
-    subtitle: '',
-    astronomyDate: '',
-    content: DEFAULT_COSMIC_DATA.factContent,
     scheduledAt: null,
     status: 'live',
     createdAt: new Date().toISOString(),
@@ -166,10 +180,177 @@ export function getUpcomingSortDistance(dateStr: string, today: { month: number;
 }
 
 /** Return today's month and day in IST (UTC+5:30). */
-export function getTodayIST(): { month: number; day: number } {
+export function getTodayIST(): { month: number; day: number; year: number } {
   const now = new Date();
   const istDate = new Date(now.getTime() + (330 + now.getTimezoneOffset()) * 60 * 1000);
-  return { month: istDate.getMonth() + 1, day: istDate.getDate() };
+  return { month: istDate.getMonth() + 1, day: istDate.getDate(), year: istDate.getFullYear() };
+}
+
+/**
+ * Returns integer count of calendar days since an epoch in IST (UTC+5:30).
+ * Changes strictly at midnight 12:00:00 AM IST.
+ */
+export function getDaysSinceEpochIST(epochDateStr: string = '2026-01-01'): number {
+  const now = new Date();
+  const istOffsetMs = (330 + now.getTimezoneOffset()) * 60 * 1000;
+  const istNow = new Date(now.getTime() + istOffsetMs);
+
+  const istYear = istNow.getFullYear();
+  const istMonth = istNow.getMonth();
+  const istDay = istNow.getDate();
+
+  const [ey, em, ed] = epochDateStr.split('-').map(Number);
+  const epochDate = new Date(Date.UTC(ey, em - 1, ed));
+  const currentDate = new Date(Date.UTC(istYear, istMonth, istDay));
+
+  const diffMs = currentDate.getTime() - epochDate.getTime();
+  const diffDays = Math.floor(diffMs / (24 * 60 * 60 * 1000));
+  return Math.max(0, diffDays);
+}
+
+/**
+ * Deterministic pseudo-random number generator (Lehmer PRNG).
+ */
+function createPseudoRandom(seed: number) {
+  let s = Math.abs(seed) % 2147483647;
+  if (s <= 0) s += 2147483646;
+  return function () {
+    s = (s * 16807) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+}
+
+/**
+ * Generates an ordered sequence of all fact entries for a specific cycle such that:
+ * 1. Every fact is included exactly once before repeating.
+ * 2. Consecutive items NEVER share the same topic/title (Title[k] != Title[k+1]).
+ * 3. The first item of cycle C does not share the same title as the last item of cycle C - 1.
+ */
+export function getFactSequenceForCycle(
+  entries: CosmicEntry[],
+  cycleNumber: number = 0,
+  prevCycleLastTitle: string = ''
+): CosmicEntry[] {
+  if (!entries || entries.length <= 1) return entries ? [...entries] : [];
+
+  // Sort canonically so input order is 100% deterministic regardless of DB query order
+  const sorted = [...entries].sort((a, b) =>
+    (a.id || '').localeCompare(b.id || '') ||
+    (a.title || '').localeCompare(b.title || '') ||
+    (a.content || '').localeCompare(b.content || '')
+  );
+
+  // If prevCycleLastTitle is empty and cycleNumber > 0, compute last title of previous cycle
+  if (!prevCycleLastTitle && cycleNumber > 0) {
+    const prevSeq = getFactSequenceForCycle(sorted, cycleNumber - 1, '');
+    if (prevSeq.length > 0) {
+      prevCycleLastTitle = (prevSeq[prevSeq.length - 1].title || '').trim();
+    }
+  }
+
+  const cycleSeed = 104729 + cycleNumber * 7919;
+  const rng = createPseudoRandom(cycleSeed);
+
+  // Group items by normalized title
+  const groups = new Map<string, CosmicEntry[]>();
+  for (const item of sorted) {
+    const t = (item.title || 'General').trim();
+    if (!groups.has(t)) groups.set(t, []);
+    groups.get(t)!.push(item);
+  }
+
+  // Shuffle within each group bucket
+  for (const [, list] of groups.entries()) {
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      const temp = list[i];
+      list[i] = list[j];
+      list[j] = temp;
+    }
+  }
+
+  const result: CosmicEntry[] = [];
+  let lastTitle = prevCycleLastTitle;
+  const total = sorted.length;
+
+  for (let step = 0; step < total; step++) {
+    const remaining = total - step;
+    const availableTitles: string[] = [];
+    let maxOtherCount = 0;
+    let maxOtherTitle = '';
+
+    for (const [title, list] of groups.entries()) {
+      if (list.length > 0) {
+        if (title !== lastTitle) {
+          availableTitles.push(title);
+          if (list.length > maxOtherCount) {
+            maxOtherCount = list.length;
+            maxOtherTitle = title;
+          }
+        }
+      }
+    }
+
+    let chosenTitle = '';
+    if (availableTitles.length === 0) {
+      // Emergency fallback if only one title remains
+      for (const [title, list] of groups.entries()) {
+        if (list.length > 0) {
+          chosenTitle = title;
+          break;
+        }
+      }
+    } else {
+      // If the largest available group has count >= ceil(remaining / 2),
+      // pick from it to avoid consecutive title clustering at the end
+      const threshold = Math.ceil(remaining / 2);
+      if (maxOtherCount >= threshold && maxOtherTitle) {
+        chosenTitle = maxOtherTitle;
+      } else {
+        const idx = Math.floor(rng() * availableTitles.length);
+        chosenTitle = availableTitles[idx];
+      }
+    }
+
+    const item = groups.get(chosenTitle)!.pop()!;
+    result.push(item);
+    lastTitle = chosenTitle;
+  }
+
+  return result;
+}
+
+/**
+ * Returns today's scheduled fact entry based on midnight IST rollover
+ * and the non-repeating, non-consecutive shuffle sequence.
+ */
+export function getScheduledFactForToday(entries: CosmicEntry[]): {
+  entry: CosmicEntry | null;
+  dayIndex: number;
+  cycleNumber: number;
+  totalFacts: number;
+  sequence: CosmicEntry[];
+} {
+  const factEntries = entries.filter(e => e.type === 'fact');
+  if (factEntries.length === 0) {
+    return { entry: null, dayIndex: 0, cycleNumber: 0, totalFacts: 0, sequence: [] };
+  }
+
+  const daysSinceEpoch = getDaysSinceEpochIST('2026-01-01');
+  const totalFacts = factEntries.length;
+  const cycleNumber = Math.floor(daysSinceEpoch / totalFacts);
+  const dayInCycle = daysSinceEpoch % totalFacts;
+
+  const sequence = getFactSequenceForCycle(factEntries, cycleNumber);
+  const todayEntry = sequence[dayInCycle] || factEntries[0];
+
+  return {
+    entry: todayEntry,
+    dayIndex: dayInCycle,
+    cycleNumber,
+    totalFacts,
+    sequence
+  };
 }
 
 function mapRowToCosmic(row: any): DailyCosmicData {
@@ -179,8 +360,9 @@ function mapRowToCosmic(row: any): DailyCosmicData {
     astronomySubtitle: row.astronomy_subtitle ?? row.astronomySubtitle ?? row.subtitle ?? DEFAULT_COSMIC_DATA.astronomySubtitle,
     astronomyDate: row.astronomy_date ?? row.astronomyDate ?? DEFAULT_COSMIC_DATA.astronomyDate,
     astronomyContent: row.astronomy_content ?? row.astronomyContent ?? DEFAULT_COSMIC_DATA.astronomyContent,
-    factTitle: row.fact_title ?? row.factTitle ?? DEFAULT_COSMIC_DATA.factTitle,
-    factContent: row.fact_content ?? row.factContent ?? DEFAULT_COSMIC_DATA.factContent,
+    factTitle: row.fact_title ?? row.factTitle ?? '',
+    factSubtitle: row.fact_subtitle ?? row.factSubtitle ?? row.subtitle ?? '',
+    factContent: row.fact_content ?? row.factContent ?? '',
     updatedAt: row.updated_at ?? row.updatedAt
   };
 }
@@ -221,6 +403,13 @@ export async function getCosmicEntries(type?: CosmicEntryType): Promise<CosmicEn
     entries = [...DEFAULT_ENTRIES];
   }
 
+  // Purge any legacy dummy fallback facts from storage
+  entries = entries.filter(e => {
+    if (e.id.startsWith('default-fact') || e.id === 'default-fact-1') return false;
+    if (e.type === 'fact' && (e.title === 'SPACE FACT OF THE DAY' || e.content?.includes('cold welding') || e.content?.includes('roughly 40,000 photons') || e.content?.includes('twinkle') || e.id === '8bc48dcc-d63d-4ac8-8c36-091b73f0d617')) return false;
+    return true;
+  });
+
   // 2. Try fetching from Supabase if connected
   if (supabase) {
     try {
@@ -234,11 +423,11 @@ export async function getCosmicEntries(type?: CosmicEntryType): Promise<CosmicEn
 
         // Purge dummy local fallback entries (default-*) when remote entries exist
         const hasRemoteAstronomy = remoteEntries.some(r => r.type === 'astronomy');
-        const hasRemoteFact = remoteEntries.some(r => r.type === 'fact');
 
         const filteredLocal = entries.filter(e => {
           if (e.id.startsWith('default-astronomy') && hasRemoteAstronomy) return false;
-          if (e.id.startsWith('default-fact') && hasRemoteFact) return false;
+          if (e.id.startsWith('default-fact') || e.id === 'default-fact-1') return false;
+          if (e.type === 'fact' && (e.title === 'SPACE FACT OF THE DAY' || e.content?.includes('cold welding') || e.content?.includes('roughly 40,000 photons') || e.content?.includes('twinkle') || e.id === '8bc48dcc-d63d-4ac8-8c36-091b73f0d617')) return false;
           return true;
         });
 
@@ -282,33 +471,39 @@ export async function getCosmicEntries(type?: CosmicEntryType): Promise<CosmicEn
         } catch {}
       }
     } else if (liveEntries.length === 0 && entries.some(e => e.type === t)) {
-      // 1. Check if an entry matches today's date in IST
-      const today = getTodayIST();
-      let liveTarget = entries.find(e => {
-        if (e.type !== t) return false;
-        const parsed = parseMilestoneDateForRollover(e.astronomyDate || '');
-        return parsed && parsed.month === today.month && parsed.day === today.day;
-      });
+      let liveTarget: CosmicEntry | undefined;
 
-      // 2. Check if an entry matches the active daily_cosmic data on the homepage
-      if (!liveTarget) {
-        try {
-          const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
-          if (cached) {
-            const cosmic = JSON.parse(cached);
-            const activeDate = t === 'astronomy' ? cosmic.astronomyDate : '';
-            const activeContent = t === 'astronomy' ? cosmic.astronomyContent : cosmic.factContent;
-            liveTarget = entries.find(e => e.type === t && (
-              (activeDate && e.astronomyDate === activeDate) ||
-              (activeContent && (e.content === activeContent || (e.content && activeContent.includes(e.content.slice(0, 30)))))
-            ));
-          }
-        } catch {}
+      if (t === 'astronomy') {
+        // 1. Astronomy: match today's date in IST
+        const today = getTodayIST();
+        liveTarget = entries.find(e => {
+          if (e.type !== t) return false;
+          const parsed = parseMilestoneDateForRollover(e.astronomyDate || '');
+          return parsed && parsed.month === today.month && parsed.day === today.day;
+        });
+
+        // 2. Astronomy: fallback to active daily_cosmic
+        if (!liveTarget) {
+          try {
+            const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (cached) {
+              const cosmic = JSON.parse(cached);
+              const activeDate = cosmic.astronomyDate;
+              liveTarget = entries.find(e => e.type === t && activeDate && e.astronomyDate === activeDate);
+            }
+          } catch {}
+        }
+      } else {
+        // Space Fact: use scheduled rotation entry for today
+        const scheduled = getScheduledFactForToday(entries);
+        if (scheduled.entry) {
+          liveTarget = scheduled.entry;
+        }
       }
 
-      // 3. Check for any previously active archived entry
+      // 3. Fallback to any archived entry
       if (!liveTarget) {
-        liveTarget = entries.find(e => e.type === t && e.status === 'archived');
+        liveTarget = entries.find(e => e.type === t && e.status === 'archived') || entries.find(e => e.type === t);
       }
 
       if (liveTarget) {
@@ -423,9 +618,11 @@ export async function saveCosmicEntry(
     // If live, update the active daily_cosmic immediately
     if (entry.status === 'live') {
       if (entry.type === 'astronomy') {
+        const title = 'This Day in Astronomy';
+        const subtitle = entry.subtitle || (entry.title !== 'This Day in Astronomy' ? entry.title : '');
         await updateCosmicData({
-          astronomyTitle: entry.title,
-          astronomySubtitle: entry.subtitle || '',
+          astronomyTitle: title,
+          astronomySubtitle: subtitle,
           astronomyDate: entry.astronomyDate || '',
           astronomyContent: entry.content
         });
@@ -452,38 +649,105 @@ export async function saveCosmicEntriesBatch(
     astronomyDate?: string;
     content: string;
     status?: CosmicEntryStatus;
-  }>
-): Promise<{ success: boolean; count: number; error?: string }> {
+  }>,
+  conflictAction: 'update' | 'skip' | 'duplicate' = 'update'
+): Promise<{ success: boolean; count: number; updatedCount: number; insertedCount: number; error?: string }> {
   try {
     if (!entriesData || entriesData.length === 0) {
-      return { success: true, count: 0 };
+      return { success: true, count: 0, updatedCount: 0, insertedCount: 0 };
     }
 
     const nowIso = new Date().toISOString();
     const currentEntries = await getCosmicEntries();
 
-    const newEntries: CosmicEntry[] = entriesData.map((item, index) => {
-      const generatedId =
-        typeof crypto !== 'undefined' && crypto.randomUUID
-          ? crypto.randomUUID()
-          : `entry_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 7)}`;
+    // Map existing astronomy entries by dateKey (e.g. "astronomy_1_1" for Jan 1)
+    const existingByDateKey = new Map<string, CosmicEntry>();
+    // Map existing fact entries by normalized content snippet
+    const existingFactByContent = new Map<string, CosmicEntry>();
 
-      return {
-        id: generatedId,
-        type: item.type,
-        title: item.title,
-        subtitle: item.subtitle || '',
-        astronomyDate: item.astronomyDate || '',
-        content: item.content,
-        scheduledAt: null,
-        status: item.status || 'draft',
-        createdAt: nowIso,
-        updatedAt: nowIso
-      };
+    currentEntries.forEach(e => {
+      if (e.type === 'astronomy') {
+        const p = parseMilestoneDateForRollover(e.astronomyDate || '');
+        if (p) {
+          const key = `astronomy_${p.month}_${p.day}`;
+          if (!existingByDateKey.has(key) || e.status === 'live') {
+            existingByDateKey.set(key, e);
+          }
+        }
+      } else {
+        const cleanContent = e.content.replace(/<[^>]*>?/gm, '').toLowerCase().replace(/\s+/g, ' ').trim().slice(0, 100);
+        if (cleanContent) {
+          if (!existingFactByContent.has(cleanContent) || e.status === 'live') {
+            existingFactByContent.set(cleanContent, e);
+          }
+        }
+      }
     });
 
-    // Prepend new entries so newest appears at the top of the list
-    const updatedList = [...newEntries, ...currentEntries];
+    const entriesToUpsert: CosmicEntry[] = [];
+    let updatedCount = 0;
+    let insertedCount = 0;
+
+    for (let index = 0; index < entriesData.length; index++) {
+      const item = entriesData[index];
+      let existing: CosmicEntry | null = null;
+      let dateKey: string | null = null;
+
+      if (item.type === 'astronomy') {
+        const p = parseMilestoneDateForRollover(item.astronomyDate || '');
+        dateKey = p ? `astronomy_${p.month}_${p.day}` : null;
+        existing = dateKey ? existingByDateKey.get(dateKey) || null : null;
+      } else {
+        const cleanContent = item.content.replace(/<[^>]*>?/gm, '').toLowerCase().replace(/\s+/g, ' ').trim().slice(0, 100);
+        existing = cleanContent ? existingFactByContent.get(cleanContent) || null : null;
+      }
+
+      if (existing && conflictAction === 'update') {
+        // Update existing entry while preserving its id, status (e.g. 'live'), and createdAt
+        const updated: CosmicEntry = {
+          ...existing,
+          title: item.title,
+          subtitle: item.subtitle ?? existing.subtitle,
+          astronomyDate: item.astronomyDate || existing.astronomyDate,
+          content: item.content,
+          updatedAt: nowIso
+        };
+        entriesToUpsert.push(updated);
+        if (dateKey) existingByDateKey.set(dateKey, updated);
+        updatedCount++;
+      } else if (existing && conflictAction === 'skip') {
+        // Skip entry
+        continue;
+      } else {
+        // Create new entry
+        const generatedId =
+          typeof crypto !== 'undefined' && crypto.randomUUID
+            ? crypto.randomUUID()
+            : `entry_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 7)}`;
+
+        const newEntry: CosmicEntry = {
+          id: generatedId,
+          type: item.type,
+          title: item.title,
+          subtitle: item.subtitle || '',
+          astronomyDate: item.astronomyDate || '',
+          content: item.content,
+          scheduledAt: null,
+          status: item.status || 'draft',
+          createdAt: nowIso,
+          updatedAt: nowIso
+        };
+        entriesToUpsert.push(newEntry);
+        if (dateKey) existingByDateKey.set(dateKey, newEntry);
+        insertedCount++;
+      }
+    }
+
+    // Merge entries with current list by id
+    const upsertMap = new Map<string, CosmicEntry>();
+    currentEntries.forEach(e => upsertMap.set(e.id, e));
+    entriesToUpsert.forEach(e => upsertMap.set(e.id, e));
+    const updatedList = Array.from(upsertMap.values());
 
     // Save to LocalStorage
     try {
@@ -492,10 +756,10 @@ export async function saveCosmicEntriesBatch(
       console.warn('LocalStorage save error:', e);
     }
 
-    // Persist to Supabase in batches of 50
+    // Persist to Supabase in batches of 50 using upsert
     if (supabase) {
       try {
-        const rows = newEntries.map(entry => ({
+        const rows = entriesToUpsert.map(entry => ({
           id: entry.id,
           type: entry.type,
           title: entry.title,
@@ -510,20 +774,25 @@ export async function saveCosmicEntriesBatch(
         const CHUNK_SIZE = 50;
         for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
           const chunk = rows.slice(i, i + CHUNK_SIZE);
-          const { error } = await supabase.from('cosmic_entries').insert(chunk);
+          const { error } = await supabase.from('cosmic_entries').upsert(chunk, { onConflict: 'id' });
           if (error) {
-            console.warn('Supabase batch chunk insert warning:', error.message);
+            console.warn('Supabase batch chunk upsert warning:', error.message);
           }
         }
       } catch (err) {
-        console.warn('Supabase batch insert error:', err);
+        console.warn('Supabase batch upsert error:', err);
       }
     }
 
-    return { success: true, count: newEntries.length };
+    return {
+      success: true,
+      count: entriesToUpsert.length,
+      updatedCount,
+      insertedCount
+    };
   } catch (err: any) {
     console.error('Failed to save batch cosmic entries:', err);
-    return { success: false, count: 0, error: err.message || 'Unknown error' };
+    return { success: false, count: 0, updatedCount: 0, insertedCount: 0, error: err.message || 'Unknown error' };
   }
 }
 
@@ -577,6 +846,55 @@ export async function deleteCosmicEntry(id: string): Promise<{ success: boolean;
   }
 }
 
+export async function deleteCosmicEntriesBatch(ids: string[]): Promise<{ success: boolean; count: number; error?: string }> {
+  try {
+    if (!ids || ids.length === 0) return { success: true, count: 0 };
+    const idSet = new Set(ids);
+    const current = await getCosmicEntries();
+    const deletedEntries = current.filter(e => idSet.has(e.id));
+    const updated = current.filter(e => !idSet.has(e.id));
+
+    try {
+      localStorage.setItem(LOCAL_STORAGE_ENTRIES_KEY, JSON.stringify(updated));
+    } catch {}
+
+    if (supabase) {
+      try {
+        const CHUNK_SIZE = 100;
+        for (let i = 0; i < ids.length; i += CHUNK_SIZE) {
+          const chunk = ids.slice(i, i + CHUNK_SIZE);
+          const { error } = await supabase.from('cosmic_entries').delete().in('id', chunk);
+          if (error) {
+            console.warn('Supabase batch delete error:', error.message);
+          }
+        }
+      } catch (err) {
+        console.warn('Supabase delete warning for cosmic_entries:', err);
+      }
+    }
+
+    // If any deleted entry was live, promote the first remaining entry of that type to live
+    const typesToPromote = new Set<CosmicEntryType>();
+    deletedEntries.forEach(e => {
+      if (e.status === 'live') {
+        typesToPromote.add(e.type);
+      }
+    });
+
+    for (const t of typesToPromote) {
+      const remaining = updated.filter(e => e.type === t);
+      if (remaining.length > 0) {
+        await setEntryLive(remaining[0].id);
+      }
+    }
+
+    return { success: true, count: ids.length };
+  } catch (err: any) {
+    console.error('Failed to batch delete cosmic entries:', err);
+    return { success: false, count: 0, error: err.message || 'Unknown error' };
+  }
+}
+
 /* =========================================================================
    Active Cosmic Data — Midnight IST Date-Based Auto-Rollover
    =========================================================================
@@ -591,53 +909,112 @@ export async function getActiveCosmicData(): Promise<DailyCosmicData> {
   const today = getTodayIST();
   const entries = await getCosmicEntries();
 
-  for (const type of ['astronomy', 'fact'] as CosmicEntryType[]) {
-    // 1. Check if a draft matches today in IST
-    const todayMatches = entries
+  // 1. Astronomy Rollover (date-based: month + day in IST)
+  const liveAstronomy = entries.find(e => e.type === 'astronomy' && e.status === 'live');
+  const liveParsed = liveAstronomy ? parseMilestoneDateForRollover(liveAstronomy.astronomyDate || '') : null;
+  const isLiveMatchingToday = !!(liveParsed && liveParsed.month === today.month && liveParsed.day === today.day);
+
+  let activeAstronomyEntry = liveAstronomy;
+
+  if (!isLiveMatchingToday) {
+    // Current live entry is not today's milestone. Find entry matching today's calendar date
+    const todayAstronomyMatches = entries
       .filter(e => {
-        if (e.type !== type || e.status !== 'draft') return false;
+        if (e.type !== 'astronomy') return false;
         const parsed = parseMilestoneDateForRollover(e.astronomyDate || '');
         if (!parsed) return false;
         return parsed.month === today.month && parsed.day === today.day;
       })
-      .sort((a, b) => new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime());
+      .sort((a, b) => {
+        // Prioritize draft over archived if both exist, then newest
+        if (a.status === 'draft' && b.status !== 'draft') return -1;
+        if (b.status === 'draft' && a.status !== 'draft') return 1;
+        return new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime();
+      });
 
-    if (todayMatches.length > 0) {
-      // Promote today's matching draft to live
-      await setEntryLive(todayMatches[0].id);
-    } else {
-      // 2. Ensure daily_cosmic accurately matches the currently marked 'live' entry only if changed
-      const liveEntry = entries.find(e => e.type === type && e.status === 'live');
-      if (liveEntry) {
-        const currentData = getCachedCosmicData();
-        if (type === 'astronomy') {
-          const isDifferent =
-            currentData.astronomyTitle !== liveEntry.title ||
-            (currentData.astronomySubtitle || '') !== (liveEntry.subtitle || '') ||
-            currentData.astronomyDate !== (liveEntry.astronomyDate || '') ||
-            currentData.astronomyContent !== liveEntry.content;
+    if (todayAstronomyMatches.length > 0) {
+      activeAstronomyEntry = todayAstronomyMatches[0];
+      await setEntryLive(todayAstronomyMatches[0].id);
+    }
+  }
 
-          if (isDifferent) {
-            await updateCosmicData({
-              astronomyTitle: liveEntry.title,
-              astronomySubtitle: liveEntry.subtitle || '',
-              astronomyDate: liveEntry.astronomyDate || '',
-              astronomyContent: liveEntry.content
-            });
-          }
-        } else {
-          const isDifferent =
-            currentData.factTitle !== liveEntry.title ||
-            currentData.factContent !== liveEntry.content;
+  // Ensure daily_cosmic row is synchronized with the active astronomy entry
+  if (activeAstronomyEntry) {
+    const currentData = getCachedCosmicData();
+    const expectedTitle = 'This Day in Astronomy';
+    const expectedSubtitle = activeAstronomyEntry.subtitle || (activeAstronomyEntry.title !== 'This Day in Astronomy' ? activeAstronomyEntry.title : '');
+    const isDifferent =
+      currentData.astronomyTitle !== expectedTitle ||
+      (currentData.astronomySubtitle || '') !== expectedSubtitle ||
+      currentData.astronomyDate !== (activeAstronomyEntry.astronomyDate || '') ||
+      currentData.astronomyContent !== activeAstronomyEntry.content;
 
-          if (isDifferent) {
-            await updateCosmicData({
-              factTitle: liveEntry.title,
-              factContent: liveEntry.content
-            });
-          }
+    if (isDifferent) {
+      await updateCosmicData({
+        astronomyTitle: expectedTitle,
+        astronomySubtitle: expectedSubtitle,
+        astronomyDate: activeAstronomyEntry.astronomyDate || '',
+        astronomyContent: activeAstronomyEntry.content
+      });
+    }
+  }
+
+  // 2. Space Fact of the Day (Non-repeating sequence rollover at midnight IST)
+  //    Rollover only triggers when IST day changes. Between rollovers, admin manual
+  //    selections (Set Live Today) are respected and synced to daily_cosmic.
+  const factEntries = entries.filter(e => e.type === 'fact');
+  if (factEntries.length > 0) {
+    const todayRolloverKey = `IST_${today.year}_${today.month}_${today.day}`;
+    let lastRolloverKey = '';
+    try {
+      lastRolloverKey = localStorage.getItem('zwosmos_fact_rollover_key') || '';
+    } catch {}
+
+    const isNewDay = lastRolloverKey !== todayRolloverKey;
+    const liveFact = factEntries.find(e => e.status === 'live');
+
+    if (isNewDay) {
+      // New IST day: rotate to today's scheduled fact
+      const { entry: scheduledFact } = getScheduledFactForToday(factEntries);
+      if (scheduledFact) {
+        try {
+          localStorage.setItem('zwosmos_fact_rollover_key', todayRolloverKey);
+        } catch {}
+        if (!liveFact || liveFact.id !== scheduledFact.id) {
+          await setEntryLive(scheduledFact.id);
         }
+        await updateCosmicData({
+          factTitle: scheduledFact.title,
+          factSubtitle: scheduledFact.subtitle || scheduledFact.title,
+          factContent: scheduledFact.content
+        });
       }
+    } else if (liveFact) {
+      // Same day: sync daily_cosmic to whatever is currently live in cosmic_entries
+      // (respects manual "Set Live Today" from admin without overriding it)
+      const currentData = getCachedCosmicData();
+      const isDifferent =
+        currentData.factTitle !== liveFact.title ||
+        currentData.factContent !== liveFact.content ||
+        (currentData.factSubtitle || '') !== (liveFact.subtitle || liveFact.title);
+
+      if (isDifferent) {
+        await updateCosmicData({
+          factTitle: liveFact.title,
+          factSubtitle: liveFact.subtitle || liveFact.title,
+          factContent: liveFact.content
+        });
+      }
+    }
+  } else {
+    // No facts in database — clear any stale fact from daily_cosmic
+    const currentData = getCachedCosmicData();
+    if (currentData.factContent || currentData.factTitle || currentData.factSubtitle) {
+      await updateCosmicData({
+        factTitle: '',
+        factSubtitle: '',
+        factContent: ''
+      });
     }
   }
 

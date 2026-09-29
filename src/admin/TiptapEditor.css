@@ -1,12 +1,67 @@
 .tiptap-white-editor {
-  padding: 20px;
-  min-height: 300px;
+  padding: 16px 20px;
+  min-height: 180px;
   outline: none;
   font-family: inherit;
+  cursor: text;
 }
 
-.tiptap-white-editor p {
-  margin: 0 0 1em 0;
+.tiptap-white-editor .tiptap,
+.tiptap-white-editor .ProseMirror {
+  min-height: 140px;
+  outline: none !important;
+  color: #0f172a !important;
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.tiptap-white-editor p,
+.ProseMirror p {
+  margin: 0 0 0.85em 0;
+  color: #0f172a;
+}
+
+.tiptap-white-editor strong,
+.tiptap-white-editor b,
+.ProseMirror strong,
+.ProseMirror b {
+  font-weight: 700 !important;
+  color: #0f172a;
+}
+
+.tiptap-white-editor em,
+.tiptap-white-editor i,
+.ProseMirror em,
+.ProseMirror i {
+  font-style: italic !important;
+  color: #0f172a;
+}
+
+.tiptap-white-editor u,
+.ProseMirror u {
+  text-decoration: underline !important;
+  color: #0f172a;
+}
+
+.tiptap-white-editor s,
+.tiptap-white-editor strike,
+.tiptap-white-editor del,
+.ProseMirror s,
+.ProseMirror strike,
+.ProseMirror del {
+  text-decoration: line-through !important;
+  color: #0f172a;
+}
+
+.tiptap-white-editor code,
+.ProseMirror code {
+  background: #f1f5f9;
+  color: #0f172a;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.9em;
 }
 
 .tiptap-white-editor h1,
@@ -14,42 +69,57 @@
 .tiptap-white-editor h3,
 .tiptap-white-editor h4,
 .tiptap-white-editor h5,
-.tiptap-white-editor h6 {
+.tiptap-white-editor h6,
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3,
+.ProseMirror h4,
+.ProseMirror h5,
+.ProseMirror h6 {
   margin-top: 0;
   margin-bottom: 0.5em;
-  font-weight: bold;
+  font-weight: 700 !important;
+  color: #0f172a;
 }
 
 .tiptap-white-editor ul,
-.tiptap-white-editor ol {
-  padding-left: 20px;
+.tiptap-white-editor ol,
+.ProseMirror ul,
+.ProseMirror ol {
+  padding-left: 24px;
   margin-bottom: 1em;
+  color: #0f172a;
 }
 
-.tiptap-white-editor a {
+.tiptap-white-editor a,
+.ProseMirror a {
   color: #3b82f6;
   text-decoration: underline;
   cursor: pointer;
 }
 
-.tiptap-white-editor img {
+.tiptap-white-editor img,
+.ProseMirror img {
   max-width: 100%;
   height: auto;
   border-radius: 4px;
 }
 
-.tiptap-white-editor blockquote {
-  border-left: 3px solid #e5e7eb;
+.tiptap-white-editor blockquote,
+.ProseMirror blockquote {
+  border-left: 3px solid #cbd5e1;
   padding-left: 1rem;
   margin-left: 0;
   margin-right: 0;
-  color: #4b5563;
+  color: #475569;
+  font-style: italic;
 }
 
-.tiptap-white-editor hr {
+.tiptap-white-editor hr,
+.ProseMirror hr {
   border: none;
-  border-top: 2px solid #e5e7eb;
-  margin: 2rem 0;
+  border-top: 1px solid #e2e8f0;
+  margin: 1.5rem 0;
 }
 
 .ProseMirror {
@@ -57,7 +127,7 @@
 }
 
 .ProseMirror p.is-editor-empty:first-child::before {
-  color: #adb5bd;
+  color: #94a3b8;
   content: attr(data-placeholder);
   float: left;
   height: 0;

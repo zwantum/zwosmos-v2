@@ -73,11 +73,11 @@ export const HeroSection: React.FC = () => {
   }, []);
   // Layout purely based on width — ignores isMobile (touch detection can be wrong in DevTools)
   const isSmallPhone = winWidth < 641;   // < 641px → phone
-  const isSmallTab   = winWidth >= 641 && winWidth < 800; // 641–799px → small tab
+  const isSmallTab = winWidth >= 641 && winWidth < 800; // 641–799px → small tab
   const isLargeTablet = winWidth >= 800 && winWidth <= 1280; // 800–1280px → large tab
-  const isTablet    = isSmallTab || isLargeTablet;
+  const isTablet = isSmallTab || isLargeTablet;
   const isLargeView = winWidth >= 800;
-  const isDesktop   = winWidth > 1280; // desktop view only
+  const isDesktop = winWidth > 1280; // desktop view only
 
   return (
     <section
@@ -108,13 +108,13 @@ export const HeroSection: React.FC = () => {
           maskImage: isSmallPhone
             ? 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%)'
             : (isLight && !isDesktop)
-            ? 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 65%, rgba(0,0,0,0) 100%)'
-            : 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 75%, rgba(0,0,0,0) 100%)',
+              ? 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 65%, rgba(0,0,0,0) 100%)'
+              : 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 75%, rgba(0,0,0,0) 100%)',
           WebkitMaskImage: isSmallPhone
             ? 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%)'
             : (isLight && !isDesktop)
-            ? 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 65%, rgba(0,0,0,0) 100%)'
-            : 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 75%, rgba(0,0,0,0) 100%)',
+              ? 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 65%, rgba(0,0,0,0) 100%)'
+              : 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 75%, rgba(0,0,0,0) 100%)',
           opacity: 1
         }}
       >
@@ -162,7 +162,7 @@ export const HeroSection: React.FC = () => {
           zIndex: 5,
           maxWidth: '1200px',
           margin: isSmallPhone ? '10px auto 0' : isDesktop ? '28px auto 0' : isLargeView ? '24px auto 0' : isSmallTab ? '30px auto 0' : '40px auto 0',
-          padding: isSmallPhone ? '0 16px' : '0 28px',
+          padding: isSmallPhone ? '0 16px' : '0px',
           boxSizing: 'border-box'
         }}
       >
@@ -258,7 +258,7 @@ export const HeroSection: React.FC = () => {
                       navigator.share({
                         title: featuredTitle,
                         url: `${window.location.origin}${featuredLink}`
-                      }).catch(() => {});
+                      }).catch(() => { });
                     } else {
                       navigator.clipboard.writeText(`${window.location.origin}${featuredLink}`);
                     }

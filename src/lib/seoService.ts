@@ -4,6 +4,8 @@ import { DEFAULT_SITE_SETTINGS, SiteSettings, settingsService } from './settings
 export interface SEOMetaOptions {
   title?: string;
   description?: string;
+  ogTitle?: string;
+  ogDescription?: string;
   image?: string;
   url?: string;
   type?: 'website' | 'article' | 'book';
@@ -45,25 +47,36 @@ function setLinkTag(rel: string, href: string, extraAttributes: Record<string, s
 }
 
 /**
- * Update document head with dynamic Open Graph, Twitter Cards, and SEO meta tags.
+ * Update document head with separate Website SEO meta and Open Graph / Social tags.
  */
 export function applySEOMeta(options: SEOMetaOptions = {}, siteSettings: SiteSettings = DEFAULT_SITE_SETTINGS) {
   if (typeof document === 'undefined') return;
 
-  const title = options.title
+  // 1. Website SEO (Search Engine & Browser Tab)
+  const seoTitle = options.title
     ? (options.title.includes('Zwosmos') ? options.title : `${options.title} | Zwosmos`)
     : siteSettings.siteTitle;
 
-  const description = options.description || siteSettings.siteDescription;
+  const seoDescription = options.description || siteSettings.siteDescription;
+
+  // 2. Open Graph & Social Cards (WhatsApp, Twitter/X, LinkedIn, Facebook, Discord)
+  const ogTitle = options.ogTitle
+    ? (options.ogTitle.includes('Zwosmos') ? options.ogTitle : `${options.ogTitle} | Zwosmos`)
+    : (options.title
+        ? (options.title.includes('Zwosmos') ? options.title : `${options.title} | Zwosmos`)
+        : (siteSettings.ogTitle || siteSettings.siteTitle));
+
+  const ogDescription = options.ogDescription || options.description || siteSettings.ogDescription || siteSettings.siteDescription;
+
   const image = options.image || siteSettings.ogImage;
   const url = options.url || (typeof window !== 'undefined' ? window.location.href : siteSettings.siteUrl);
   const type = options.type || 'website';
   const twitterCard = options.twitterCard || siteSettings.twitterCard || 'summary_large_image';
   const twitterHandle = siteSettings.twitterHandle || '@zwosmos';
 
-  // Basic HTML Title & Description
-  document.title = title;
-  setMetaTag('name', 'description', description);
+  // Basic HTML Title & Description (SEO)
+  document.title = seoTitle;
+  setMetaTag('name', 'description', seoDescription);
   if (options.keywords || siteSettings.keywords) {
     setMetaTag('name', 'keywords', options.keywords || siteSettings.keywords);
   }
@@ -73,21 +86,30 @@ export function applySEOMeta(options: SEOMetaOptions = {}, siteSettings: SiteSet
 
   // Open Graph (Facebook, LinkedIn, Discord, WhatsApp)
   setMetaTag('property', 'og:site_name', 'Zwosmos');
-  setMetaTag('property', 'og:title', title);
-  setMetaTag('property', 'og:description', description);
+  setMetaTag('property', 'og:title', ogTitle);
+  setMetaTag('property', 'og:description', ogDescription);
   setMetaTag('property', 'og:url', url);
   setMetaTag('property', 'og:type', type);
   setMetaTag('property', 'og:image', image);
   if (image && image.startsWith('https://')) {
     setMetaTag('property', 'og:image:secure_url', image);
   }
-  setMetaTag('property', 'og:image:alt', title);
+  setMetaTag('property', 'og:image:alt', ogTitle);
   setMetaTag('property', 'og:locale', 'en_US');
+  if (image) {
+    if (image.includes('.png')) {
+      setMetaTag('property', 'og:image:type', 'image/png');
+    } else if (image.includes('.webp')) {
+      setMetaTag('property', 'og:image:type', 'image/webp');
+    } else {
+      setMetaTag('property', 'og:image:type', 'image/jpeg');
+    }
+  }
 
   // Twitter Cards (X)
   setMetaTag('name', 'twitter:card', twitterCard);
-  setMetaTag('name', 'twitter:title', title);
-  setMetaTag('name', 'twitter:description', description);
+  setMetaTag('name', 'twitter:title', ogTitle);
+  setMetaTag('name', 'twitter:description', ogDescription);
   setMetaTag('name', 'twitter:image', image);
   setMetaTag('name', 'twitter:site', twitterHandle);
   setMetaTag('name', 'twitter:creator', twitterHandle);
