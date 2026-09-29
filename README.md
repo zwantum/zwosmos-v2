@@ -1,4 +1,4 @@
-# 7WOSMOS - Look Up. Think Beyond. 🌌
+# ZWOSMOS - Look Up. Think Beyond. 🌌
 
 A premium cosmic-themed blog and space exploration platform built with React, Three.js, and Supabase. Featuring immersive 3D visuals, a full CMS-powered blog, and a modern admin dashboard.
 
