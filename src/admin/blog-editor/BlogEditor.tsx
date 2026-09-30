@@ -173,11 +173,15 @@ export const BlogEditor = forwardRef<BlogEditorHandle, BlogEditorProps>(({
     const updateWidth = () => {
       if (textareaRef.current) {
         const w = Math.max(0, textareaRef.current.clientWidth - 32);
-        setTextareaWidth(w);
+        if (w > 0) {
+          setTextareaWidth(w);
+        }
       }
     };
     updateWidth();
-    const ro = new ResizeObserver(updateWidth);
+    const ro = new ResizeObserver(() => {
+      window.requestAnimationFrame(updateWidth);
+    });
     ro.observe(textareaRef.current);
     return () => ro.disconnect();
   }, [isCodeView]);
@@ -185,20 +189,22 @@ export const BlogEditor = forwardRef<BlogEditorHandle, BlogEditorProps>(({
   // Dynamically sync gutter line heights with wrapped visual lines
   useEffect(() => {
     if (!isCodeView || !isWordWrap || !measureContainerRef.current) return;
-    const children = measureContainerRef.current.children;
-    const heights: number[] = [];
-    for (let i = 0; i < children.length; i++) {
-      const el = children[i] as HTMLElement;
-      heights.push(el.offsetHeight || 21);
-    }
-    setLineHeights(heights);
+    try {
+      const children = measureContainerRef.current.children;
+      const heights: number[] = [];
+      for (let i = 0; i < children.length; i++) {
+        const el = children[i] as HTMLElement;
+        heights.push(el?.offsetHeight || 21);
+      }
+      setLineHeights(heights);
+    } catch {}
   }, [rawCode, textareaWidth, isWordWrap, isCodeView]);
 
   // Mode switcher handler
   const handleSwitchMode = (toCode: boolean) => {
     if (toCode) {
       const currentHtml = editor ? editor.getHTML() : '';
-      const formatted = formatHtml(currentHtml);
+      const formatted = formatHtml(currentHtml || '');
       setRawCode(formatted);
       setIsCodeView(true);
     } else {
@@ -225,13 +231,15 @@ export const BlogEditor = forwardRef<BlogEditorHandle, BlogEditorProps>(({
   const handleCodeChange = (newCode: string) => {
     setRawCode(newCode);
 
-    // Extract word count from typed HTML
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = newCode;
-    const text = tempDiv.textContent || tempDiv.innerText || '';
-    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
-    setWordCount(words);
-    setCharCount(text.length);
+    // Extract word count from typed HTML safely
+    try {
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = newCode;
+      const text = tempDiv.textContent || tempDiv.innerText || '';
+      const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+      setWordCount(words);
+      setCharCount(text.length);
+    } catch {}
 
     if (editor) {
       if (onChange) {
@@ -579,19 +587,17 @@ export const BlogEditor = forwardRef<BlogEditorHandle, BlogEditorProps>(({
               ))}
             </div>
           )}
-
-          {/* Visual Editor Toolbar & Bubble Menu */}
-          {!isCodeView && (
-            <>
-              <EditorToolbar editor={editor} onOpenMediaLibrary={onOpenMediaLibrary} />
-              <EditorBubbleMenu editor={editor} />
-            </>
-          )}
         </>
       )}
 
-      {/* Editor Body */}
-      {!isCodeView ? (
+      {/* Visual Editor Section (Always kept mounted in DOM to prevent Tippy/TipTap teardown crash) */}
+      <div style={{ display: isCodeView ? 'none' : 'block' }}>
+        {!readOnly && (
+          <>
+            <EditorToolbar editor={editor} onOpenMediaLibrary={onOpenMediaLibrary} />
+            <EditorBubbleMenu editor={editor} />
+          </>
+        )}
         <div
           className="zw-blog-editor-content"
           onClick={() => {
@@ -603,112 +609,112 @@ export const BlogEditor = forwardRef<BlogEditorHandle, BlogEditorProps>(({
         >
           <EditorContent editor={editor} />
         </div>
-      ) : (
-        /* Raw HTML Code Editor with Line Numbers */
-        <div
-          style={{
-            display: 'flex',
-            minHeight: '360px',
-            background: '#ffffff',
-            borderTop: 'none',
-            overflow: 'hidden',
-            position: 'relative'
-          }}
-        >
-          {/* Hidden Mirror to measure wrapped heights of each line */}
-          {isCodeView && isWordWrap && (
-            <div
-              ref={measureContainerRef}
-              aria-hidden="true"
-              style={{
-                position: 'absolute',
-                visibility: 'hidden',
-                top: 0,
-                left: 0,
-                width: textareaWidth > 0 ? `${textareaWidth}px` : '100%',
-                fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace",
-                fontSize: '13px',
-                lineHeight: '21px',
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
-                overflowWrap: 'break-word',
-                boxSizing: 'content-box',
-                pointerEvents: 'none',
-                zIndex: -9999
-              }}
-            >
-              {rawCode.split('\n').map((line, idx) => (
-                <div key={idx} style={{ lineHeight: '21px', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-                  {line || '\u00A0'}
-                </div>
-              ))}
-            </div>
-          )}
+      </div>
 
-          {/* Line Numbers Gutter */}
+      {/* Raw HTML Code Editor with Line Numbers */}
+      <div
+        style={{
+          display: isCodeView ? 'flex' : 'none',
+          minHeight: '360px',
+          background: '#ffffff',
+          borderTop: 'none',
+          overflow: 'hidden',
+          position: 'relative'
+        }}
+      >
+        {/* Hidden Mirror to measure wrapped heights of each line */}
+        {isCodeView && isWordWrap && (
           <div
-            ref={gutterRef}
+            ref={measureContainerRef}
+            aria-hidden="true"
             style={{
-              padding: '16px 10px',
-              background: '#f8fafc',
-              borderRight: '1px solid #cbd5e1',
-              color: '#94a3b8',
+              position: 'absolute',
+              visibility: 'hidden',
+              top: 0,
+              left: 0,
+              width: textareaWidth > 0 ? `${textareaWidth}px` : '100%',
               fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace",
               fontSize: '13px',
               lineHeight: '21px',
-              textAlign: 'right',
-              userSelect: 'none',
-              overflowY: 'hidden',
-              minWidth: '44px',
-              boxSizing: 'border-box'
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+              overflowWrap: 'break-word',
+              boxSizing: 'content-box',
+              pointerEvents: 'none',
+              zIndex: -9999
             }}
           >
-            {rawCode.split('\n').map((_, i) => (
-              <div
-                key={i + 1}
-                style={{
-                  height: isWordWrap && lineHeights[i] ? `${lineHeights[i]}px` : '21px',
-                  lineHeight: '21px',
-                  boxSizing: 'border-box'
-                }}
-              >
-                {i + 1}
+            {(rawCode || '').split('\n').map((line, idx) => (
+              <div key={idx} style={{ lineHeight: '21px', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                {line || '\u00A0'}
               </div>
             ))}
           </div>
+        )}
 
-          {/* Textarea Code Input */}
-          <textarea
-            ref={textareaRef}
-            value={rawCode}
-            onChange={(e) => handleCodeChange(e.target.value)}
-            onScroll={handleCodeScroll}
-            spellCheck={false}
-            autoCapitalize="off"
-            autoCorrect="off"
-            placeholder="Type or paste HTML code here..."
-            style={{
-              flex: 1,
-              padding: '16px',
-              border: 'none',
-              outline: 'none',
-              fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace",
-              fontSize: '13px',
-              lineHeight: '21px',
-              color: '#0f172a',
-              background: '#ffffff',
-              minHeight: '360px',
-              whiteSpace: isWordWrap ? 'pre-wrap' : 'pre',
-              wordBreak: isWordWrap ? 'break-word' : 'normal',
-              overflowWrap: isWordWrap ? 'break-word' : 'normal',
-              overflowX: isWordWrap ? 'hidden' : 'auto',
-              overflowY: 'auto',
-              resize: 'vertical',
-              boxSizing: 'border-box'
-            }}
-          />
+        {/* Line Numbers Gutter */}
+        <div
+          ref={gutterRef}
+          style={{
+            padding: '16px 10px',
+            background: '#f8fafc',
+            borderRight: '1px solid #cbd5e1',
+            color: '#94a3b8',
+            fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace",
+            fontSize: '13px',
+            lineHeight: '21px',
+            textAlign: 'right',
+            userSelect: 'none',
+            overflowY: 'hidden',
+            minWidth: '44px',
+            boxSizing: 'border-box'
+          }}
+        >
+          {(rawCode || '').split('\n').map((_, i) => (
+            <div
+              key={i + 1}
+              style={{
+                height: isWordWrap && lineHeights[i] ? `${lineHeights[i]}px` : '21px',
+                lineHeight: '21px',
+                boxSizing: 'border-box'
+              }}
+            >
+              {i + 1}
+            </div>
+          ))}
         </div>
-      )}
+
+        {/* Textarea Code Input */}
+        <textarea
+          ref={textareaRef}
+          value={rawCode}
+          onChange={(e) => handleCodeChange(e.target.value)}
+          onScroll={handleCodeScroll}
+          spellCheck={false}
+          autoCapitalize="off"
+          autoCorrect="off"
+          placeholder="Type or paste HTML code here..."
+          style={{
+            flex: 1,
+            padding: '16px',
+            border: 'none',
+            outline: 'none',
+            fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace",
+            fontSize: '13px',
+            lineHeight: '21px',
+            color: '#0f172a',
+            background: '#ffffff',
+            minHeight: '360px',
+            whiteSpace: isWordWrap ? 'pre-wrap' : 'pre',
+            wordBreak: isWordWrap ? 'break-word' : 'normal',
+            overflowWrap: isWordWrap ? 'break-word' : 'normal',
+            overflowX: isWordWrap ? 'hidden' : 'auto',
+            overflowY: 'auto',
+            resize: 'vertical',
+            boxSizing: 'border-box'
+          }}
+        />
+      </div>
 
       {/* Editor Footer */}
       <div className="zw-blog-editor-footer" style={{ borderTop: '1px solid #e2e8f0', background: '#f8fafc', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
