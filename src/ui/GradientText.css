@@ -98,3 +98,17 @@
   text-decoration: line-through !important;
   text-decoration-color: #c084fc !important;
 }
+
+/* Allow custom inline CSS (colors, background highlights) added via HTML Code editor to display accurately */
+.text-content [style*="color"] {
+  background-clip: unset !important;
+  -webkit-background-clip: unset !important;
+  -webkit-text-fill-color: currentColor !important;
+  background-image: none !important;
+}
+
+.text-content [style*="background"] {
+  background-clip: border-box !important;
+  -webkit-background-clip: border-box !important;
+}
+

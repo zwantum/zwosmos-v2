@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
+import { Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
@@ -35,6 +36,50 @@ export function formatHtml(html: string): string {
     .join('\n');
 }
 
+// Custom extension to preserve inline style="..." and class="..." attributes across all standard nodes/marks
+const PreserveStyleAndClass = Extension.create({
+  name: 'preserveStyleAndClass',
+  addGlobalAttributes() {
+    return [
+      {
+        types: [
+          'heading',
+          'paragraph',
+          'textStyle',
+          'bold',
+          'italic',
+          'underline',
+          'strike',
+          'blockquote',
+          'listItem',
+          'bulletList',
+          'orderedList',
+          'image',
+          'link'
+        ],
+        attributes: {
+          style: {
+            default: null,
+            parseHTML: element => element.getAttribute('style'),
+            renderHTML: attributes => {
+              if (!attributes.style) return {};
+              return { style: attributes.style };
+            }
+          },
+          class: {
+            default: null,
+            parseHTML: element => element.getAttribute('class'),
+            renderHTML: attributes => {
+              if (!attributes.class) return {};
+              return { class: attributes.class };
+            }
+          }
+        }
+      }
+    ];
+  }
+});
+
 export default function TiptapEditor({ value, onChange, minHeight = '180px', onReady }: TiptapEditorProps) {
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [isLinkBoxOpen, setIsLinkBoxOpen] = useState(false);
@@ -58,6 +103,7 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px', onR
       Color,
       TextStyle,
       FontFamily,
+      PreserveStyleAndClass,
     ],
     content: value,
     onUpdate: ({ editor }) => {
@@ -287,7 +333,7 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px', onR
             }}
           >
             <Code2 size={14} color={isCodeView ? '#ffcc00' : '#64748b'} />
-            <span>&lt;/&gt; HTML Code</span>
+            <span>HTML Code</span>
           </button>
         </div>
 
@@ -341,7 +387,7 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px', onR
           </div>
         ) : (
           <span style={{ fontSize: '11px', color: '#64748b' }}>
-            Visual mode • Switch to <strong>&lt;/&gt; HTML Code</strong> to view &amp; edit raw code directly
+            Visual mode • Switch to <strong>HTML Code</strong> to view &amp; edit raw code directly
           </span>
         )}
       </div>
