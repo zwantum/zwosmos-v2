@@ -199,6 +199,8 @@ export default function FactsManager() {
 
   // Form State (for Create or Edit)
   const [editingId, setEditingId] = useState<string | null>(null);
+  const editingEntry = editingId ? entries.find(e => e.id === editingId) : null;
+  const isEditingLive = editingEntry?.status === 'live';
   const [formTitle, setFormTitle] = useState('');
   const [formSubtitle, setFormSubtitle] = useState('');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -341,11 +343,23 @@ export default function FactsManager() {
       });
 
       if (res.success && res.data) {
-        showNotification(
-          finalStatus === 'live'
+        let notif = '';
+        if (editingId) {
+          if (finalStatus === 'live') {
+            notif = isEditingLive
+              ? 'Live fact updated successfully!'
+              : 'Fact updated and published live to homepage!';
+          } else {
+            notif = isEditingLive
+              ? 'Fact moved to rotation queue (unpublished).'
+              : 'Fact updated successfully!';
+          }
+        } else {
+          notif = finalStatus === 'live'
             ? 'Fact published live to homepage!'
-            : 'Fact saved successfully! It will show automatically on its scheduled date.'
-        );
+            : (activeSubTab === 'fact' ? 'Fact saved to rotation queue successfully!' : 'Astronomy entry saved successfully!');
+        }
+        showNotification(notif);
         await loadAllData();
         setViewMode('list');
       } else {
@@ -1423,7 +1437,9 @@ export default function FactsManager() {
                 </button>
 
                 <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748b' }}>
-                  {editingId ? 'Editing Fact' : 'Creating New Fact'}
+                  {editingId
+                    ? (activeSubTab === 'fact' ? 'Editing Fact' : 'Editing Astronomy Entry')
+                    : (activeSubTab === 'fact' ? 'Creating New Fact' : 'Creating New Astronomy Entry')}
                 </span>
               </div>
 
@@ -1760,57 +1776,153 @@ export default function FactsManager() {
               </div>
 
               {/* Action Buttons */}
-              <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '12px', paddingTop: '8px', borderTop: '1px solid #f1f5f9' }}>
-                {/* Publish Live Now */}
-                <button
-                  type="button"
-                  onClick={() => handleSaveEntry(false)}
-                  disabled={saving}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    background: '#ffcc00',
-                    color: '#0f172a',
-                    border: 'none',
-                    padding: '12px 26px',
-                    borderRadius: '8px',
-                    cursor: saving ? 'not-allowed' : 'pointer',
-                    fontWeight: 600,
-                    fontSize: '13px',
-                    boxShadow: '0 2px 8px rgba(255, 204, 0, 0.35)',
-                    opacity: saving ? 0.7 : 1,
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  <Save size={16} />
-                  <span>{saving ? 'Saving...' : activeSubTab === 'fact' ? 'Publish' : 'Publish'}</span>
-                </button>
+              <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '12px', paddingTop: '8px', borderTop: '1px solid #f1f5f9', flexWrap: 'wrap' }}>
+                {editingId ? (
+                  <>
+                    {/* Primary Button for Edit Mode */}
+                    <button
+                      type="button"
+                      onClick={() => handleSaveEntry(!isEditingLive)}
+                      disabled={saving}
+                      title={isEditingLive ? 'Update and keep live on homepage' : 'Save your edits to the rotation deck'}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        background: '#ffcc00',
+                        color: '#0f172a',
+                        border: 'none',
+                        padding: '12px 26px',
+                        borderRadius: '8px',
+                        cursor: saving ? 'not-allowed' : 'pointer',
+                        fontWeight: 600,
+                        fontSize: '13px',
+                        boxShadow: '0 2px 8px rgba(255, 204, 0, 0.35)',
+                        opacity: saving ? 0.7 : 1,
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <Save size={16} />
+                      <span>
+                        {saving
+                          ? 'Updating...'
+                          : isEditingLive
+                          ? 'Update Live Fact'
+                          : activeSubTab === 'fact'
+                          ? 'Update Fact'
+                          : 'Update Entry'}
+                      </span>
+                    </button>
 
-                {/* Save Entry */}
-                <button
-                  type="button"
-                  onClick={() => handleSaveEntry(true)}
-                  disabled={saving}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    background: '#ffffff',
-                    color: '#334155',
-                    border: '1px solid #cbd5e1',
-                    padding: '12px 20px',
-                    borderRadius: '8px',
-                    cursor: saving ? 'not-allowed' : 'pointer',
-                    fontWeight: 600,
-                    fontSize: '13px',
-                    opacity: saving ? 0.7 : 1,
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  <Layers size={15} />
-                  <span>{activeSubTab === 'fact' ? 'Save to Rotation Queue' : 'Save Entry'}</span>
-                </button>
+                    {/* Secondary Action for Edit Mode */}
+                    {!isEditingLive ? (
+                      <button
+                        type="button"
+                        onClick={() => handleSaveEntry(false)}
+                        disabled={saving}
+                        title="Save your changes and immediately make this fact live on the homepage"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          background: '#ffffff',
+                          color: '#334155',
+                          border: '1px solid #cbd5e1',
+                          padding: '12px 20px',
+                          borderRadius: '8px',
+                          cursor: saving ? 'not-allowed' : 'pointer',
+                          fontWeight: 600,
+                          fontSize: '13px',
+                          opacity: saving ? 0.7 : 1,
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <Layers size={15} />
+                        <span>Update &amp; Publish Live</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleSaveEntry(true)}
+                        disabled={saving}
+                        title="Unpublish this fact from homepage and move it back to the rotation queue"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          background: '#ffffff',
+                          color: '#334155',
+                          border: '1px solid #cbd5e1',
+                          padding: '12px 20px',
+                          borderRadius: '8px',
+                          cursor: saving ? 'not-allowed' : 'pointer',
+                          fontWeight: 600,
+                          fontSize: '13px',
+                          opacity: saving ? 0.7 : 1,
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <Layers size={15} />
+                        <span>Move to Queue (Unpublish)</span>
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {/* Create Mode: Publish Live Now */}
+                    <button
+                      type="button"
+                      onClick={() => handleSaveEntry(false)}
+                      disabled={saving}
+                      title="Save and display live on homepage immediately"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        background: '#ffcc00',
+                        color: '#0f172a',
+                        border: 'none',
+                        padding: '12px 26px',
+                        borderRadius: '8px',
+                        cursor: saving ? 'not-allowed' : 'pointer',
+                        fontWeight: 600,
+                        fontSize: '13px',
+                        boxShadow: '0 2px 8px rgba(255, 204, 0, 0.35)',
+                        opacity: saving ? 0.7 : 1,
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <Save size={16} />
+                      <span>{saving ? 'Publishing...' : 'Publish Live'}</span>
+                    </button>
+
+                    {/* Create Mode: Save to Rotation Queue / Save Entry */}
+                    <button
+                      type="button"
+                      onClick={() => handleSaveEntry(true)}
+                      disabled={saving}
+                      title="Save to rotation queue without replacing the currently live fact"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        background: '#ffffff',
+                        color: '#334155',
+                        border: '1px solid #cbd5e1',
+                        padding: '12px 20px',
+                        borderRadius: '8px',
+                        cursor: saving ? 'not-allowed' : 'pointer',
+                        fontWeight: 600,
+                        fontSize: '13px',
+                        opacity: saving ? 0.7 : 1,
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <Layers size={15} />
+                      <span>{activeSubTab === 'fact' ? 'Save to Rotation Queue' : 'Save Entry'}</span>
+                    </button>
+                  </>
+                )}
 
                 {/* Cancel */}
                 <button
