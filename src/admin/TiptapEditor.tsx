@@ -12,7 +12,7 @@ import FontFamily from '@tiptap/extension-font-family';
 import { 
   Bold, Italic, Underline as UnderlineIcon, Strikethrough, Code, Link as LinkIcon, Image as ImageIcon, 
   List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify, 
-  Quote, Minus, Undo, Redo, Palette, X, Eye, Code2, Sparkles, Copy, Check
+  Quote, Minus, Undo, Redo, Palette, X, Eye, Code2, Sparkles, Copy, Check, WrapText
 } from 'lucide-react';
 import { MediaLibrary } from '@zwantum/blog/admin';
 import { blogClient } from '../lib/blogClient';
@@ -87,9 +87,42 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px', onR
   const [isCodeView, setIsCodeView] = useState(false);
   const [rawCode, setRawCode] = useState(() => formatHtml(value || ''));
   const [isCopied, setIsCopied] = useState(false);
+  const [isWordWrap, setIsWordWrap] = useState(true);
+  const [lineHeights, setLineHeights] = useState<number[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const gutterRef = useRef<HTMLDivElement>(null);
+  const measureContainerRef = useRef<HTMLDivElement>(null);
+  const [textareaWidth, setTextareaWidth] = useState<number>(0);
   const lastEmittedRef = useRef(value);
+
+  // Measure textarea content width so hidden mirror matches width precisely
+  useEffect(() => {
+    if (!textareaRef.current) return;
+    const updateWidth = () => {
+      if (textareaRef.current) {
+        // clientWidth is width inside borders, excluding scrollbar
+        // subtract padding (16px left + 16px right = 32px)
+        const w = Math.max(0, textareaRef.current.clientWidth - 32);
+        setTextareaWidth(w);
+      }
+    };
+    updateWidth();
+    const ro = new ResizeObserver(updateWidth);
+    ro.observe(textareaRef.current);
+    return () => ro.disconnect();
+  }, [isCodeView]);
+
+  // Measure wrapped heights of each line to align line numbers gutter
+  useEffect(() => {
+    if (!isCodeView || !isWordWrap || !measureContainerRef.current) return;
+    const children = measureContainerRef.current.children;
+    const heights: number[] = [];
+    for (let i = 0; i < children.length; i++) {
+      const el = children[i] as HTMLElement;
+      heights.push(el.offsetHeight || 21);
+    }
+    setLineHeights(heights);
+  }, [rawCode, textareaWidth, isWordWrap, isCodeView]);
 
   const editor = useEditor({
     extensions: [
@@ -339,7 +372,29 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px', onR
 
         {/* Code Mode Quick Actions */}
         {isCodeView ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => setIsWordWrap(!isWordWrap)}
+              title={isWordWrap ? 'Word wrap is ON (lines break naturally). Click to disable.' : 'Word wrap is OFF. Click to wrap long lines.'}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '5px 10px',
+                background: isWordWrap ? '#f1f5f9' : '#ffffff',
+                border: isWordWrap ? '1px solid #94a3b8' : '1px solid #cbd5e1',
+                borderRadius: '6px',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: isWordWrap ? '#0f172a' : '#64748b',
+                cursor: 'pointer',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <WrapText size={13} color={isWordWrap ? '#0f172a' : '#64748b'} />
+              <span>{isWordWrap ? 'Wrap: On' : 'Wrap: Off'}</span>
+            </button>
             <button
               type="button"
               onClick={handleFormatCode}
@@ -786,6 +841,36 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px', onR
             position: 'relative'
           }}
         >
+          {/* Hidden Mirror to measure wrapped heights of each line */}
+          {isCodeView && isWordWrap && (
+            <div
+              ref={measureContainerRef}
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                visibility: 'hidden',
+                top: 0,
+                left: 0,
+                width: textareaWidth > 0 ? `${textareaWidth}px` : '100%',
+                fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace",
+                fontSize: '13px',
+                lineHeight: '21px',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                overflowWrap: 'break-word',
+                boxSizing: 'content-box',
+                pointerEvents: 'none',
+                zIndex: -9999
+              }}
+            >
+              {rawCode.split('\n').map((line, idx) => (
+                <div key={idx} style={{ lineHeight: '21px', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                  {line || '\u00A0'}
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Line Numbers Gutter */}
           <div
             ref={gutterRef}
@@ -804,8 +889,15 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px', onR
               boxSizing: 'border-box'
             }}
           >
-            {Array.from({ length: Math.max(1, rawCode.split('\n').length) }, (_, i) => (
-              <div key={i + 1} style={{ height: '21px', lineHeight: '21px' }}>
+            {rawCode.split('\n').map((_, i) => (
+              <div
+                key={i + 1}
+                style={{
+                  height: isWordWrap && lineHeights[i] ? `${lineHeights[i]}px` : '21px',
+                  lineHeight: '21px',
+                  boxSizing: 'border-box'
+                }}
+              >
                 {i + 1}
               </div>
             ))}
@@ -832,8 +924,10 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px', onR
               color: '#0f172a',
               background: '#ffffff',
               minHeight,
-              whiteSpace: 'pre',
-              overflowX: 'auto',
+              whiteSpace: isWordWrap ? 'pre-wrap' : 'pre',
+              wordBreak: isWordWrap ? 'break-word' : 'normal',
+              overflowWrap: isWordWrap ? 'break-word' : 'normal',
+              overflowX: isWordWrap ? 'hidden' : 'auto',
               overflowY: 'auto',
               resize: 'vertical',
               boxSizing: 'border-box'
