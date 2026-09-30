@@ -15,7 +15,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "postinstall": "node scripts/patch-blog-editor.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^9.121.4",

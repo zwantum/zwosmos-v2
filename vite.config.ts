@@ -5,6 +5,14 @@ import react from '@vitejs/plugin-react'
 export default defineConfig(() => {
   return {
     plugins: [react()],
+    resolve: {
+      alias: [
+        {
+          find: /^@zwantum\/blog-editor$/,
+          replacement: '/src/admin/blog-editor/index.ts'
+        }
+      ]
+    },
     build: {
       chunkSizeWarningLimit: 1200,
       rollupOptions: {
