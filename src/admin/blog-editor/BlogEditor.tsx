@@ -1,13 +1,12 @@
-import { useEffect, useMemo, useState, useRef, forwardRef, useImperativeHandle } from 'react';
-import { useEditor, EditorContent } from '@tiptap/react';
+import React, { useEffect, useMemo, useState, useRef, forwardRef, useImperativeHandle } from 'react';
+import { useEditor, EditorContent, BubbleMenu as TiptapBubbleMenu } from '@tiptap/react';
 import { Extension } from '@tiptap/core';
 import { BlogEditorConfig } from '@zwantum/blog-types';
 import { Eye, Code2, WrapText, Sparkles, Copy, Check } from 'lucide-react';
 
-// Import supporting components and utilities from blog-editor package
+// Import toolbar, extensions, and autosave hook from original blog-editor bundle
 import { 
   EditorToolbar, 
-  EditorBubbleMenu, 
   getBlogEditorExtensions, 
   useAutosave 
 } from '../../../node_modules/@zwantum/blog-editor/dist/index.mjs';
@@ -37,10 +36,15 @@ export interface BlogEditorProps {
 }
 
 export function formatHtml(html: string): string {
-  if (!html) return '';
-  return html
-    .replace(/></g, '>\n<')
-    .replace(/(<\/(?:p|h[1-6]|div|blockquote|ul|ol|li|hr|figure|table|tr|td|th)>)/gi, '$1\n')
+  if (!html || typeof html !== 'string') return '';
+  const trimmed = html.trim();
+  if (trimmed === '<p></p>' || trimmed === '<p><br></p>' || trimmed === '<p><br/></p>') {
+    return trimmed;
+  }
+  return trimmed
+    .replace(/>\s*</g, '><')
+    .replace(/(<\/(?:p|h[1-6]|div|blockquote|ul|ol|li|hr|table|tr|pre|figure)>)/gi, '$1\n')
+    .replace(/(<(?:p|h[1-6]|div|blockquote|ul|ol|table|pre|figure)(?: [^>]*)?>)/gi, '\n$1')
     .split('\n')
     .map(line => line.trim())
     .filter(Boolean)
@@ -94,6 +98,100 @@ const PreserveStyleAndClass = Extension.create({
     ];
   }
 });
+
+// Resilient inline Bubble Menu that safely hides in code mode and never measures detached DOM rects
+const SafeBubbleMenu: React.FC<{ editor: any; isCodeView: boolean }> = ({ editor, isCodeView }) => {
+  if (!editor || isCodeView) return null;
+
+  return (
+    <TiptapBubbleMenu
+      editor={editor}
+      tippyOptions={{ duration: 150 }}
+      shouldShow={({ editor: ed, view, state }) => {
+        if (isCodeView || !ed || ed.isDestroyed || !view) return false;
+        try {
+          if (!view.hasFocus()) return false;
+          return !state.selection.empty;
+        } catch {
+          return false;
+        }
+      }}
+      className="zw-blog-bubble-menu"
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px',
+          padding: '4px 6px',
+          background: '#1e293b',
+          borderRadius: '8px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+        }}
+      >
+        <button
+          type="button"
+          style={{
+            background: editor.isActive('bold') ? '#475569' : 'transparent',
+            color: '#ffffff',
+            border: 'none',
+            padding: '4px 8px',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontWeight: 'bold',
+          }}
+          onClick={() => editor.chain().focus().toggleBold().run()}
+        >
+          B
+        </button>
+        <button
+          type="button"
+          style={{
+            background: editor.isActive('italic') ? '#475569' : 'transparent',
+            color: '#ffffff',
+            border: 'none',
+            padding: '4px 8px',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontStyle: 'italic',
+          }}
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+        >
+          I
+        </button>
+        <button
+          type="button"
+          style={{
+            background: editor.isActive('underline') ? '#475569' : 'transparent',
+            color: '#ffffff',
+            border: 'none',
+            padding: '4px 8px',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            textDecoration: 'underline',
+          }}
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
+        >
+          U
+        </button>
+        <button
+          type="button"
+          style={{
+            background: editor.isActive('highlight') ? '#475569' : 'transparent',
+            color: '#fef08a',
+            border: 'none',
+            padding: '4px 8px',
+            borderRadius: '4px',
+            cursor: 'pointer',
+          }}
+          onClick={() => editor.chain().focus().toggleHighlight().run()}
+        >
+          HL
+        </button>
+      </div>
+    </TiptapBubbleMenu>
+  );
+};
 
 export const BlogEditor = forwardRef<BlogEditorHandle, BlogEditorProps>(({
   content,
@@ -159,31 +257,36 @@ export const BlogEditor = forwardRef<BlogEditorHandle, BlogEditorProps>(({
   // Keep content in sync if incoming content changes while not focused
   useEffect(() => {
     if (editor && content && !editor.isFocused && !isCodeView) {
-      const currentStr = JSON.stringify(editor.getJSON());
-      const incomingStr = JSON.stringify(content);
-      if (currentStr !== incomingStr) {
-        editor.commands.setContent(content, false);
-      }
+      try {
+        const currentStr = JSON.stringify(editor.getJSON());
+        const incomingStr = JSON.stringify(content);
+        if (currentStr !== incomingStr) {
+          editor.commands.setContent(content, false);
+        }
+      } catch {}
     }
   }, [content, editor, isCodeView]);
 
   // Track width of textarea for accurate word-wrap height calculation
   useEffect(() => {
-    if (!textareaRef.current) return;
+    if (!isCodeView || !textareaRef.current) return;
+    let animFrame: number | null = null;
     const updateWidth = () => {
       if (textareaRef.current) {
         const w = Math.max(0, textareaRef.current.clientWidth - 32);
-        if (w > 0) {
-          setTextareaWidth(w);
-        }
+        setTextareaWidth(prev => (prev !== w ? w : prev));
       }
     };
     updateWidth();
     const ro = new ResizeObserver(() => {
-      window.requestAnimationFrame(updateWidth);
+      if (animFrame) cancelAnimationFrame(animFrame);
+      animFrame = requestAnimationFrame(updateWidth);
     });
     ro.observe(textareaRef.current);
-    return () => ro.disconnect();
+    return () => {
+      if (animFrame) cancelAnimationFrame(animFrame);
+      ro.disconnect();
+    };
   }, [isCodeView]);
 
   // Dynamically sync gutter line heights with wrapped visual lines
@@ -203,6 +306,9 @@ export const BlogEditor = forwardRef<BlogEditorHandle, BlogEditorProps>(({
   // Mode switcher handler
   const handleSwitchMode = (toCode: boolean) => {
     if (toCode) {
+      try {
+        editor?.commands.blur();
+      } catch {}
       const currentHtml = editor ? editor.getHTML() : '';
       const formatted = formatHtml(currentHtml || '');
       setRawCode(formatted);
@@ -210,7 +316,7 @@ export const BlogEditor = forwardRef<BlogEditorHandle, BlogEditorProps>(({
     } else {
       if (editor) {
         try {
-          editor.commands.setContent(rawCode, false);
+          editor.commands.setContent(rawCode || '<p></p>', false);
           const json = editor.getJSON() as Record<string, unknown>;
           const text = editor.getText();
           const words = text.trim() ? text.trim().split(/\s+/).length : 0;
@@ -288,7 +394,7 @@ export const BlogEditor = forwardRef<BlogEditorHandle, BlogEditorProps>(({
       if (isCodeView) {
         if (editor) {
           try {
-            editor.commands.setContent(rawCode, false);
+            editor.commands.setContent(rawCode || '<p></p>', false);
           } catch {}
         }
         const isEmpty = !rawCode.trim() || rawCode === '<p></p>' || rawCode === '';
@@ -315,7 +421,7 @@ export const BlogEditor = forwardRef<BlogEditorHandle, BlogEditorProps>(({
     getJSON: () => {
       if (isCodeView && editor) {
         try {
-          editor.commands.setContent(rawCode, false);
+          editor.commands.setContent(rawCode || '<p></p>', false);
         } catch {}
       }
       return editor ? (editor.getJSON() as Record<string, unknown>) : { type: 'doc', content: [{ type: 'paragraph' }] };
@@ -590,12 +696,12 @@ export const BlogEditor = forwardRef<BlogEditorHandle, BlogEditorProps>(({
         </>
       )}
 
-      {/* Visual Editor Section (Always kept mounted in DOM to prevent Tippy/TipTap teardown crash) */}
+      {/* Visual Editor Section (Kept mounted to preserve cursor & TipTap editor instance) */}
       <div style={{ display: isCodeView ? 'none' : 'block' }}>
         {!readOnly && (
           <>
             <EditorToolbar editor={editor} onOpenMediaLibrary={onOpenMediaLibrary} />
-            <EditorBubbleMenu editor={editor} />
+            <SafeBubbleMenu editor={editor} isCodeView={isCodeView} />
           </>
         )}
         <div
