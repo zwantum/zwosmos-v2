@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'node:path'
 
 // https://vite.dev/config/
 export default defineConfig(() => {
@@ -9,7 +10,7 @@ export default defineConfig(() => {
       alias: [
         {
           find: /^@zwantum\/blog-editor$/,
-          replacement: '/src/admin/blog-editor/index.ts'
+          replacement: path.resolve(process.cwd(), 'src/admin/blog-editor/index.ts')
         }
       ]
     },
