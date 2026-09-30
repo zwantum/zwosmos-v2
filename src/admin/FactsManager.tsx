@@ -1784,7 +1784,7 @@ export default function FactsManager() {
                   }}
                 >
                   <Save size={16} />
-                  <span>{saving ? 'Saving...' : activeSubTab === 'fact' ? 'Publish Live Today' : 'Publish'}</span>
+                  <span>{saving ? 'Saving...' : activeSubTab === 'fact' ? 'Publish' : 'Publish'}</span>
                 </button>
 
                 {/* Save Entry */}

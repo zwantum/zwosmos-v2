@@ -90,6 +90,62 @@
   color: #0f172a !important;
 }
 
+/* Explicit Italic Support in Blog Editor */
+.zw-blog-editor-content,
+.zw-blog-editor-content .tiptap,
+.zw-blog-editor-content .ProseMirror {
+  font-synthesis: weight style !important;
+}
+
+.zw-blog-editor-content em,
+.zw-blog-editor-content i,
+.zw-blog-editor-content cite,
+.zw-blog-editor-content [style*="font-style: italic"],
+.zw-blog-editor-content [style*="font-style:italic"],
+.zw-blog-editor-content .tiptap em,
+.zw-blog-editor-content .tiptap i,
+.zw-blog-editor-content .tiptap cite,
+.zw-blog-editor-content .tiptap [style*="font-style: italic"],
+.zw-blog-editor-content .tiptap [style*="font-style:italic"],
+.zw-blog-editor-content .ProseMirror em,
+.zw-blog-editor-content .ProseMirror i,
+.zw-blog-editor-content .ProseMirror cite,
+.zw-blog-editor-content .ProseMirror [style*="font-style: italic"],
+.zw-blog-editor-content .ProseMirror [style*="font-style:italic"] {
+  font-style: italic !important;
+  display: inline !important;
+}
+
+/* Explicit Bold Support in Blog Editor */
+.zw-blog-editor-content strong,
+.zw-blog-editor-content b,
+.zw-blog-editor-content .tiptap strong,
+.zw-blog-editor-content .tiptap b,
+.zw-blog-editor-content .ProseMirror strong,
+.zw-blog-editor-content .ProseMirror b {
+  font-weight: 700 !important;
+}
+
+/* Explicit Bold + Italic Support in Blog Editor */
+.zw-blog-editor-content strong em,
+.zw-blog-editor-content em strong,
+.zw-blog-editor-content b i,
+.zw-blog-editor-content i b,
+.zw-blog-editor-content .tiptap strong em,
+.zw-blog-editor-content .tiptap em strong,
+.zw-blog-editor-content .ProseMirror strong em,
+.zw-blog-editor-content .ProseMirror em strong {
+  font-weight: 700 !important;
+  font-style: italic !important;
+}
+
+/* Explicit Underline Support in Blog Editor */
+.zw-blog-editor-content u,
+.zw-blog-editor-content .tiptap u,
+.zw-blog-editor-content .ProseMirror u {
+  text-decoration: underline !important;
+}
+
 .zw-blog-editor-content .tiptap p.is-editor-empty:first-child::before {
   color: #94a3b8 !important;
 }

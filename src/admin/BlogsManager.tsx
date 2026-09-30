@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BlogAdmin } from '@zwantum/blog/admin';
 import { blogClient } from '../lib/blogClient';
 import { PushNotificationContainer } from './PushNotification';
@@ -7,6 +8,22 @@ import '@zwantum/blog-editor/content.css';
 import './BlogsManager.css';
 
 export default function BlogsManager() {
+  useEffect(() => {
+    // Prevent toolbar buttons and bubble menu buttons from stealing focus / collapsing selection on mousedown
+    const handleMouseDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      const toolbarBtn = target?.closest?.('.zw-blog-toolbar-btn, .zw-blog-editor-toolbar button, .zw-blog-bubble-menu button');
+      if (toolbarBtn) {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => {
+      document.removeEventListener('mousedown', handleMouseDown);
+    };
+  }, []);
+
   return (
     <div className="zw-blog-admin-box-wrapper">
       <PushNotificationContainer />

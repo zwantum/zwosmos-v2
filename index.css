@@ -59,6 +59,48 @@ html[data-theme="sepia"] #root {
   font-family: 'Lora', Georgia, Cambria, 'Times New Roman', Times, serif !important;
 }
 
+/* Ensure font synthesis (faux italic & bold) works across all browsers */
+.zw-blog-content,
+.zw-blog-content-wrapper,
+.zw-blog-prose,
+.blog-article-content-area,
+.zw-blog-editor-content,
+.ProseMirror,
+.tiptap {
+  font-synthesis: weight style !important;
+}
+
+/* Universal Italic Guarantee for Blog Editor & Content */
+.zw-blog-content em,
+.zw-blog-content i,
+.zw-blog-content cite,
+.zw-blog-content [style*="font-style: italic"],
+.zw-blog-content [style*="font-style:italic"],
+.zw-blog-content-wrapper em,
+.zw-blog-content-wrapper i,
+.zw-blog-prose em,
+.zw-blog-prose i,
+.blog-article-content-area em,
+.blog-article-content-area i,
+.zw-blog-editor-content em,
+.zw-blog-editor-content i,
+.zw-blog-editor-content cite,
+.zw-blog-editor-content [style*="font-style: italic"],
+.zw-blog-editor-content [style*="font-style:italic"],
+.ProseMirror em,
+.ProseMirror i,
+.ProseMirror cite,
+.ProseMirror [style*="font-style: italic"],
+.ProseMirror [style*="font-style:italic"],
+.tiptap em,
+.tiptap i,
+.tiptap cite,
+.tiptap [style*="font-style: italic"],
+.tiptap [style*="font-style:italic"] {
+  font-style: italic !important;
+  display: inline !important;
+}
+
 /* Monospace for Code Blocks */
 .zw-blog-content pre,
 .zw-blog-content code,
