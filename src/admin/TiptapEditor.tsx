@@ -11,7 +11,7 @@ import FontFamily from '@tiptap/extension-font-family';
 import { 
   Bold, Italic, Underline as UnderlineIcon, Strikethrough, Code, Link as LinkIcon, Image as ImageIcon, 
   List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify, 
-  Quote, Minus, Undo, Redo, Palette, X
+  Quote, Minus, Undo, Redo, Palette, X, Eye, Code2, Sparkles, Copy, Check
 } from 'lucide-react';
 import { MediaLibrary } from '@zwantum/blog/admin';
 import { blogClient } from '../lib/blogClient';
@@ -24,10 +24,26 @@ interface TiptapEditorProps {
   onReady?: (editor: any) => void;
 }
 
+export function formatHtml(html: string): string {
+  if (!html) return '';
+  return html
+    .replace(/></g, '>\n<')
+    .replace(/(<\/(?:p|h[1-6]|div|blockquote|ul|ol|li|hr|figure|table|tr|td|th)>)/gi, '$1\n')
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean)
+    .join('\n');
+}
+
 export default function TiptapEditor({ value, onChange, minHeight = '180px', onReady }: TiptapEditorProps) {
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [isLinkBoxOpen, setIsLinkBoxOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
+  const [isCodeView, setIsCodeView] = useState(false);
+  const [rawCode, setRawCode] = useState(() => formatHtml(value || ''));
+  const [isCopied, setIsCopied] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const gutterRef = useRef<HTMLDivElement>(null);
   const lastEmittedRef = useRef(value);
 
   const editor = useEditor({
@@ -63,9 +79,13 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px', onR
 
   useEffect(() => {
     if (editor && onReady) {
-      onReady(editor);
+      const proxy = {
+        ...editor,
+        getHTML: () => (isCodeView ? rawCode : editor.getHTML())
+      };
+      onReady(proxy);
     }
-  }, [editor, onReady]);
+  }, [editor, onReady, isCodeView, rawCode]);
 
   useEffect(() => {
     if (!editor) return;
@@ -74,8 +94,65 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px', onR
       if (editor.getHTML() !== value) {
         editor.commands.setContent(value, false);
       }
+      setRawCode(formatHtml(value));
     }
   }, [value, editor]);
+
+  const handleSwitchMode = (toCode: boolean) => {
+    if (toCode) {
+      const currentHtml = editor ? editor.getHTML() : value;
+      const formatted = formatHtml(currentHtml);
+      setRawCode(formatted);
+      setIsCodeView(true);
+    } else {
+      if (editor) {
+        editor.commands.setContent(rawCode, false);
+      }
+      lastEmittedRef.current = rawCode;
+      onChange(rawCode);
+      setIsCodeView(false);
+    }
+  };
+
+  const handleCodeChange = (newCode: string) => {
+    setRawCode(newCode);
+    lastEmittedRef.current = newCode;
+    onChange(newCode);
+  };
+
+  const handleCodeScroll = () => {
+    if (textareaRef.current && gutterRef.current) {
+      gutterRef.current.scrollTop = textareaRef.current.scrollTop;
+    }
+  };
+
+  const handleInsertTag = (openTag: string, closeTag: string = '') => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = rawCode.substring(start, end);
+    const replacement = closeTag ? `${openTag}${selected || 'text'}${closeTag}` : openTag;
+    const newCode = rawCode.substring(0, start) + replacement + rawCode.substring(end);
+    handleCodeChange(newCode);
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + openTag.length, start + openTag.length + (selected ? selected.length : 4));
+    }, 10);
+  };
+
+  const handleFormatCode = () => {
+    const formatted = formatHtml(rawCode);
+    handleCodeChange(formatted);
+  };
+
+  const handleCopyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(rawCode);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch {}
+  };
 
   if (!editor) {
     return null;
@@ -153,13 +230,161 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px', onR
         boxSizing: 'border-box'
       }}
     >
-      {/* Light Dashboard Theme Toolbar (NO black background) */}
+      {/* Top Header Bar: Mode Switcher [Visual Editor] | [</> HTML Code] */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
+          justifyContent: 'space-between',
           padding: '8px 12px',
           background: '#f8fafc',
+          borderBottom: '1px solid #e2e8f0',
+          flexWrap: 'wrap',
+          gap: '8px'
+        }}
+      >
+        {/* Toggle Pills */}
+        <div style={{ display: 'inline-flex', background: '#e2e8f0', borderRadius: '8px', padding: '3px', gap: '3px' }}>
+          <button
+            type="button"
+            onClick={() => handleSwitchMode(false)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '5px 12px',
+              borderRadius: '6px',
+              border: 'none',
+              background: !isCodeView ? '#ffffff' : 'transparent',
+              color: !isCodeView ? '#0f172a' : '#64748b',
+              fontWeight: !isCodeView ? 700 : 500,
+              fontSize: '12px',
+              cursor: 'pointer',
+              boxShadow: !isCodeView ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <Eye size={14} color={!isCodeView ? '#eab308' : '#64748b'} />
+            <span>Visual Editor</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSwitchMode(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '5px 12px',
+              borderRadius: '6px',
+              border: 'none',
+              background: isCodeView ? '#0f172a' : 'transparent',
+              color: isCodeView ? '#ffcc00' : '#64748b',
+              fontWeight: isCodeView ? 700 : 500,
+              fontSize: '12px',
+              cursor: 'pointer',
+              boxShadow: isCodeView ? '0 1px 4px rgba(0,0,0,0.25)' : 'none',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <Code2 size={14} color={isCodeView ? '#ffcc00' : '#64748b'} />
+            <span>&lt;/&gt; HTML Code</span>
+          </button>
+        </div>
+
+        {/* Code Mode Quick Actions */}
+        {isCodeView ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={handleFormatCode}
+              title="Beautify and indent HTML code"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '5px 10px',
+                background: '#ffffff',
+                border: '1px solid #cbd5e1',
+                borderRadius: '6px',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: '#334155',
+                cursor: 'pointer',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.04)'
+              }}
+            >
+              <Sparkles size={13} color="#eab308" />
+              <span>Format HTML</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleCopyCode}
+              title="Copy raw HTML to clipboard"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '5px 10px',
+                background: '#ffffff',
+                border: '1px solid #cbd5e1',
+                borderRadius: '6px',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: isCopied ? '#166534' : '#334155',
+                cursor: 'pointer',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.04)'
+              }}
+            >
+              {isCopied ? <Check size={13} color="#16a34a" /> : <Copy size={13} />}
+              <span>{isCopied ? 'Copied!' : 'Copy Code'}</span>
+            </button>
+          </div>
+        ) : (
+          <span style={{ fontSize: '11px', color: '#64748b' }}>
+            Visual mode • Switch to <strong>&lt;/&gt; HTML Code</strong> to view &amp; edit raw code directly
+          </span>
+        )}
+      </div>
+
+      {/* Code Mode Quick Tag Bar */}
+      {isCodeView && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: '6px 12px',
+            background: '#ffffff',
+            borderBottom: '1px solid #e2e8f0',
+            flexWrap: 'wrap',
+            gap: '6px'
+          }}
+        >
+          <span style={{ fontSize: '11px', fontWeight: 600, color: '#64748b', marginRight: '4px' }}>
+            Quick Tags:
+          </span>
+          <button type="button" onClick={() => handleInsertTag('<p>', '</p>')} className="tiptap-code-tag-btn">&lt;p&gt;</button>
+          <button type="button" onClick={() => handleInsertTag('<strong>', '</strong>')} className="tiptap-code-tag-btn">&lt;strong&gt;</button>
+          <button type="button" onClick={() => handleInsertTag('<em>', '</em>')} className="tiptap-code-tag-btn">&lt;em&gt;</button>
+          <button type="button" onClick={() => handleInsertTag('<u>', '</u>')} className="tiptap-code-tag-btn">&lt;u&gt;</button>
+          <button type="button" onClick={() => handleInsertTag('<s>', '</s>')} className="tiptap-code-tag-btn">&lt;s&gt;</button>
+          <button type="button" onClick={() => handleInsertTag('<a href="https://">', '</a>')} className="tiptap-code-tag-btn">&lt;a&gt;</button>
+          <button type="button" onClick={() => handleInsertTag('<br/>')} className="tiptap-code-tag-btn">&lt;br/&gt;</button>
+          <button type="button" onClick={() => handleInsertTag('<h1>', '</h1>')} className="tiptap-code-tag-btn">&lt;h1&gt;</button>
+          <button type="button" onClick={() => handleInsertTag('<h2>', '</h2>')} className="tiptap-code-tag-btn">&lt;h2&gt;</button>
+          <button type="button" onClick={() => handleInsertTag('<h3>', '</h3>')} className="tiptap-code-tag-btn">&lt;h3&gt;</button>
+          <button type="button" onClick={() => handleInsertTag('<blockquote>', '</blockquote>')} className="tiptap-code-tag-btn">&lt;quote&gt;</button>
+        </div>
+      )}
+
+      {/* Visual Mode Rich Text Toolbar */}
+      {!isCodeView && (
+        <>
+          <div
+            style={{
+          display: 'flex',
+          alignItems: 'center',
+          padding: '8px 12px',
+          background: '#ffffff',
           borderBottom: '1px solid #e2e8f0',
           flexWrap: 'wrap',
           gap: '4px'
@@ -488,18 +713,88 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px', onR
           </button>
         </div>
       )}
+      </>
+      )}
 
-      {/* Clean White Editor Content Area */}
-      <div
-        style={{ background: '#ffffff', color: '#0f172a', minHeight, cursor: 'text' }}
-        onClick={() => {
-          if (editor && !editor.isFocused) {
-            editor.commands.focus();
-          }
-        }}
-      >
-        <EditorContent editor={editor} className="tiptap-white-editor" style={{ minHeight }} />
-      </div>
+      {/* Editor Content Area */}
+      {!isCodeView ? (
+        <div
+          style={{ background: '#ffffff', color: '#0f172a', minHeight, cursor: 'text' }}
+          onClick={() => {
+            if (editor && !editor.isFocused) {
+              editor.commands.focus();
+            }
+          }}
+        >
+          <EditorContent editor={editor} className="tiptap-white-editor" style={{ minHeight }} />
+        </div>
+      ) : (
+        /* Raw HTML Code Editor with Line Numbers */
+        <div
+          style={{
+            display: 'flex',
+            minHeight,
+            background: '#ffffff',
+            borderTop: 'none',
+            overflow: 'hidden',
+            position: 'relative'
+          }}
+        >
+          {/* Line Numbers Gutter */}
+          <div
+            ref={gutterRef}
+            style={{
+              padding: '16px 10px',
+              background: '#f8fafc',
+              borderRight: '1px solid #cbd5e1',
+              color: '#94a3b8',
+              fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace",
+              fontSize: '13px',
+              lineHeight: '21px',
+              textAlign: 'right',
+              userSelect: 'none',
+              overflowY: 'hidden',
+              minWidth: '44px',
+              boxSizing: 'border-box'
+            }}
+          >
+            {Array.from({ length: Math.max(1, rawCode.split('\n').length) }, (_, i) => (
+              <div key={i + 1} style={{ height: '21px', lineHeight: '21px' }}>
+                {i + 1}
+              </div>
+            ))}
+          </div>
+
+          {/* Textarea Code Input */}
+          <textarea
+            ref={textareaRef}
+            value={rawCode}
+            onChange={(e) => handleCodeChange(e.target.value)}
+            onScroll={handleCodeScroll}
+            spellCheck={false}
+            autoCapitalize="off"
+            autoCorrect="off"
+            placeholder="Type or paste HTML code here..."
+            style={{
+              flex: 1,
+              padding: '16px',
+              border: 'none',
+              outline: 'none',
+              fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace",
+              fontSize: '13px',
+              lineHeight: '21px',
+              color: '#0f172a',
+              background: '#ffffff',
+              minHeight,
+              whiteSpace: 'pre',
+              overflowX: 'auto',
+              overflowY: 'auto',
+              resize: 'vertical',
+              boxSizing: 'border-box'
+            }}
+          />
+        </div>
+      )}
 
       {/* Blog Media Gallery Modal */}
       {isMediaModalOpen && (
