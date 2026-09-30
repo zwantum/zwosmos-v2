@@ -372,6 +372,7 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px', onR
 
         {/* Code Mode Quick Actions */}
         {isCodeView ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
             <button
               type="button"
               onClick={() => setIsWordWrap(!isWordWrap)}
