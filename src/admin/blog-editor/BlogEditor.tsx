@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState, useRef, forwardRef, useImperativeHandle } from 'react';
-import { useEditor, EditorContent, BubbleMenu as TiptapBubbleMenu } from '@tiptap/react';
+import { useEffect, useMemo, useState, useRef, forwardRef, useImperativeHandle } from 'react';
+import { useEditor, EditorContent } from '@tiptap/react';
 import { Extension } from '@tiptap/core';
 import { BlogEditorConfig } from '@zwantum/blog-types';
 import { Eye, Code2, WrapText, Sparkles, Copy, Check } from 'lucide-react';
@@ -99,99 +99,7 @@ const PreserveStyleAndClass = Extension.create({
   }
 });
 
-// Resilient inline Bubble Menu that safely hides in code mode and never measures detached DOM rects
-const SafeBubbleMenu: React.FC<{ editor: any; isCodeView: boolean }> = ({ editor, isCodeView }) => {
-  if (!editor || isCodeView) return null;
 
-  return (
-    <TiptapBubbleMenu
-      editor={editor}
-      tippyOptions={{ duration: 150 }}
-      shouldShow={({ editor: ed, view, state }) => {
-        if (isCodeView || !ed || ed.isDestroyed || !view) return false;
-        try {
-          if (!view.hasFocus()) return false;
-          return !state.selection.empty;
-        } catch {
-          return false;
-        }
-      }}
-      className="zw-blog-bubble-menu"
-    >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '4px',
-          padding: '4px 6px',
-          background: '#1e293b',
-          borderRadius: '8px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-        }}
-      >
-        <button
-          type="button"
-          style={{
-            background: editor.isActive('bold') ? '#475569' : 'transparent',
-            color: '#ffffff',
-            border: 'none',
-            padding: '4px 8px',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontWeight: 'bold',
-          }}
-          onClick={() => editor.chain().focus().toggleBold().run()}
-        >
-          B
-        </button>
-        <button
-          type="button"
-          style={{
-            background: editor.isActive('italic') ? '#475569' : 'transparent',
-            color: '#ffffff',
-            border: 'none',
-            padding: '4px 8px',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontStyle: 'italic',
-          }}
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-        >
-          I
-        </button>
-        <button
-          type="button"
-          style={{
-            background: editor.isActive('underline') ? '#475569' : 'transparent',
-            color: '#ffffff',
-            border: 'none',
-            padding: '4px 8px',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            textDecoration: 'underline',
-          }}
-          onClick={() => editor.chain().focus().toggleUnderline().run()}
-        >
-          U
-        </button>
-        <button
-          type="button"
-          style={{
-            background: editor.isActive('highlight') ? '#475569' : 'transparent',
-            color: '#fef08a',
-            border: 'none',
-            padding: '4px 8px',
-            borderRadius: '4px',
-            cursor: 'pointer',
-          }}
-          onClick={() => editor.chain().focus().toggleHighlight().run()}
-        >
-          HL
-        </button>
-      </div>
-    </TiptapBubbleMenu>
-  );
-};
 
 export const BlogEditor = forwardRef<BlogEditorHandle, BlogEditorProps>(({
   content,
@@ -699,10 +607,7 @@ export const BlogEditor = forwardRef<BlogEditorHandle, BlogEditorProps>(({
       {/* Visual Editor Section (Kept mounted to preserve cursor & TipTap editor instance) */}
       <div style={{ display: isCodeView ? 'none' : 'block' }}>
         {!readOnly && (
-          <>
-            <EditorToolbar editor={editor} onOpenMediaLibrary={onOpenMediaLibrary} />
-            <SafeBubbleMenu editor={editor} isCodeView={isCodeView} />
-          </>
+          <EditorToolbar editor={editor} onOpenMediaLibrary={onOpenMediaLibrary} />
         )}
         <div
           className="zw-blog-editor-content"
