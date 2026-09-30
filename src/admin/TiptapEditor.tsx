@@ -21,9 +21,10 @@ interface TiptapEditorProps {
   value: string;
   onChange: (content: string) => void;
   minHeight?: string;
+  onReady?: (editor: any) => void;
 }
 
-export default function TiptapEditor({ value, onChange, minHeight = '180px' }: TiptapEditorProps) {
+export default function TiptapEditor({ value, onChange, minHeight = '180px', onReady }: TiptapEditorProps) {
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [isLinkBoxOpen, setIsLinkBoxOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
@@ -48,7 +49,23 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px' }: T
       lastEmittedRef.current = html;
       onChange(html);
     },
+    onSelectionUpdate: ({ editor }) => {
+      const html = editor.getHTML();
+      lastEmittedRef.current = html;
+      onChange(html);
+    },
+    onBlur: ({ editor }) => {
+      const html = editor.getHTML();
+      lastEmittedRef.current = html;
+      onChange(html);
+    },
   });
+
+  useEffect(() => {
+    if (editor && onReady) {
+      onReady(editor);
+    }
+  }, [editor, onReady]);
 
   useEffect(() => {
     if (!editor) return;

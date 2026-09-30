@@ -81,6 +81,20 @@
   font-weight: 700 !important;
 }
 
+.text-content em,
+.text-content i {
+  font-style: italic !important;
+}
+
 .text-content u {
   text-decoration: underline !important;
+  text-decoration-color: #c084fc !important;
+  text-underline-offset: 4px;
+}
+
+.text-content s,
+.text-content strike,
+.text-content del {
+  text-decoration: line-through !important;
+  text-decoration-color: #c084fc !important;
 }

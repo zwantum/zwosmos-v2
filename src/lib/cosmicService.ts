@@ -594,7 +594,6 @@ export async function saveCosmicEntry(
           subtitle: entry.subtitle || null,
           astronomy_date: entry.astronomyDate || null,
           content: entry.content,
-          scheduled_at: entry.scheduledAt || null,
           status: entry.status,
           updated_at: nowIso
         };
@@ -609,9 +608,14 @@ export async function saveCosmicEntry(
             .eq('status', 'live');
         }
 
-        await supabase.from('cosmic_entries').upsert(payload, { onConflict: 'id' });
-      } catch (err) {
-        console.warn('Supabase upsert warning for cosmic_entries:', err);
+        const { error } = await supabase.from('cosmic_entries').upsert(payload, { onConflict: 'id' });
+        if (error) {
+          console.error('Supabase upsert error for cosmic_entries:', error);
+          throw new Error('Supabase save error: ' + error.message);
+        }
+      } catch (err: any) {
+        console.error('Supabase upsert error for cosmic_entries:', err);
+        return { success: false, error: err.message || 'Database error' };
       }
     }
 
@@ -629,6 +633,7 @@ export async function saveCosmicEntry(
       } else {
         await updateCosmicData({
           factTitle: entry.title,
+          factSubtitle: entry.subtitle || entry.title,
           factContent: entry.content
         });
       }

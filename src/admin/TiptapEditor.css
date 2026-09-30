@@ -133,3 +133,38 @@
   height: 0;
   pointer-events: none;
 }
+
+/* Dashboard Entries List View Snippet */
+.zw-facts-list-snippet {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.zw-facts-list-snippet p {
+  display: inline;
+  margin: 0;
+}
+
+.zw-facts-list-snippet strong,
+.zw-facts-list-snippet b {
+  font-weight: 700 !important;
+  color: #0f172a !important;
+}
+
+.zw-facts-list-snippet em,
+.zw-facts-list-snippet i {
+  font-style: italic !important;
+}
+
+.zw-facts-list-snippet u {
+  text-decoration: underline !important;
+  text-decoration-color: #7c3aed !important;
+  text-underline-offset: 2px;
+}
+
+.zw-facts-list-snippet s,
+.zw-facts-list-snippet strike,
+.zw-facts-list-snippet del {
+  text-decoration: line-through !important;
+}

@@ -122,6 +122,8 @@ export const DailyCosmicSection: React.FC = () => {
         }
         .zw-cosmic-rich-content u {
           text-decoration: underline !important;
+          text-decoration-color: ${isLight ? 'var(--brand-purple)' : '#c084fc'} !important;
+          text-underline-offset: 4px;
         }
         .zw-cosmic-rich-content em,
         .zw-cosmic-rich-content i,
@@ -137,7 +139,6 @@ export const DailyCosmicSection: React.FC = () => {
         .zw-cosmic-rich-content i b {
           font-weight: 700 !important;
           font-style: italic !important;
-          color: ${isLight ? '#111827' : '#ffffff'} !important;
         }
         .zw-cosmic-scrollable {
           scrollbar-width: thin;
@@ -390,7 +391,7 @@ export const DailyCosmicSection: React.FC = () => {
                 <h3
                   style={{
                     margin: '0 0 20px',
-                    fontFamily: "'Noto Sans', sans-serif",
+                    fontFamily: "'Playfair Display', serif",
                     fontSize: isMobile ? '1.85rem' : '2.5rem',
                     fontWeight: 700,
                     letterSpacing: '-0.02em',

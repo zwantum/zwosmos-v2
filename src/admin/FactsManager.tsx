@@ -203,6 +203,7 @@ export default function FactsManager() {
   const [formSubtitle, setFormSubtitle] = useState('');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [formContent, setFormContent] = useState('');
+  const tiptapEditorRef = useRef<any>(null);
 
   // Date fields — used by both Astronomy & Space Fact for midnight IST rollover
   const [monthPart, setMonthPart] = useState('');
@@ -311,11 +312,14 @@ export default function FactsManager() {
   };
 
   const handleSaveEntry = async (asDraft = false) => {
+    const rawContent = tiptapEditorRef.current ? tiptapEditorRef.current.getHTML() : formContent;
+    const finalContent = (rawContent && rawContent.trim() && rawContent !== '<p></p>') ? rawContent : formContent;
+
     if (!formTitle.trim()) {
       alert('Please enter a module title');
       return;
     }
-    if (!stripHtml(formContent).trim()) {
+    if (!stripHtml(finalContent).trim()) {
       alert('Please enter content for this fact');
       return;
     }
@@ -329,9 +333,9 @@ export default function FactsManager() {
         id: editingId || undefined,
         type: activeSubTab as CosmicEntryType,
         title: isAstronomy ? 'This Day in Astronomy' : formTitle,
-        subtitle: isAstronomy ? formSubtitle.trim() : undefined,
+        subtitle: isAstronomy ? formSubtitle.trim() : (formSubtitle.trim() || formTitle),
         astronomyDate: astronomyDateStr || undefined,
-        content: formContent,
+        content: finalContent,
         scheduledAt: null,
         status: finalStatus
       });
@@ -1225,8 +1229,9 @@ export default function FactsManager() {
                             )}
                           </div>
 
-                          {/* Content Snippet */}
-                          <p
+                          {/* Content Snippet (Preserves Rich Text Formatting) */}
+                          <div
+                            className="zw-facts-list-snippet"
                             style={{
                               margin: 0,
                               fontSize: '13px',
@@ -1235,11 +1240,11 @@ export default function FactsManager() {
                               display: '-webkit-box',
                               WebkitLineClamp: 2,
                               WebkitBoxOrient: 'vertical',
-                              overflow: 'hidden'
+                              overflow: 'hidden',
+                              wordBreak: 'break-word'
                             }}
-                          >
-                            {stripHtml(entry.content)}
-                          </p>
+                            dangerouslySetInnerHTML={{ __html: entry.content }}
+                          />
                         </div>
 
                         {/* Right Actions */}
@@ -1746,6 +1751,7 @@ export default function FactsManager() {
                 <TiptapEditor
                   value={formContent}
                   onChange={(newHtml) => setFormContent(newHtml)}
+                  onReady={(ed) => { tiptapEditorRef.current = ed; }}
                   minHeight="180px"
                 />
                 <span style={{ fontSize: '11px', color: '#64748b' }}>
