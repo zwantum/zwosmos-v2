@@ -53,6 +53,32 @@
 </head>
 
 <body>
+  <script>
+    window.addEventListener('error', function(e) {
+      if (document.getElementById('vite-global-error-overlay')) return;
+      var d = document.createElement('div');
+      d.id = 'vite-global-error-overlay';
+      d.style = 'position:fixed;top:0;left:0;right:0;bottom:0;background:#ffffff;color:#991b1b;padding:32px;z-index:99999999;font-family:monospace;font-size:14px;overflow:auto;';
+      d.innerHTML = '<h2 style="color:#dc2626;margin:0 0 16px 0;">JavaScript Runtime Error</h2>' +
+        '<p style="color:#0f172a;font-size:16px;"><strong>Message:</strong> ' + (e.message || e.error) + '</p>' +
+        '<p style="color:#64748b;"><strong>Source:</strong> ' + e.filename + ':' + e.lineno + ':' + e.colno + '</p>' +
+        '<pre style="background:#fee2e2;padding:16px;border-radius:8px;white-space:pre-wrap;overflow:auto;margin-top:16px;">' + (e.error && e.error.stack ? e.error.stack : 'No stack trace available') + '</pre>' +
+        '<button onclick="location.reload()" style="margin-top:20px;padding:10px 20px;background:#dc2626;color:#ffffff;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Reload Page</button>';
+      document.body.appendChild(d);
+    });
+    window.addEventListener('unhandledrejection', function(e) {
+      if (document.getElementById('vite-global-error-overlay')) return;
+      var d = document.createElement('div');
+      d.id = 'vite-global-error-overlay';
+      d.style = 'position:fixed;top:0;left:0;right:0;bottom:0;background:#ffffff;color:#991b1b;padding:32px;z-index:99999999;font-family:monospace;font-size:14px;overflow:auto;';
+      var reason = e.reason || {};
+      d.innerHTML = '<h2 style="color:#dc2626;margin:0 0 16px 0;">Unhandled Promise Rejection</h2>' +
+        '<p style="color:#0f172a;font-size:16px;"><strong>Reason:</strong> ' + (reason.message || String(e.reason)) + '</p>' +
+        '<pre style="background:#fee2e2;padding:16px;border-radius:8px;white-space:pre-wrap;overflow:auto;margin-top:16px;">' + (reason.stack || 'No stack trace available') + '</pre>' +
+        '<button onclick="location.reload()" style="margin-top:20px;padding:10px 20px;background:#dc2626;color:#ffffff;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Reload Page</button>';
+      document.body.appendChild(d);
+    });
+  </script>
   <div id="root"></div>
   <script type="module" src="/src/index.tsx"></script>
 </body>

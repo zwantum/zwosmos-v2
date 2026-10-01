@@ -49,14 +49,6 @@ async function patch() {
     console.error('[patch-blog-editor] Error bundling blog-editor dist:', err);
   }
 
-  // Clear .vite cache so Vite picks up the newly compiled files immediately
-  const viteCache = path.join(rootDir, 'node_modules/.vite');
-  if (fs.existsSync(viteCache)) {
-    try {
-      fs.rmSync(viteCache, { recursive: true, force: true });
-      console.log('[patch-blog-editor] Cleared .vite cache');
-    } catch {}
-  }
 }
 
 patch();
