@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { Link } from 'react-router-dom';
 import { BlogCard } from './BlogCard';
@@ -59,112 +59,114 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
   const isLargeView = winWidth >= 800;
   const isDesktop = winWidth >= 1025;
 
-  // Helper to find a post by matching category slug, or fallback
-  const getPostByCatSlug = (slug: string) => {
-    return livePosts?.find(p => p.categories?.some(c => c.slug?.toLowerCase() === slug.toLowerCase()));
-  };
+  // Synchronously load cached live posts to prevent any reload flash of empty content
+  const cachedPosts = useMemo(() => {
+    try {
+      const raw = sessionStorage.getItem('zw_cached_all_posts');
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return null;
+  }, []);
 
-  const mapToCard = (post: any, fallback: any) => {
-    if (!post) return fallback;
+  useEffect(() => {
+    if (livePosts && livePosts.length > 0) {
+      try {
+        sessionStorage.setItem('zw_cached_all_posts', JSON.stringify(livePosts));
+      } catch {}
+    }
+  }, [livePosts]);
+
+  const activeLivePosts: any[] = useMemo(() => {
+    if (livePosts && livePosts.length > 0) return livePosts;
+    if (cachedPosts && cachedPosts.length > 0) return cachedPosts;
+    return [];
+  }, [livePosts, cachedPosts]);
+
+  // Helper to map a post to BlogCard data structure
+  const mapPostToCard = (post: any) => {
+    if (!post) return null;
+    const primaryCat = post.categories?.[0]?.name || 'COSMOS';
+    const rawExcerpt = post.excerpt || post.description || '';
+    const cleanExcerpt = rawExcerpt.replace(/<[^>]*>?/gm, '').trim();
+    const authorName = post.author?.name || 'Zwosmos Editorial';
+    const dateStr = post.published_at
+      ? new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      : '';
+
     return {
       id: post.slug || post.id,
-      category: (post.categories?.[0]?.name || fallback.category).toUpperCase(),
-      title: post.title,
-      desc: post.excerpt || fallback.desc,
-      authorName: post.author?.name || fallback.authorName,
-      date: post.published_at
-        ? new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-        : fallback.date,
-      img: post.featured_image?.url || fallback.img
+      category: primaryCat.toUpperCase(),
+      title: post.title || 'Untitled Article',
+      desc: cleanExcerpt,
+      authorName,
+      date: dateStr,
+      img: post.featured_image?.url || post.cover_image || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000&auto=format&fit=crop'
     };
   };
 
-  // Section 1: Deep Space & Universe stories
-  const deepSpace1 = mapToCard(getPostByCatSlug('universe'), {
-    id: 1,
-    category: 'DEEP SPACE',
-    title: 'The Nursery of New Stars',
-    desc: 'Far far away, behind the word mountains, interstellar gas collapses into protostellar furnaces across the Pillars of Creation.',
-    authorName: 'Dr. Elena Vance',
-    date: 'Sep 24, 2026',
-    img: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1000&auto=format&fit=crop'
-  });
-  const deepSpace2 = mapToCard(getPostByCatSlug('space-news'), {
-    id: 4,
-    category: 'DEEP SPACE',
-    title: 'The Symphony of Black Holes',
-    desc: 'When two supermassive black holes collide, spacetime itself rings like a bell, radiating gravitational waves across the cosmos.',
-    authorName: 'Marie Curie',
-    date: 'Sep 10, 2026',
-    img: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000&auto=format&fit=crop'
-  });
-  const deepSpace3 = mapToCard(getPostByCatSlug('space-exploration'), {
-    id: 7,
-    category: 'DEEP SPACE',
-    title: 'The Cosmic Web and Dark Voids',
-    desc: 'Invisible filaments of cold dark matter shape the scaffolding of the universe, bridging billion-light-year gulfs between galaxies.',
-    authorName: 'Dr. Marcus Vance',
-    date: 'Aug 30, 2026',
-    img: 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=1000&auto=format&fit=crop'
-  });
+  // Dynamically assign real published posts to each homepage category section
+  const { deepSpacePosts, techPosts, solarPosts } = useMemo(() => {
+    const usedSlugs = new Set<string>();
 
-  // Section 2: Technology & Observatories
-  const techFeatured = mapToCard(getPostByCatSlug('telescopes-technology'), {
-    id: 2,
-    category: 'TECHNOLOGY',
-    title: 'Seeing Further Than Ever Before: The James Webb Frontier',
-    desc: '',
-    authorName: 'Jane Smith',
-    date: 'Sep 20, 2026',
-    img: 'https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?q=80&w=1000&auto=format&fit=crop'
-  });
-  const techStacked1 = mapToCard(getPostByCatSlug('explainers') || getPostByCatSlug('learn'), {
-    id: 5,
-    category: 'TECHNOLOGY',
-    title: 'Submillimeter Telescopes: Piercing Cosmic Dust',
-    desc: 'Antenna arrays high in the Atacama resolve newborn circumstellar disks with sub-arcsecond precision.',
-    authorName: 'Dr. Aris Thorne',
-    date: 'Sep 12, 2026',
-    img: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=600&auto=format&fit=crop'
-  });
-  const techStacked2 = mapToCard(getPostByCatSlug('people-history'), {
-    id: 8,
-    category: 'TECHNOLOGY',
-    title: 'Interstellar Probes: Beyond the Heliopause',
-    desc: 'Deep space probes venturing past the heliopause, transmitting telemetry across interstellar space.',
-    authorName: 'Carl Sagan',
-    date: 'Sep 05, 2026',
-    img: 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?q=80&w=600&auto=format&fit=crop'
-  });
+    const findAndClaim = (predicate: (p: any) => boolean) => {
+      const found = activeLivePosts.find(p => !usedSlugs.has(p.slug || p.id) && predicate(p));
+      if (found) {
+        usedSlugs.add(found.slug || found.id);
+        return found;
+      }
+      return null;
+    };
 
-  // Section 3: Solar System & Planetary Frontiers
-  const solarCard1 = mapToCard(getPostByCatSlug('solar-system'), {
-    id: 3,
-    category: 'SOLAR SYSTEM',
-    title: 'When the Sun Disappears',
-    desc: "During total solar eclipse, the sun's ghostly outer atmosphere reveals magnetic storms that govern space weather.",
-    authorName: 'Alan Turing',
-    date: 'Sep 15, 2026',
-    img: 'https://images.unsplash.com/photo-1541873676-a18131494184?q=80&w=600&auto=format&fit=crop'
-  });
-  const solarCard2 = mapToCard(getPostByCatSlug('skywatching'), {
-    id: 6,
-    category: 'SOLAR SYSTEM',
-    title: 'Subsurface Oceans of Enceladus',
-    desc: 'Plumes of water vapor and organic molecules blasting through the icy crust hint at subterranean vents harboring life.',
-    authorName: 'Ada Lovelace',
-    date: 'Aug 28, 2026',
-    img: 'https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?q=80&w=600&auto=format&fit=crop'
-  });
-  const solarCard3 = mapToCard(getPostByCatSlug('space-culture'), {
-    id: 8,
-    category: 'SOLAR SYSTEM',
-    title: 'Storms of Jupiter: Great Red Spot',
-    desc: "NASA's Juno spacecraft penetrates deep into Jupiter's cloud decks, unmasking vortex roots plunging into hydrogen oceans.",
-    authorName: 'Carl Sagan',
-    date: 'Sep 05, 2026',
-    img: 'https://images.unsplash.com/photo-1614732414444-096e5f1122d5?q=80&w=600&auto=format&fit=crop'
-  });
+    const claimAnyRemaining = () => {
+      const found = activeLivePosts.find(p => !usedSlugs.has(p.slug || p.id));
+      if (found) {
+        usedSlugs.add(found.slug || found.id);
+        return found;
+      }
+      return null;
+    };
+
+    const hasCat = (post: any, slugs: string[]) => {
+      const pSlugs = (post.categories || []).map((c: any) => c.slug?.toLowerCase());
+      return slugs.some(s => pSlugs.includes(s.toLowerCase()));
+    };
+
+    // Section 1: Deep Space Chronicles (Universe, Space News, Space Exploration)
+    const ds1 = findAndClaim(p => hasCat(p, ['universe']));
+    const ds2 = findAndClaim(p => hasCat(p, ['space-news']));
+    const ds3 = findAndClaim(p => hasCat(p, ['space-exploration']));
+    const dsList = [ds1, ds2, ds3].map(p => p || claimAnyRemaining()).filter(Boolean);
+
+    // Section 2: Technology & Observatories (Telescopes & Tech, Explainers/Learn, People & History)
+    const tech1 = findAndClaim(p => hasCat(p, ['telescopes-technology']));
+    const tech2 = findAndClaim(p => hasCat(p, ['explainers', 'learn']));
+    const tech3 = findAndClaim(p => hasCat(p, ['people-history']));
+    const tList = [tech1, tech2, tech3].map(p => p || claimAnyRemaining()).filter(Boolean);
+
+    // Section 3: Solar System & Planetary Frontiers (Solar System, Skywatching, Space Culture, General)
+    const sol1 = findAndClaim(p => hasCat(p, ['solar-system']));
+    const sol2 = findAndClaim(p => hasCat(p, ['skywatching']));
+    const sol3 = findAndClaim(p => hasCat(p, ['space-culture']));
+    const sList = [sol1, sol2, sol3].map(p => p || claimAnyRemaining()).filter(Boolean);
+
+    return {
+      deepSpacePosts: dsList.map(mapPostToCard).filter(Boolean) as NonNullable<ReturnType<typeof mapPostToCard>>[],
+      techPosts: tList.map(mapPostToCard).filter(Boolean) as NonNullable<ReturnType<typeof mapPostToCard>>[],
+      solarPosts: sList.map(mapPostToCard).filter(Boolean) as NonNullable<ReturnType<typeof mapPostToCard>>[]
+    };
+  }, [activeLivePosts]);
+
+  const deepSpace1 = deepSpacePosts[0];
+  const deepSpace2 = deepSpacePosts[1];
+  const deepSpace3 = deepSpacePosts[2];
+
+  const techFeatured = techPosts[0];
+  const techStacked1 = techPosts[1];
+  const techStacked2 = techPosts[2];
+
+  const solarCard1 = solarPosts[0];
+  const solarCard2 = solarPosts[1];
+  const solarCard3 = solarPosts[2];
 
   return (
     <div
@@ -199,18 +201,30 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
           </div>
 
           <div className="grid-3">
-            {[deepSpace1, deepSpace2, deepSpace3].map((story) => (
-              <BlogCard
-                key={story.id}
-                id={story.id}
-                category={story.category}
-                title={story.title}
-                desc={story.desc}
-                img={story.img}
-                authorName={story.authorName}
-                date={story.date}
-                variant="standard"
-              />
+            {[deepSpace1, deepSpace2, deepSpace3].map((story, idx) => (
+              story ? (
+                <BlogCard
+                  key={story.id}
+                  id={story.id}
+                  category={story.category}
+                  title={story.title}
+                  desc={story.desc}
+                  img={story.img}
+                  authorName={story.authorName}
+                  date={story.date}
+                  variant="standard"
+                />
+              ) : (
+                <div
+                  key={idx}
+                  style={{
+                    height: '380px',
+                    borderRadius: '8px',
+                    background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.02)',
+                    border: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.05)'
+                  }}
+                />
+              )
             ))}
           </div>
         </div>
@@ -246,42 +260,75 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
           >
             {/* Left Column: Large Featured Hero Card */}
             <div style={{ display: 'flex', flexDirection: 'column', height: isSmallPhone ? 'auto' : '100%' }}>
-              <BlogCard
-                id={techFeatured.id}
-                category={techFeatured.category}
-                title={techFeatured.title}
-                desc=""
-                showExcerpt={false}
-                authorName={techFeatured.authorName}
-                date={techFeatured.date}
-                img={techFeatured.img}
-                variant="featured"
-              />
+              {techFeatured ? (
+                <BlogCard
+                  id={techFeatured.id}
+                  category={techFeatured.category}
+                  title={techFeatured.title}
+                  desc=""
+                  showExcerpt={false}
+                  authorName={techFeatured.authorName}
+                  date={techFeatured.date}
+                  img={techFeatured.img}
+                  variant="featured"
+                />
+              ) : (
+                <div
+                  style={{
+                    height: '380px',
+                    borderRadius: '8px',
+                    background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.02)',
+                    border: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.05)'
+                  }}
+                />
+              )}
             </div>
 
             {/* Right Column: Stacked Horizontal Cards (2 Cards) */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: isSmallPhone ? '30px' : '16px', height: isSmallPhone ? 'auto' : '100%' }}>
-              <BlogCard
-                id={techStacked1.id}
-                category={techStacked1.category}
-                title={techStacked1.title}
-                desc={techStacked1.desc}
-                authorName={techStacked1.authorName}
-                date={techStacked1.date}
-                img={techStacked1.img}
-                variant="horizontal"
-              />
+              {techStacked1 ? (
+                <BlogCard
+                  id={techStacked1.id}
+                  category={techStacked1.category}
+                  title={techStacked1.title}
+                  desc={techStacked1.desc}
+                  authorName={techStacked1.authorName}
+                  date={techStacked1.date}
+                  img={techStacked1.img}
+                  variant="horizontal"
+                />
+              ) : (
+                <div
+                  style={{
+                    height: '170px',
+                    borderRadius: '8px',
+                    background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.02)',
+                    border: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.05)'
+                  }}
+                />
+              )}
 
-              <BlogCard
-                id={techStacked2.id}
-                category={techStacked2.category}
-                title={techStacked2.title}
-                desc={techStacked2.desc}
-                authorName={techStacked2.authorName}
-                date={techStacked2.date}
-                img={techStacked2.img}
-                variant="horizontal"
-              />
+              {techStacked2 ? (
+                <BlogCard
+                  id={techStacked2.id}
+                  category={techStacked2.category}
+                  title={techStacked2.title}
+                  desc={techStacked2.desc}
+                  authorName={techStacked2.authorName}
+                  date={techStacked2.date}
+                  img={techStacked2.img}
+                  variant="horizontal"
+                />
+              ) : (
+                <div
+                  style={{
+                    height: '170px',
+                    borderRadius: '8px',
+                    background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.02)',
+                    border: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.05)'
+                  }}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -315,38 +362,31 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
               alignItems: isSmallPhone ? 'start' : 'stretch'
             }}
           >
-            <BlogCard
-              id={solarCard1.id}
-              category={solarCard1.category}
-              title={solarCard1.title}
-              desc={solarCard1.desc}
-              authorName={solarCard1.authorName}
-              date={solarCard1.date}
-              img={solarCard1.img}
-              variant="horizontal"
-            />
-
-            <BlogCard
-              id={solarCard2.id}
-              category={solarCard2.category}
-              title={solarCard2.title}
-              desc={solarCard2.desc}
-              authorName={solarCard2.authorName}
-              date={solarCard2.date}
-              img={solarCard2.img}
-              variant="horizontal"
-            />
-
-            <BlogCard
-              id={solarCard3.id}
-              category={solarCard3.category}
-              title={solarCard3.title}
-              desc={solarCard3.desc}
-              authorName={solarCard3.authorName}
-              date={solarCard3.date}
-              img={solarCard3.img}
-              variant="horizontal"
-            />
+            {[solarCard1, solarCard2, solarCard3].map((card, idx) => (
+              card ? (
+                <BlogCard
+                  key={card.id}
+                  id={card.id}
+                  category={card.category}
+                  title={card.title}
+                  desc={card.desc}
+                  authorName={card.authorName}
+                  date={card.date}
+                  img={card.img}
+                  variant="horizontal"
+                />
+              ) : (
+                <div
+                  key={idx}
+                  style={{
+                    height: '170px',
+                    borderRadius: '8px',
+                    background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.02)',
+                    border: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.05)'
+                  }}
+                />
+              )
+            ))}
           </div>
         </div>
       </section>
