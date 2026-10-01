@@ -4,12 +4,10 @@ import { Extension } from '@tiptap/core';
 import { BlogEditorConfig } from '@zwantum/blog-types';
 import { Eye, Code2, WrapText, Sparkles, Copy, Check } from 'lucide-react';
 
-// Import toolbar, extensions, and autosave hook from original blog-editor bundle
-import { 
-  EditorToolbar, 
-  getBlogEditorExtensions, 
-  useAutosave 
-} from '../../../node_modules/@zwantum/blog-editor/dist/index.mjs';
+// Import toolbar, extensions, and autosave directly from pure source files (no circular dist imports)
+import { EditorToolbar } from '../../../node_modules/@zwantum/blog-editor/src/components/EditorToolbar';
+import { getBlogEditorExtensions } from '../../../node_modules/@zwantum/blog-editor/src/extensions';
+import { useAutosave } from '../../../node_modules/@zwantum/blog-editor/src/hooks/useAutosave';
 
 import '@zwantum/blog-editor/styles.css';
 import '@zwantum/blog-editor/content.css';

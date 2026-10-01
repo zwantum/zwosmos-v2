@@ -9,8 +9,15 @@ const targetEditorPath = path.join(rootDir, 'node_modules/@zwantum/blog-editor/s
 
 async function patch() {
   if (fs.existsSync(localEditorPath) && fs.existsSync(path.dirname(targetEditorPath))) {
-    fs.copyFileSync(localEditorPath, targetEditorPath);
-    console.log('[patch-blog-editor] Copied enhanced BlogEditor.tsx to node_modules/@zwantum/blog-editor');
+    let code = fs.readFileSync(localEditorPath, 'utf8');
+    code = code
+      .replace(/['"]\.\.\/\.\.\/\.\.\/node_modules\/@zwantum\/blog-editor\/src\/components\/EditorToolbar['"]/g, "'./EditorToolbar'")
+      .replace(/['"]\.\.\/\.\.\/\.\.\/node_modules\/@zwantum\/blog-editor\/src\/extensions['"]/g, "'../extensions'")
+      .replace(/['"]\.\.\/\.\.\/\.\.\/node_modules\/@zwantum\/blog-editor\/src\/hooks\/useAutosave['"]/g, "'../hooks/useAutosave'")
+      .replace(/['"]@zwantum\/blog-editor\/styles\.css['"]/g, "'../styles/editor.css'")
+      .replace(/['"]@zwantum\/blog-editor\/content\.css['"]/g, "'../styles/content.css'");
+    fs.writeFileSync(targetEditorPath, code, 'utf8');
+    console.log('[patch-blog-editor] Copied and adapted BlogEditor.tsx to node_modules/@zwantum/blog-editor');
   }
 
   try {
@@ -48,7 +55,6 @@ async function patch() {
   } catch (err) {
     console.error('[patch-blog-editor] Error bundling blog-editor dist:', err);
   }
-
 }
 
 patch();
