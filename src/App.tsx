@@ -1,8 +1,23 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
+import { Routes, Route, useLocation, useNavigationType, Navigate } from 'react-router-dom';
 import { MobileProvider } from './contexts/MobileContext';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
+import { BlogProvider } from '@zwantum/blog/react';
+import { blogClient } from './lib/blogClient';
+import { useSEO } from './lib/seoService';
 import HeroSection from './ui/HeroSection';
 import DailyCosmicSection from './ui/DailyCosmicSection';
 import ContentSections from './ui/ContentSections';
+import BlogIndexPage from './ui/BlogIndexPage';
+import BlogPostPage from './ui/BlogPostPage';
+import BooksPage from './ui/BooksPage';
+import CategoryPage from './ui/CategoryPage';
+import AuthorPage from './ui/AuthorPage';
+import TagPage from './ui/TagPage';
+import RssPage from './ui/RssPage';
+import SitemapPage from './ui/SitemapPage';
+import NotFoundPage from './ui/NotFoundPage';
+import ScrollToTopButton from './ui/ScrollToTopButton';
 import { Analytics } from "@vercel/analytics/react";
 import ErrorBoundary from './ui/ErrorBoundary';
 
@@ -114,22 +129,6 @@ function AppContent() {
     </div>
   );
 }
-
-import BlogIndexPage from './ui/BlogIndexPage';
-import BlogPostPage from './ui/BlogPostPage';
-import BooksPage from './ui/BooksPage';
-import CategoryPage from './ui/CategoryPage';
-import AuthorPage from './ui/AuthorPage';
-import TagPage from './ui/TagPage';
-import RssPage from './ui/RssPage';
-import SitemapPage from './ui/SitemapPage';
-import NotFoundPage from './ui/NotFoundPage';
-import ScrollToTopButton from './ui/ScrollToTopButton';
-import { Routes, Route, useLocation, useNavigationType, Navigate } from 'react-router-dom';
-import { ThemeProvider, useTheme } from './contexts/ThemeContext';
-import { BlogProvider } from '@zwantum/blog/react';
-import { blogClient } from './lib/blogClient';
-import { useSEO } from './lib/seoService';
 
 // Preserves scroll position on refresh/back/forward, while scrolling to top on new page navigation
 function ScrollToTop() {

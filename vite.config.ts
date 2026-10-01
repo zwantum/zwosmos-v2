@@ -14,9 +14,7 @@ export default defineConfig(() => {
         }
       ]
     },
-    optimizeDeps: {
-      exclude: ['@zwantum/blog', '@zwantum/blog-admin', '@zwantum/blog-editor']
-    },
+
     build: {
       chunkSizeWarningLimit: 1200,
       rollupOptions: {
