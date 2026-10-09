@@ -8,16 +8,40 @@ const localEditorPath = path.join(rootDir, 'src/admin/blog-editor/BlogEditor.tsx
 const targetEditorPath = path.join(rootDir, 'node_modules/@zwantum/blog-editor/src/components/BlogEditor.tsx');
 
 async function patch() {
+  // Sync modified components and extensions to node_modules/@zwantum/blog-editor/src
   if (fs.existsSync(localEditorPath) && fs.existsSync(path.dirname(targetEditorPath))) {
     let code = fs.readFileSync(localEditorPath, 'utf8');
     code = code
-      .replace(/['"]\.\.\/\.\.\/\.\.\/node_modules\/@zwantum\/blog-editor\/src\/components\/EditorToolbar['"]/g, "'./EditorToolbar'")
-      .replace(/['"]\.\.\/\.\.\/\.\.\/node_modules\/@zwantum\/blog-editor\/src\/extensions['"]/g, "'../extensions'")
-      .replace(/['"]\.\.\/\.\.\/\.\.\/node_modules\/@zwantum\/blog-editor\/src\/hooks\/useAutosave['"]/g, "'../hooks/useAutosave'")
+      .replace(/['"]\.\/EditorToolbar['"]/g, "'./EditorToolbar'")
+      .replace(/['"]\.\/extensions['"]/g, "'../extensions'")
+      .replace(/['"]\.\/hooks\/useAutosave['"]/g, "'../hooks/useAutosave'")
       .replace(/['"]@zwantum\/blog-editor\/styles\.css['"]/g, "'../styles/editor.css'")
       .replace(/['"]@zwantum\/blog-editor\/content\.css['"]/g, "'../styles/content.css'");
     fs.writeFileSync(targetEditorPath, code, 'utf8');
-    console.log('[patch-blog-editor] Copied and adapted BlogEditor.tsx to node_modules/@zwantum/blog-editor');
+  }
+
+  const localToolbarPath = path.join(rootDir, 'src/admin/blog-editor/EditorToolbar.tsx');
+  const targetToolbarPath = path.join(rootDir, 'node_modules/@zwantum/blog-editor/src/components/EditorToolbar.tsx');
+  if (fs.existsSync(localToolbarPath) && fs.existsSync(path.dirname(targetToolbarPath))) {
+    fs.copyFileSync(localToolbarPath, targetToolbarPath);
+  }
+
+  const localModalPath = path.join(rootDir, 'src/admin/blog-editor/EditorModal.tsx');
+  const targetModalPath = path.join(rootDir, 'node_modules/@zwantum/blog-editor/src/components/EditorModal.tsx');
+  if (fs.existsSync(localModalPath) && fs.existsSync(path.dirname(targetModalPath))) {
+    fs.copyFileSync(localModalPath, targetModalPath);
+  }
+
+  const localExtDir = path.join(rootDir, 'src/admin/blog-editor/extensions');
+  const targetExtDir = path.join(rootDir, 'node_modules/@zwantum/blog-editor/src/extensions');
+  if (fs.existsSync(localExtDir) && fs.existsSync(targetExtDir)) {
+    fs.cpSync(localExtDir, targetExtDir, { recursive: true });
+  }
+
+  const localBlogContentPath = path.join(rootDir, 'src/ui/BlogContent.tsx');
+  const targetBlogContentPath = path.join(rootDir, 'node_modules/@zwantum/blog-react/src/components/BlogContent.tsx');
+  if (fs.existsSync(localBlogContentPath) && fs.existsSync(path.dirname(targetBlogContentPath))) {
+    fs.copyFileSync(localBlogContentPath, targetBlogContentPath);
   }
 
   try {
@@ -51,9 +75,33 @@ async function patch() {
     fs.unlinkSync(tempMjs);
     fs.unlinkSync(tempCjs);
 
-    console.log('[patch-blog-editor] Successfully compiled @zwantum/blog-editor dist files');
+    console.log('[patch-blog-editor] Successfully compiled @zwantum/blog-editor dist files with Citation support');
+
+    // Also compile @zwantum/blog-react dist files with Citation support
+    const reactEntry = path.join(rootDir, 'node_modules/@zwantum/blog-react/src/index.ts');
+    const reactOutMjs = path.join(rootDir, 'node_modules/@zwantum/blog-react/dist/index.mjs');
+    const reactOutCjs = path.join(rootDir, 'node_modules/@zwantum/blog-react/dist/index.js');
+    if (fs.existsSync(reactEntry)) {
+      await esbuild.build({
+        entryPoints: [reactEntry],
+        outfile: reactOutMjs,
+        bundle: true,
+        format: 'esm',
+        external: ['react', 'react-dom', 'react/*', 'react-dom/*', '@zwantum/blog-core', '@zwantum/blog-types'],
+        loader: { '.tsx': 'tsx', '.ts': 'ts' }
+      });
+      await esbuild.build({
+        entryPoints: [reactEntry],
+        outfile: reactOutCjs,
+        bundle: true,
+        format: 'cjs',
+        external: ['react', 'react-dom', 'react/*', 'react-dom/*', '@zwantum/blog-core', '@zwantum/blog-types'],
+        loader: { '.tsx': 'tsx', '.ts': 'ts' }
+      });
+      console.log('[patch-blog-editor] Successfully compiled @zwantum/blog-react dist files with Citation support');
+    }
   } catch (err) {
-    console.error('[patch-blog-editor] Error bundling blog-editor dist:', err);
+    console.error('[patch-blog-editor] Error bundling dist files:', err);
   }
 }
 

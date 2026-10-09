@@ -12,10 +12,11 @@ import FontFamily from '@tiptap/extension-font-family';
 import { 
   Bold, Italic, Underline as UnderlineIcon, Strikethrough, Code, Link as LinkIcon, Image as ImageIcon, 
   List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify, 
-  Quote, Minus, Undo, Redo, Palette, X, Eye, Code2, Sparkles, Copy, Check, WrapText
+  Quote, Minus, Undo, Redo, Palette, X, Eye, Code2, Sparkles, Copy, Check, WrapText, Bookmark
 } from 'lucide-react';
 import { MediaLibrary } from '@zwantum/blog/admin';
 import { blogClient } from '../lib/blogClient';
+import { BlogCitation } from './blog-editor/extensions/citation';
 import './TiptapEditor.css';
 
 interface TiptapEditorProps {
@@ -84,6 +85,11 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px', onR
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [isLinkBoxOpen, setIsLinkBoxOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
+  const [isCitationBoxOpen, setIsCitationBoxOpen] = useState(false);
+  const [citationText, setCitationText] = useState('');
+  const [citationUrl, setCitationUrl] = useState('');
+  const [citationOpenInNewTab, setCitationOpenInNewTab] = useState(true);
+  const [citationRelType, setCitationRelType] = useState<'dofollow' | 'nofollow'>('dofollow');
   const [isCodeView, setIsCodeView] = useState(false);
   const [rawCode, setRawCode] = useState(() => formatHtml(value || ''));
   const [isCopied, setIsCopied] = useState(false);
@@ -131,7 +137,16 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px', onR
       }),
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Underline,
-      Link.configure({ openOnClick: false }),
+      Link.extend({
+        parseHTML() {
+          return [
+            {
+              tag: 'a[href]:not([data-citation]):not(.zw-blog-citation)',
+            },
+          ];
+        },
+      }).configure({ openOnClick: false }),
+      BlogCitation,
       Image,
       Color,
       TextStyle,
@@ -259,6 +274,69 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px', onR
   const handleRemoveLink = () => {
     editor.chain().focus().extendMarkRange('link').unsetLink().run();
     setIsLinkBoxOpen(false);
+  };
+
+  const handleToggleCitationBox = () => {
+    const attrs = editor.getAttributes('blogCitation');
+    const { from, to } = editor.state.selection;
+    const selected = editor.state.doc.textBetween(from, to, ' ');
+    setCitationUrl((attrs.href as string) || '');
+    setCitationText(selected || '');
+    setCitationOpenInNewTab(attrs.target === undefined ? true : attrs.target === '_blank');
+    const relStr = (attrs.rel as string) || '';
+    setCitationRelType(relStr.includes('nofollow') ? 'nofollow' : 'dofollow');
+    setIsCitationBoxOpen(!isCitationBoxOpen);
+    if (isLinkBoxOpen) setIsLinkBoxOpen(false);
+  };
+
+  const handleApplyCitation = () => {
+    const url = citationUrl.trim();
+    const text = citationText.trim();
+    if (!url) {
+      editor.chain().focus().extendMarkRange('blogCitation').unsetCitation().run();
+    } else {
+      const finalUrl = url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')
+        ? url
+        : `https://${url}`;
+      const target = citationOpenInNewTab ? '_blank' : null;
+      const rel = citationRelType === 'nofollow'
+        ? (target === '_blank' ? 'nofollow noopener noreferrer' : 'nofollow')
+        : (target === '_blank' ? 'noopener noreferrer' : null);
+
+      const { selection } = editor.state;
+      if (selection.empty) {
+        if (editor.isActive('blogCitation')) {
+          editor.chain().focus().extendMarkRange('blogCitation').setCitation({ href: finalUrl, target, rel }).run();
+        } else if (text) {
+          editor.chain().focus().insertContent({
+            type: 'text',
+            text,
+            marks: [{ type: 'blogCitation', attrs: { href: finalUrl, target, rel, 'data-citation': 'true', class: 'zw-blog-citation' } }]
+          }).run();
+        }
+      } else {
+        const selectedText = editor.state.doc.textBetween(selection.from, selection.to, ' ');
+        if (text && text !== selectedText) {
+          editor.chain().focus().insertContent({
+            type: 'text',
+            text,
+            marks: [{ type: 'blogCitation', attrs: { href: finalUrl, target, rel, 'data-citation': 'true', class: 'zw-blog-citation' } }]
+          }).run();
+        } else {
+          const chain = editor.chain().focus().unsetLink();
+          if (editor.isActive('blogCitation')) {
+            chain.extendMarkRange('blogCitation');
+          }
+          chain.setCitation({ href: finalUrl, target, rel }).run();
+        }
+      }
+    }
+    setIsCitationBoxOpen(false);
+  };
+
+  const handleRemoveCitation = () => {
+    editor.chain().focus().extendMarkRange('blogCitation').unsetCitation().run();
+    setIsCitationBoxOpen(false);
   };
 
   const toolbarBtnStyle = (isActive: boolean) => ({
@@ -600,6 +678,17 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px', onR
           <LinkIcon size={15} />
         </button>
 
+        {/* Citation Badge */}
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={handleToggleCitationBox}
+          style={toolbarBtnStyle(editor.isActive('blogCitation') || isCitationBoxOpen)}
+          title="Insert Reference Citation Badge"
+        >
+          <Bookmark size={15} />
+        </button>
+
         {/* Image from Blog Media Gallery */}
         <button
           type="button"
@@ -800,6 +889,141 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px', onR
           <button
             type="button"
             onClick={() => setIsLinkBoxOpen(false)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#64748b',
+              cursor: 'pointer',
+              padding: '4px',
+              display: 'flex',
+              alignItems: 'center'
+            }}
+            title="Close"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
+      {/* Inline Citation Toolbar */}
+      {isCitationBoxOpen && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 14px',
+            background: '#f8fafc',
+            borderBottom: '1px solid #e2e8f0',
+            flexWrap: 'wrap',
+            animation: 'fadeIn 0.15s ease'
+          }}
+        >
+          <span style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <Bookmark size={14} color="#0284c7" /> Citation:
+          </span>
+          <input
+            type="text"
+            value={citationText}
+            onChange={(e) => setCitationText(e.target.value)}
+            placeholder="Badge label (e.g. NASA black-hole guide)"
+            style={{
+              flex: 1,
+              minWidth: '180px',
+              padding: '6px 10px',
+              borderRadius: '6px',
+              border: '1px solid #cbd5e1',
+              fontSize: '13px',
+              outline: 'none',
+              background: '#ffffff',
+              color: '#0f172a'
+            }}
+          />
+          <input
+            type="url"
+            value={citationUrl}
+            onChange={(e) => setCitationUrl(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleApplyCitation();
+              } else if (e.key === 'Escape') {
+                setIsCitationBoxOpen(false);
+              }
+            }}
+            placeholder="URL (https://example.com)"
+            style={{
+              flex: 1.2,
+              minWidth: '200px',
+              padding: '6px 10px',
+              borderRadius: '6px',
+              border: '1px solid #cbd5e1',
+              fontSize: '13px',
+              outline: 'none',
+              background: '#ffffff',
+              color: '#0f172a'
+            }}
+          />
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#475569', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={citationOpenInNewTab}
+              onChange={(e) => setCitationOpenInNewTab(e.target.checked)}
+            />
+            <span>New Tab</span>
+          </label>
+          <select
+            value={citationRelType}
+            onChange={(e: any) => setCitationRelType(e.target.value)}
+            style={{
+              padding: '5px 8px',
+              borderRadius: '6px',
+              border: '1px solid #cbd5e1',
+              fontSize: '12px',
+              background: '#ffffff',
+              color: '#334155'
+            }}
+          >
+            <option value="dofollow">DoFollow</option>
+            <option value="nofollow">NoFollow (rel="nofollow")</option>
+          </select>
+          <button
+            type="button"
+            onClick={handleApplyCitation}
+            style={{
+              background: '#0284c7',
+              color: '#ffffff',
+              border: 'none',
+              padding: '6px 14px',
+              borderRadius: '6px',
+              fontWeight: 600,
+              fontSize: '12px',
+              cursor: 'pointer'
+            }}
+          >
+            Insert Badge
+          </button>
+          {editor.isActive('blogCitation') && (
+            <button
+              type="button"
+              onClick={handleRemoveCitation}
+              style={{
+                background: '#fee2e2',
+                color: '#ef4444',
+                border: '1px solid #fecdd3',
+                padding: '5px 12px',
+                borderRadius: '6px',
+                fontSize: '12px',
+                cursor: 'pointer',
+                fontWeight: 500
+              }}
+            >
+              Remove
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setIsCitationBoxOpen(false)}
             style={{
               background: 'transparent',
               border: 'none',

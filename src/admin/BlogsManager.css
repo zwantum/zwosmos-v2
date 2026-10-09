@@ -342,3 +342,80 @@
   color: #065f46 !important;
 }
 
+/* Reference Citations in Admin Editor */
+.zw-blog-editor-content .tiptap .zw-blog-citation,
+.tiptap .zw-blog-citation {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 2px 8px !important;
+  margin: 0 3px !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+  font-size: 0.85em !important;
+  font-weight: 500 !important;
+  line-height: 1.45 !important;
+  color: #475569 !important;
+  background-color: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 5px !important;
+  text-decoration: none !important;
+  vertical-align: baseline !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: color 0.15s ease, border-color 0.15s ease !important;
+}
+
+.zw-blog-editor-content .tiptap .zw-blog-citation:hover,
+.tiptap .zw-blog-citation:hover {
+  color: #0284c7 !important;
+  border-color: #0284c7 !important;
+  background-color: #f8fafc !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* Dark mode in admin */
+[data-theme="dark"] .tiptap .zw-blog-citation,
+body.dark-theme .tiptap .zw-blog-citation,
+.dark-theme .tiptap .zw-blog-citation {
+  color: #38bdf8 !important;
+  background-color: rgba(15, 23, 42, 0.75) !important;
+  border: 1px solid rgba(56, 189, 248, 0.45) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+[data-theme="dark"] .tiptap .zw-blog-citation:hover,
+body.dark-theme .tiptap .zw-blog-citation:hover,
+.dark-theme .tiptap .zw-blog-citation:hover {
+  color: #7dd3fc !important;
+  border-color: #7dd3fc !important;
+  background-color: rgba(15, 23, 42, 0.75) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* Sepia mode in admin */
+[data-theme="sepia"] .tiptap .zw-blog-citation,
+body.sepia-theme .tiptap .zw-blog-citation,
+.sepia-theme .tiptap .zw-blog-citation {
+  color: #92400e !important;
+  background-color: #fdf6e7 !important;
+  border: 1px solid rgba(180, 83, 9, 0.35) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+[data-theme="sepia"] .tiptap .zw-blog-citation:hover,
+body.sepia-theme .tiptap .zw-blog-citation:hover,
+.sepia-theme .tiptap .zw-blog-citation:hover {
+  color: #b45309 !important;
+  border-color: #b45309 !important;
+  background-color: #fdf6e7 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+
+

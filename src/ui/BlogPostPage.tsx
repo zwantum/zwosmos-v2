@@ -6,7 +6,8 @@ import Header from './Header';
 import Footer from './Footer';
 import { BlogCard } from './BlogCard';
 import ZwosmosIcon from './ZwosmosIcon';
-import { useBlogPost, useBlogPosts, BlogContent, CommentSection } from '@zwantum/blog/react';
+import { useBlogPost, useBlogPosts, CommentSection } from '@zwantum/blog/react';
+import { BlogContent } from './BlogContent';
 import '@zwantum/blog-editor/content.css';
 import { useSEO } from '../lib/seoService';
 import { settingsService } from '../lib/settingsService';
@@ -2115,11 +2116,11 @@ const BlogPostPage: React.FC = () => {
                 text-transform: uppercase !important;
               }
             `}</style>
-            {post?.content ? (
+            {activePost?.content ? (
               <div
-                className={`zw-blog-content zw-blog-content-wrapper ${isLight ? 'light-mode' : 'dark-mode'}`}
+                className={`zw-blog-content zw-blog-content-wrapper ${isSepia ? 'sepia-mode' : isDark ? 'dark-mode' : 'light-mode'}`}
                 style={{
-                  color: isLight ? '#1e293b' : 'rgba(255,255,255,0.88)',
+                  color: isSepia ? '#451a03' : isLight ? '#1e293b' : 'rgba(255,255,255,0.88)',
                   fontSize: `calc(${isMobile ? '1.05rem' : '1.18rem'} * ${fontScale})`,
                   lineHeight: isMobile ? 1.75 : 1.9,
                   marginBottom: '30px'
@@ -2129,7 +2130,7 @@ const BlogPostPage: React.FC = () => {
                     .zw-blog-content-wrapper.light-mode,
                     .zw-blog-content-wrapper.light-mode *,
                     .zw-blog-content-wrapper.light-mode p,
-                    .zw-blog-content-wrapper.light-mode span,
+                    .zw-blog-content-wrapper.light-mode span:not(.zw-blog-citation):not(.zw-blog-citation *),
                     .zw-blog-content-wrapper.light-mode li,
                     .zw-blog-content-wrapper.light-mode strong,
                     .zw-blog-content-wrapper.light-mode em {
@@ -2142,6 +2143,44 @@ const BlogPostPage: React.FC = () => {
                     .zw-blog-content-wrapper.light-mode h5,
                     .zw-blog-content-wrapper.light-mode h6 {
                       color: #0f172a !important;
+                    }
+
+                    /* Sepia Mode Typography */
+                    .zw-blog-content-wrapper.sepia-mode,
+                    .zw-blog-content-wrapper.sepia-mode *,
+                    .zw-blog-content-wrapper.sepia-mode p,
+                    .zw-blog-content-wrapper.sepia-mode span:not(.zw-blog-citation):not(.zw-blog-citation *),
+                    .zw-blog-content-wrapper.sepia-mode li,
+                    .zw-blog-content-wrapper.sepia-mode strong,
+                    .zw-blog-content-wrapper.sepia-mode em {
+                      color: #451a03 !important;
+                    }
+                    .zw-blog-content-wrapper.sepia-mode h1,
+                    .zw-blog-content-wrapper.sepia-mode h2,
+                    .zw-blog-content-wrapper.sepia-mode h3,
+                    .zw-blog-content-wrapper.sepia-mode h4,
+                    .zw-blog-content-wrapper.sepia-mode h5,
+                    .zw-blog-content-wrapper.sepia-mode h6 {
+                      color: #291204 !important;
+                    }
+                    .zw-blog-content-wrapper.sepia-mode .zw-blog-faq {
+                      background: rgba(254, 243, 199, 0.45) !important;
+                      border: 1px solid rgba(217, 119, 6, 0.25) !important;
+                      border-radius: 12px !important;
+                      margin: 1.2rem 0 !important;
+                      padding: 16px 20px !important;
+                    }
+                    .zw-blog-content-wrapper.sepia-mode .zw-blog-faq-question {
+                      color: #451a03 !important;
+                      font-weight: 700 !important;
+                      cursor: pointer !important;
+                      font-size: 1.05rem !important;
+                    }
+                    .zw-blog-content-wrapper.sepia-mode .zw-blog-faq-answer {
+                      color: #78350f !important;
+                      margin-top: 10px !important;
+                      line-height: 1.7 !important;
+                      font-size: 0.98rem !important;
                     }
 
                     /* Remove divider lines after headings */
@@ -2184,7 +2223,7 @@ const BlogPostPage: React.FC = () => {
                     .zw-blog-content-wrapper.dark-mode,
                     .zw-blog-content-wrapper.dark-mode *,
                     .zw-blog-content-wrapper.dark-mode p,
-                    .zw-blog-content-wrapper.dark-mode span,
+                    .zw-blog-content-wrapper.dark-mode span:not(.zw-blog-citation):not(.zw-blog-citation *),
                     .zw-blog-content-wrapper.dark-mode li {
                       color: rgba(255, 255, 255, 0.88) !important;
                     }
@@ -2263,20 +2302,158 @@ const BlogPostPage: React.FC = () => {
                     .zw-blog-content-wrapper.dark-mode .zw-blog-cta-desc {
                       color: rgba(255, 255, 255, 0.75) !important;
                     }
+
+                    /* ---------------------------------------------------- */
+                    /* Reference Citation Badges (Light, Dark, Sepia)        */
+                    /* No glow, no movement on hover: border & text color only */
+                    /* ---------------------------------------------------- */
+                    .zw-blog-content-wrapper .zw-blog-citation,
+                    .zw-blog-content .zw-blog-citation,
+                    .zw-blog-citation {
+                      display: inline-flex !important;
+                      align-items: center !important;
+                      gap: 4px !important;
+                      padding: 2px 8px !important;
+                      margin: 0 3px !important;
+                      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace !important;
+                      font-size: 0.84em !important;
+                      font-weight: 500 !important;
+                      line-height: 1.45 !important;
+                      border-radius: 5px !important;
+                      text-decoration: none !important;
+                      vertical-align: baseline !important;
+                      cursor: pointer !important;
+                      box-shadow: none !important;
+                      transform: none !important;
+                      transition: color 0.15s ease, border-color 0.15s ease !important;
+                    }
+
+                    .zw-blog-content-wrapper .zw-blog-citation:active,
+                    .zw-blog-citation:active {
+                      transform: none !important;
+                      box-shadow: none !important;
+                    }
+
+                    /* 1. LIGHT MODE CITATION */
+                    .zw-blog-content-wrapper.light-mode .zw-blog-citation,
+                    .zw-blog-content-wrapper.light-mode .zw-blog-citation *,
+                    body.light-theme .zw-blog-content-wrapper .zw-blog-citation,
+                    body.light-theme .zw-blog-citation,
+                    [data-theme="light"] .zw-blog-citation {
+                      color: #475569 !important;
+                      background-color: #f8fafc !important;
+                      border: 1px solid #cbd5e1 !important;
+                      box-shadow: none !important;
+                      transform: none !important;
+                    }
+                    .zw-blog-content-wrapper.light-mode .zw-blog-citation:hover,
+                    .zw-blog-content-wrapper.light-mode .zw-blog-citation:hover *,
+                    body.light-theme .zw-blog-content-wrapper .zw-blog-citation:hover,
+                    body.light-theme .zw-blog-citation:hover,
+                    [data-theme="light"] .zw-blog-citation:hover {
+                      color: #0284c7 !important;
+                      border-color: #0284c7 !important;
+                      background-color: #f8fafc !important;
+                      box-shadow: none !important;
+                      transform: none !important;
+                    }
+
+                    /* 2. DARK MODE CITATION */
+                    .zw-blog-content-wrapper.dark-mode .zw-blog-citation,
+                    .zw-blog-content-wrapper.dark-mode .zw-blog-citation *,
+                    body.dark-theme .zw-blog-content-wrapper .zw-blog-citation,
+                    body.dark-theme .zw-blog-citation,
+                    [data-theme="dark"] .zw-blog-citation {
+                      color: #38bdf8 !important;
+                      background-color: rgba(15, 23, 42, 0.75) !important;
+                      border: 1px solid rgba(56, 189, 248, 0.45) !important;
+                      box-shadow: none !important;
+                      transform: none !important;
+                    }
+                    .zw-blog-content-wrapper.dark-mode .zw-blog-citation:hover,
+                    .zw-blog-content-wrapper.dark-mode .zw-blog-citation:hover *,
+                    body.dark-theme .zw-blog-content-wrapper .zw-blog-citation:hover,
+                    body.dark-theme .zw-blog-citation:hover,
+                    [data-theme="dark"] .zw-blog-citation:hover {
+                      color: #7dd3fc !important;
+                      border-color: #7dd3fc !important;
+                      background-color: rgba(15, 23, 42, 0.75) !important;
+                      box-shadow: none !important;
+                      transform: none !important;
+                    }
+
+                    /* 3. SEPIA MODE CITATION */
+                    .zw-blog-content-wrapper.sepia-mode .zw-blog-citation,
+                    .zw-blog-content-wrapper.sepia-mode .zw-blog-citation *,
+                    body.sepia-theme .zw-blog-content-wrapper .zw-blog-citation,
+                    body.sepia-theme .zw-blog-citation,
+                    [data-theme="sepia"] .zw-blog-citation {
+                      color: #92400e !important;
+                      background-color: #fdf6e7 !important;
+                      border: 1px solid rgba(180, 83, 9, 0.35) !important;
+                      box-shadow: none !important;
+                      transform: none !important;
+                    }
+                    .zw-blog-content-wrapper.sepia-mode .zw-blog-citation:hover,
+                    .zw-blog-content-wrapper.sepia-mode .zw-blog-citation:hover *,
+                    body.sepia-theme .zw-blog-content-wrapper .zw-blog-citation:hover,
+                    body.sepia-theme .zw-blog-citation:hover,
+                    [data-theme="sepia"] .zw-blog-citation:hover {
+                      color: #b45309 !important;
+                      border-color: #b45309 !important;
+                      background-color: #fdf6e7 !important;
+                      box-shadow: none !important;
+                      transform: none !important;
+                    }
                   `}</style>
-                <BlogContent content={activePost.content} />
+                {(() => {
+                  const contentHasCit = JSON.stringify(activePost?.content || '').includes('citation');
+                  const htmlHasCit = Boolean(activePost?.content_html && (activePost.content_html.includes('zw-blog-citation') || activePost.content_html.includes('data-citation')));
+                  const shouldUseHtml = htmlHasCit && !contentHasCit && activePost?.content_html;
+
+                  if (shouldUseHtml) {
+                    return (
+                      <div
+                        className={`zw-blog-content zw-blog-content-wrapper ${isSepia ? 'sepia-mode' : isDark ? 'dark-mode' : 'light-mode'}`}
+                        dangerouslySetInnerHTML={{ __html: activePost.content_html }}
+                        style={{
+                          color: isSepia ? '#451a03' : isLight ? '#1e293b' : 'rgba(255,255,255,0.88)',
+                          fontSize: `calc(${isMobile ? '1.05rem' : '1.18rem'} * ${fontScale})`,
+                          lineHeight: isMobile ? 1.75 : 1.9,
+                          marginBottom: '30px'
+                        }}
+                      />
+                    );
+                  }
+
+                  if (activePost?.content) {
+                    return (
+                      <div
+                        className={`zw-blog-content zw-blog-content-wrapper ${isSepia ? 'sepia-mode' : isDark ? 'dark-mode' : 'light-mode'}`}
+                      >
+                        <BlogContent content={activePost.content} />
+                      </div>
+                    );
+                  }
+
+                  if (activePost?.content_html) {
+                    return (
+                      <div
+                        className={`zw-blog-content zw-blog-content-wrapper ${isSepia ? 'sepia-mode' : isDark ? 'dark-mode' : 'light-mode'}`}
+                        dangerouslySetInnerHTML={{ __html: activePost.content_html }}
+                        style={{
+                          color: isSepia ? '#451a03' : isLight ? '#1e293b' : 'rgba(255,255,255,0.88)',
+                          fontSize: `calc(${isMobile ? '1.05rem' : '1.18rem'} * ${fontScale})`,
+                          lineHeight: isMobile ? 1.75 : 1.9,
+                          marginBottom: '30px'
+                        }}
+                      />
+                    );
+                  }
+
+                  return null;
+                })()}
               </div>
-            ) : activePost?.content_html ? (
-              <div
-                className={`zw-blog-content zw-blog-content-wrapper ${isLight ? 'light-mode' : 'dark-mode'}`}
-                dangerouslySetInnerHTML={{ __html: activePost.content_html }}
-                style={{
-                  color: isLight ? '#1e293b' : 'rgba(255,255,255,0.88)',
-                  fontSize: `calc(${isMobile ? '1.05rem' : '1.18rem'} * ${fontScale})`,
-                  lineHeight: isMobile ? 1.75 : 1.9,
-                  marginBottom: '30px'
-                }}
-              />
             ) : null}
 
 

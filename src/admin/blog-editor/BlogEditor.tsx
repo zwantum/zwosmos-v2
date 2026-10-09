@@ -4,10 +4,10 @@ import { Extension } from '@tiptap/core';
 import { BlogEditorConfig } from '@zwantum/blog-types';
 import { Eye, Code2, WrapText, Sparkles, Copy, Check } from 'lucide-react';
 
-// Import toolbar, extensions, and autosave directly from pure source files (no circular dist imports)
-import { EditorToolbar } from '../../../node_modules/@zwantum/blog-editor/src/components/EditorToolbar';
-import { getBlogEditorExtensions } from '../../../node_modules/@zwantum/blog-editor/src/extensions';
-import { useAutosave } from '../../../node_modules/@zwantum/blog-editor/src/hooks/useAutosave';
+// Import toolbar, extensions, and autosave directly from local source files
+import { EditorToolbar } from './EditorToolbar';
+import { getBlogEditorExtensions } from './extensions';
+import { useAutosave } from './hooks/useAutosave';
 
 import '@zwantum/blog-editor/styles.css';
 import '@zwantum/blog-editor/content.css';
@@ -415,6 +415,7 @@ export const BlogEditor = forwardRef<BlogEditorHandle, BlogEditorProps>(({
     { label: '<blockquote>', open: '<blockquote>', close: '</blockquote>' },
     { label: '<code>', open: '<code>', close: '</code>' },
     { label: '<pre>', open: '<pre><code>', close: '</code></pre>' },
+    { label: '<citation>', open: '<a class="zw-blog-citation" data-citation="true" target="_blank" rel="noopener noreferrer" href="https://">', close: '</a>' },
     { label: '<div>', open: '<div>', close: '</div>' },
   ];
 

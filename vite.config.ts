@@ -14,6 +14,9 @@ export default defineConfig(() => {
         }
       ]
     },
+    optimizeDeps: {
+      exclude: ['@zwantum/blog-editor', '@zwantum/blog-admin', '@zwantum/blog', '@zwantum/blog-react']
+    },
 
     build: {
       chunkSizeWarningLimit: 1200,
