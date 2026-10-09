@@ -46,18 +46,18 @@ const BlogPostPage: React.FC = () => {
       }
       const bDrop = localStorage.getItem('zw_blog_drop_cap');
       if (bDrop !== null) return bDrop === 'true';
-    } catch {}
+    } catch { }
     return true;
   });
 
   useEffect(() => {
     settingsService.getSettings().then(s => {
       if (s.enableDropCap !== undefined) setEnableDropCap(s.enableDropCap);
-    }).catch(() => {});
+    }).catch(() => { });
 
     blogClient.settings.get().then((bs: any) => {
       if (bs?.enableDropCap !== undefined) setEnableDropCap(bs.enableDropCap);
-    }).catch(() => {});
+    }).catch(() => { });
 
     const handleSettingsUpdated = (e: any) => {
       if (e.detail?.enableDropCap !== undefined) {
@@ -78,7 +78,7 @@ const BlogPostPage: React.FC = () => {
     try {
       const raw = sessionStorage.getItem(`zw_post_${id}`);
       if (raw) return JSON.parse(raw);
-    } catch {}
+    } catch { }
     return null;
   }, [id]);
 
@@ -92,7 +92,7 @@ const BlogPostPage: React.FC = () => {
         if (post.id && post.id !== id) {
           sessionStorage.setItem(`zw_post_${post.id}`, JSON.stringify(post));
         }
-      } catch {}
+      } catch { }
     }
   }, [post, id]);
 
@@ -100,9 +100,38 @@ const BlogPostPage: React.FC = () => {
     if (allLivePosts && allLivePosts.length > 0) {
       try {
         sessionStorage.setItem('zw_cached_all_posts', JSON.stringify(allLivePosts));
-      } catch {}
+      } catch { }
     }
   }, [allLivePosts]);
+
+  // Fetch captions from blog_media table so any image with a caption configured in Media Dashboard automatically renders its caption
+  const [mediaCaptionMap, setMediaCaptionMap] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const supabase = (blogClient as any)?.db?.client || (blogClient as any)?.storage?.client;
+    if (!supabase) return;
+
+    supabase
+      .from('blog_media')
+      .select('url, caption')
+      .not('caption', 'is', null)
+      .neq('caption', '')
+      .then(({ data, error }: any) => {
+        if (!error && data) {
+          const map: Record<string, string> = {};
+          for (const row of data) {
+            if (row.url && row.caption && typeof row.caption === 'string' && row.caption.trim()) {
+              const trimmed = row.caption.trim();
+              map[row.url] = trimmed;
+              const cleanUrl = row.url.split('?')[0];
+              map[cleanUrl] = trimmed;
+            }
+          }
+          setMediaCaptionMap(map);
+        }
+      })
+      .catch(() => { });
+  }, []);
 
   const activePost = post || cachedPost || (allLivePosts?.find(p => p.slug === id || p.id === id) ?? null);
 
@@ -242,10 +271,23 @@ const BlogPostPage: React.FC = () => {
     title: activePost?.title || '',
     excerpt: activePost?.excerpt || '',
     featuredImage: activePost?.featured_image?.url || activePost?.custom_fields?.featured_image_url || '',
-    imageCaption: (typeof activePost?.featured_image?.caption === 'string' && activePost.featured_image.caption.trim()) ||
-      (typeof activePost?.custom_fields?.featured_image_caption === 'string' && activePost.custom_fields.featured_image_caption.trim()) ||
-      (typeof activePost?.custom_fields?.image_caption === 'string' && activePost.custom_fields.image_caption.trim()) ||
-      (typeof activePost?.custom_fields?.caption === 'string' && activePost.custom_fields.caption.trim()) || '',
+    imageCaption: (() => {
+      const cf = activePost?.custom_fields;
+      const customCap = cf?.featured_image_caption ?? cf?.image_caption ?? cf?.caption;
+      if (customCap !== undefined && customCap !== null && String(customCap).trim() !== '') {
+        return String(customCap).trim();
+      }
+      if (typeof activePost?.featured_image?.caption === 'string' && activePost.featured_image.caption.trim() !== '') {
+        return activePost.featured_image.caption.trim();
+      }
+      const featUrl = activePost?.featured_image?.url || cf?.featured_image_url;
+      if (featUrl) {
+        const cleanUrl = String(featUrl).split('?')[0];
+        if (mediaCaptionMap[featUrl]) return mediaCaptionMap[featUrl];
+        if (mediaCaptionMap[cleanUrl]) return mediaCaptionMap[cleanUrl];
+      }
+      return '';
+    })(),
     category: (activePost?.categories?.[0]?.name || 'SPACE NEWS').toUpperCase(),
     categoryName: activePost?.categories?.[0]?.name || 'Space News',
     categorySlug: activePost?.categories?.[0]?.slug || 'space-news',
@@ -282,7 +324,7 @@ const BlogPostPage: React.FC = () => {
         const num = parseInt(saved, 10);
         if (num >= -3 && num <= 3) return num;
       }
-    } catch {}
+    } catch { }
     return 0;
   });
 
@@ -291,7 +333,7 @@ const BlogPostPage: React.FC = () => {
     setFontLevel(clamped);
     try {
       localStorage.setItem('zw_blog_font_level', clamped.toString());
-    } catch {}
+    } catch { }
   };
 
   const fontScale = FONT_SCALE_MAP[fontLevel] ?? 1.00;
@@ -320,18 +362,18 @@ const BlogPostPage: React.FC = () => {
           background: isDark
             ? 'rgba(255, 255, 255, 0.04)'
             : isSepia
-            ? 'rgba(254, 246, 234, 0.94)'
-            : 'rgba(255, 255, 255, 0.88)',
+              ? 'rgba(254, 246, 234, 0.94)'
+              : 'rgba(255, 255, 255, 0.88)',
           border: isDark
             ? '1px solid rgba(255, 255, 255, 0.12)'
             : isSepia
-            ? '1px solid rgba(217, 119, 6, 0.35)'
-            : '1px solid rgba(0, 0, 0, 0.1)',
+              ? '1px solid rgba(217, 119, 6, 0.35)'
+              : '1px solid rgba(0, 0, 0, 0.1)',
           boxShadow: isSepia
             ? '0 4px 16px rgba(217, 119, 6, 0.1)'
             : isLight
-            ? '0 4px 16px rgba(0, 0, 0, 0.06)'
-            : '0 8px 32px rgba(0, 0, 0, 0.45), 0 0 20px rgba(147, 51, 234, 0.12)',
+              ? '0 4px 16px rgba(0, 0, 0, 0.06)'
+              : '0 8px 32px rgba(0, 0, 0, 0.45), 0 0 20px rgba(147, 51, 234, 0.12)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
           transition: 'all 0.25s ease'
@@ -353,8 +395,8 @@ const BlogPostPage: React.FC = () => {
             borderRight: isDark
               ? '1px solid rgba(255,255,255,0.12)'
               : isSepia
-              ? '1px solid rgba(217, 119, 6, 0.25)'
-              : '1px solid rgba(0,0,0,0.1)'
+                ? '1px solid rgba(217, 119, 6, 0.25)'
+                : '1px solid rgba(0,0,0,0.1)'
           }}
         >
           <ZwosmosIcon size={12} color={isSepia ? '#d97706' : '#bd75ff'} />
@@ -376,13 +418,13 @@ const BlogPostPage: React.FC = () => {
               border: isDark
                 ? '1px solid rgba(255,255,255,0.18)'
                 : isSepia
-                ? '1px solid rgba(217, 119, 6, 0.35)'
-                : '1px solid rgba(0,0,0,0.12)',
+                  ? '1px solid rgba(217, 119, 6, 0.35)'
+                  : '1px solid rgba(0,0,0,0.12)',
               background: isDark
                 ? 'rgba(255, 255, 255, 0.08)'
                 : isSepia
-                ? '#fde8c8'
-                : '#f3f4f6',
+                  ? '#fde8c8'
+                  : '#f3f4f6',
               color: fontLevel === -3
                 ? (isLight ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.25)')
                 : (isSepia ? '#78350f' : isLight ? '#111827' : '#ffffff'),
@@ -408,13 +450,13 @@ const BlogPostPage: React.FC = () => {
               e.currentTarget.style.background = isDark
                 ? 'rgba(255, 255, 255, 0.08)'
                 : isSepia
-                ? '#fde8c8'
-                : '#f3f4f6';
+                  ? '#fde8c8'
+                  : '#f3f4f6';
               e.currentTarget.style.borderColor = isDark
                 ? 'rgba(255,255,255,0.18)'
                 : isSepia
-                ? 'rgba(217, 119, 6, 0.35)'
-                : 'rgba(0,0,0,0.12)';
+                  ? 'rgba(217, 119, 6, 0.35)'
+                  : 'rgba(0,0,0,0.12)';
               e.currentTarget.style.color = fontLevel === -3
                 ? (isLight ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.25)')
                 : (isSepia ? '#78350f' : isLight ? '#111827' : '#ffffff');
@@ -573,13 +615,13 @@ const BlogPostPage: React.FC = () => {
               border: isDark
                 ? '1px solid rgba(255,255,255,0.18)'
                 : isSepia
-                ? '1px solid rgba(217, 119, 6, 0.35)'
-                : '1px solid rgba(0,0,0,0.12)',
+                  ? '1px solid rgba(217, 119, 6, 0.35)'
+                  : '1px solid rgba(0,0,0,0.12)',
               background: isDark
                 ? 'rgba(255, 255, 255, 0.08)'
                 : isSepia
-                ? '#fde8c8'
-                : '#f3f4f6',
+                  ? '#fde8c8'
+                  : '#f3f4f6',
               color: fontLevel === 3
                 ? (isLight ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.25)')
                 : (isSepia ? '#78350f' : isLight ? '#111827' : '#ffffff'),
@@ -605,13 +647,13 @@ const BlogPostPage: React.FC = () => {
               e.currentTarget.style.background = isDark
                 ? 'rgba(255, 255, 255, 0.08)'
                 : isSepia
-                ? '#fde8c8'
-                : '#f3f4f6';
+                  ? '#fde8c8'
+                  : '#f3f4f6';
               e.currentTarget.style.borderColor = isDark
                 ? 'rgba(255,255,255,0.18)'
                 : isSepia
-                ? 'rgba(217, 119, 6, 0.35)'
-                : 'rgba(0,0,0,0.12)';
+                  ? 'rgba(217, 119, 6, 0.35)'
+                  : 'rgba(0,0,0,0.12)';
               e.currentTarget.style.color = fontLevel === 3
                 ? (isLight ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.25)')
                 : (isSepia ? '#78350f' : isLight ? '#111827' : '#ffffff');
@@ -637,8 +679,8 @@ const BlogPostPage: React.FC = () => {
         borderBottom: isDark
           ? '1px solid rgba(255,255,255,0.08)'
           : isSepia
-          ? '1px solid rgba(217, 119, 6, 0.2)'
-          : '1px solid rgba(0,0,0,0.08)',
+            ? '1px solid rgba(217, 119, 6, 0.2)'
+            : '1px solid rgba(0,0,0,0.08)',
         marginBottom: '2px'
       }}
     >
@@ -854,8 +896,8 @@ const BlogPostPage: React.FC = () => {
           borderBottom: isDark
             ? '1px solid rgba(255,255,255,0.08)'
             : isSepia
-            ? '1px solid rgba(217, 119, 6, 0.2)'
-            : '1px solid rgba(0,0,0,0.08)',
+              ? '1px solid rgba(217, 119, 6, 0.2)'
+              : '1px solid rgba(0,0,0,0.08)',
           marginBottom: '6px'
         }}
       >
@@ -954,18 +996,18 @@ const BlogPostPage: React.FC = () => {
             border: isDark
               ? '1px solid rgba(255,255,255,0.08)'
               : isSepia
-              ? '1px solid rgba(217, 119, 6, 0.28)'
-              : '1px solid rgba(0,0,0,0.08)',
+                ? '1px solid rgba(217, 119, 6, 0.28)'
+                : '1px solid rgba(0,0,0,0.08)',
             borderRight: isDark
               ? '1px solid rgba(255,255,255,0.1)'
               : isSepia
-              ? '1px solid rgba(217, 119, 6, 0.28)'
-              : '1px solid rgba(0,0,0,0.1)',
+                ? '1px solid rgba(217, 119, 6, 0.28)'
+                : '1px solid rgba(0,0,0,0.1)',
             background: isDark
               ? 'var(--bg-main)'
               : isSepia
-              ? '#fde8c8'
-              : '#f3f4f6',
+                ? '#fde8c8'
+                : '#f3f4f6',
             borderRadius: '12px 0 0 12px',
             flexShrink: 0
           }}
@@ -998,13 +1040,13 @@ const BlogPostPage: React.FC = () => {
             background: isDark
               ? 'rgba(255,255,255,0.03)'
               : isSepia
-              ? '#fef6ea'
-              : '#fdfdfd',
+                ? '#fef6ea'
+                : '#fdfdfd',
             border: isDark
               ? '1px solid rgba(255,255,255,0.08)'
               : isSepia
-              ? '1px solid rgba(217, 119, 6, 0.28)'
-              : '1px solid rgba(0,0,0,0.08)',
+                ? '1px solid rgba(217, 119, 6, 0.28)'
+                : '1px solid rgba(0,0,0,0.08)',
             borderLeft: 'none',
             borderRadius: '0 12px 12px 0',
             padding: '14px 12px',
@@ -1088,8 +1130,8 @@ const BlogPostPage: React.FC = () => {
               borderTop: isDark
                 ? '1px solid rgba(255,255,255,0.08)'
                 : isSepia
-                ? '1px solid rgba(217, 119, 6, 0.18)'
-                : '1px solid rgba(0,0,0,0.08)',
+                  ? '1px solid rgba(217, 119, 6, 0.18)'
+                  : '1px solid rgba(0,0,0,0.08)',
               paddingTop: '8px',
               textAlign: 'left',
               fontSize: '0.7rem',
@@ -1119,161 +1161,161 @@ const BlogPostPage: React.FC = () => {
           boxSizing: 'border-box'
         }}
       >
-      {/* Wireframe Border */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          border: isSepia ? '1px solid rgba(217, 119, 6, 0.45)' : '1px solid var(--brand-purple)',
-          borderRadius: '12px',
-          zIndex: 3,
-          pointerEvents: 'none',
-          transform: (isMobile || isTablet) ? 'translate(-6px, 6px)' : 'translate(-8px, 8px)'
-        }}
-      ></div>
-
-      <div style={{ display: 'flex', width: '100%', height: '100%', position: 'relative', zIndex: 1 }}>
-        {/* Vertical Tab */}
+        {/* Wireframe Border */}
         <div
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '12px 5px',
-            border: isDark
-              ? '1px solid rgba(255,255,255,0.08)'
-              : isSepia
-              ? '1px solid rgba(217, 119, 6, 0.28)'
-              : '1px solid rgba(0,0,0,0.08)',
-            borderRight: isDark
-              ? '1px solid rgba(255,255,255,0.1)'
-              : isSepia
-              ? '1px solid rgba(217, 119, 6, 0.28)'
-              : '1px solid rgba(0,0,0,0.1)',
-            background: isDark
-              ? 'var(--bg-main)'
-              : isSepia
-              ? '#fde8c8'
-              : '#f3f4f6',
-            borderRadius: '12px 0 0 12px',
-            flexShrink: 0
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            border: isSepia ? '1px solid rgba(217, 119, 6, 0.45)' : '1px solid var(--brand-purple)',
+            borderRadius: '12px',
+            zIndex: 3,
+            pointerEvents: 'none',
+            transform: (isMobile || isTablet) ? 'translate(-6px, 6px)' : 'translate(-8px, 8px)'
           }}
-        >
-          <span
+        ></div>
+
+        <div style={{ display: 'flex', width: '100%', height: '100%', position: 'relative', zIndex: 1 }}>
+          {/* Vertical Tab */}
+          <div
             style={{
-              writingMode: 'vertical-rl',
-              transform: 'rotate(180deg)',
-              display: 'inline-flex',
+              display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              fontFamily: '"Noto Sans", sans-serif',
-              fontSize: '0.78rem',
-              fontWeight: 400,
-              letterSpacing: '3px',
-              textTransform: 'uppercase',
-              color: isLight ? '#111827' : 'white',
-              whiteSpace: 'nowrap'
+              justifyContent: 'center',
+              padding: '12px 5px',
+              border: isDark
+                ? '1px solid rgba(255,255,255,0.08)'
+                : isSepia
+                  ? '1px solid rgba(217, 119, 6, 0.28)'
+                  : '1px solid rgba(0,0,0,0.08)',
+              borderRight: isDark
+                ? '1px solid rgba(255,255,255,0.1)'
+                : isSepia
+                  ? '1px solid rgba(217, 119, 6, 0.28)'
+                  : '1px solid rgba(0,0,0,0.1)',
+              background: isDark
+                ? 'var(--bg-main)'
+                : isSepia
+                  ? '#fde8c8'
+                  : '#f3f4f6',
+              borderRadius: '12px 0 0 12px',
+              flexShrink: 0
             }}
           >
-            <ZwosmosIcon size={12} color={isSepia ? '#d97706' : '#bd75ff'} />
-            <span>Latest</span>
-          </span>
-        </div>
-
-        {/* Posts Container */}
-        <div
-          style={{
-            flex: 1,
-            background: isDark
-              ? 'rgba(255,255,255,0.03)'
-              : isSepia
-              ? '#fef6ea'
-              : '#fdfdfd',
-            border: isDark
-              ? '1px solid rgba(255,255,255,0.08)'
-              : isSepia
-              ? '1px solid rgba(217, 119, 6, 0.28)'
-              : '1px solid rgba(0,0,0,0.08)',
-            borderLeft: 'none',
-            borderRadius: '0 12px 12px 0',
-            padding: '14px 10px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px',
-            height: '100%',
-            boxSizing: 'border-box'
-          }}
-        >
-          {latestSidebarPosts.map((latestItem) => (
-            <Link
-              key={latestItem.id}
-              to={`/blog/${latestItem.id}`}
+            <span
               style={{
-                display: 'flex',
-                gap: '8px',
+                writingMode: 'vertical-rl',
+                transform: 'rotate(180deg)',
+                display: 'inline-flex',
                 alignItems: 'center',
-                textDecoration: 'none',
-                color: 'inherit',
-                transition: 'transform 0.2s'
+                gap: '8px',
+                fontFamily: '"Noto Sans", sans-serif',
+                fontSize: '0.78rem',
+                fontWeight: 400,
+                letterSpacing: '3px',
+                textTransform: 'uppercase',
+                color: isLight ? '#111827' : 'white',
+                whiteSpace: 'nowrap'
               }}
-              onMouseOver={e => (e.currentTarget.style.transform = 'translateX(3px)')}
-              onMouseOut={e => (e.currentTarget.style.transform = 'translateX(0)')}
             >
-              <div
+              <ZwosmosIcon size={12} color={isSepia ? '#d97706' : '#bd75ff'} />
+              <span>Latest</span>
+            </span>
+          </div>
+
+          {/* Posts Container */}
+          <div
+            style={{
+              flex: 1,
+              background: isDark
+                ? 'rgba(255,255,255,0.03)'
+                : isSepia
+                  ? '#fef6ea'
+                  : '#fdfdfd',
+              border: isDark
+                ? '1px solid rgba(255,255,255,0.08)'
+                : isSepia
+                  ? '1px solid rgba(217, 119, 6, 0.28)'
+                  : '1px solid rgba(0,0,0,0.08)',
+              borderLeft: 'none',
+              borderRadius: '0 12px 12px 0',
+              padding: '14px 10px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              height: '100%',
+              boxSizing: 'border-box'
+            }}
+          >
+            {latestSidebarPosts.map((latestItem) => (
+              <Link
+                key={latestItem.id}
+                to={`/blog/${latestItem.id}`}
                 style={{
-                  width: '44px',
-                  height: '44px',
-                  borderRadius: '6px',
-                  overflow: 'hidden',
-                  flexShrink: 0,
-                  border: isDark
-                    ? '1px solid rgba(255,255,255,0.1)'
-                    : isSepia
-                    ? '1px solid rgba(217, 119, 6, 0.2)'
-                    : '1px solid rgba(0,0,0,0.1)'
+                  display: 'flex',
+                  gap: '8px',
+                  alignItems: 'center',
+                  textDecoration: 'none',
+                  color: 'inherit',
+                  transition: 'transform 0.2s'
                 }}
+                onMouseOver={e => (e.currentTarget.style.transform = 'translateX(3px)')}
+                onMouseOut={e => (e.currentTarget.style.transform = 'translateX(0)')}
               >
-                <img
-                  src={String(latestItem.img || '')}
-                  alt={latestItem.title}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <h4
-                  style={{
-                    margin: '0 0 2px 0',
-                    fontFamily: "'Playfair Display', serif",
-                    fontSize: '0.78rem',
-                    lineHeight: 1.25,
-                    color: isLight ? '#111827' : 'white',
-                    overflow: 'hidden',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    textOverflow: 'ellipsis'
-                  }}
-                >
-                  {latestItem.title}
-                </h4>
                 <div
                   style={{
-                    color: isLight ? '#6b7280' : 'rgba(255,255,255,0.5)',
-                    fontSize: '0.68rem',
-                    fontFamily: "'Lora', serif"
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '6px',
+                    overflow: 'hidden',
+                    flexShrink: 0,
+                    border: isDark
+                      ? '1px solid rgba(255,255,255,0.1)'
+                      : isSepia
+                        ? '1px solid rgba(217, 119, 6, 0.2)'
+                        : '1px solid rgba(0,0,0,0.1)'
                   }}
                 >
-                  {latestItem.date}
+                  <img
+                    src={String(latestItem.img || '')}
+                    alt={latestItem.title}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
                 </div>
-              </div>
-            </Link>
-          ))}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h4
+                    style={{
+                      margin: '0 0 2px 0',
+                      fontFamily: "'Playfair Display', serif",
+                      fontSize: '0.78rem',
+                      lineHeight: 1.25,
+                      color: isLight ? '#111827' : 'white',
+                      overflow: 'hidden',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      textOverflow: 'ellipsis'
+                    }}
+                  >
+                    {latestItem.title}
+                  </h4>
+                  <div
+                    style={{
+                      color: isLight ? '#6b7280' : 'rgba(255,255,255,0.5)',
+                      fontSize: '0.68rem',
+                      fontFamily: "'Lora', serif"
+                    }}
+                  >
+                    {latestItem.date}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
     );
   };
 
@@ -1308,18 +1350,18 @@ const BlogPostPage: React.FC = () => {
               border: isDark
                 ? '1px solid rgba(255,255,255,0.08)'
                 : isSepia
-                ? '1px solid rgba(217, 119, 6, 0.28)'
-                : '1px solid rgba(0,0,0,0.08)',
+                  ? '1px solid rgba(217, 119, 6, 0.28)'
+                  : '1px solid rgba(0,0,0,0.08)',
               borderRight: isDark
                 ? '1px solid rgba(255,255,255,0.1)'
                 : isSepia
-                ? '1px solid rgba(217, 119, 6, 0.28)'
-                : '1px solid rgba(0,0,0,0.1)',
+                  ? '1px solid rgba(217, 119, 6, 0.28)'
+                  : '1px solid rgba(0,0,0,0.1)',
               background: isDark
                 ? 'var(--bg-main)'
                 : isSepia
-                ? '#fde8c8'
-                : '#f3f4f6',
+                  ? '#fde8c8'
+                  : '#f3f4f6',
               borderRadius: '12px 0 0 12px',
               flexShrink: 0
             }}
@@ -1352,13 +1394,13 @@ const BlogPostPage: React.FC = () => {
               background: isDark
                 ? 'rgba(255,255,255,0.03)'
                 : isSepia
-                ? '#fef6ea'
-                : '#fdfdfd',
+                  ? '#fef6ea'
+                  : '#fdfdfd',
               border: isDark
                 ? '1px solid rgba(255,255,255,0.08)'
                 : isSepia
-                ? '1px solid rgba(217, 119, 6, 0.28)'
-                : '1px solid rgba(0,0,0,0.08)',
+                  ? '1px solid rgba(217, 119, 6, 0.28)'
+                  : '1px solid rgba(0,0,0,0.08)',
               borderLeft: 'none',
               borderRadius: '0 12px 12px 0',
               padding: '12px 10px',
@@ -1379,13 +1421,13 @@ const BlogPostPage: React.FC = () => {
                   background: isDark
                     ? 'rgba(255,255,255,0.04)'
                     : isSepia
-                    ? '#fde8c8'
-                    : '#f3f4f6',
+                      ? '#fde8c8'
+                      : '#f3f4f6',
                   border: isDark
                     ? '1px solid rgba(255,255,255,0.12)'
                     : isSepia
-                    ? '1px solid rgba(217, 119, 6, 0.3)'
-                    : '1px solid rgba(0,0,0,0.12)',
+                      ? '1px solid rgba(217, 119, 6, 0.3)'
+                      : '1px solid rgba(0,0,0,0.12)',
                   color: isSepia ? '#78350f' : (isLight ? '#1f2937' : 'rgba(255,255,255,0.85)'),
                   fontFamily: "'Lora', serif",
                   cursor: 'pointer',
@@ -1402,13 +1444,13 @@ const BlogPostPage: React.FC = () => {
                   e.currentTarget.style.borderColor = isDark
                     ? 'rgba(255,255,255,0.12)'
                     : isSepia
-                    ? 'rgba(217, 119, 6, 0.3)'
-                    : 'rgba(0,0,0,0.12)';
+                      ? 'rgba(217, 119, 6, 0.3)'
+                      : 'rgba(0,0,0,0.12)';
                   e.currentTarget.style.background = isDark
                     ? 'rgba(255,255,255,0.04)'
                     : isSepia
-                    ? '#fde8c8'
-                    : '#f3f4f6';
+                      ? '#fde8c8'
+                      : '#f3f4f6';
                   e.currentTarget.style.color = isSepia ? '#78350f' : (isLight ? '#1f2937' : 'rgba(255,255,255,0.85)');
                   e.currentTarget.style.transform = 'translateY(0)';
                 }}
@@ -1436,8 +1478,8 @@ const BlogPostPage: React.FC = () => {
         borderBottom: isDark
           ? '1px solid rgba(255,255,255,0.08)'
           : isSepia
-          ? '1px solid rgba(217, 119, 6, 0.2)'
-          : '1px solid rgba(0,0,0,0.08)',
+            ? '1px solid rgba(217, 119, 6, 0.2)'
+            : '1px solid rgba(0,0,0,0.08)',
         marginBottom: '4px'
       }}
     >
@@ -1778,265 +1820,265 @@ const BlogPostPage: React.FC = () => {
       {/* 3. Active Post View */}
       {activePost && (
         <div className="blog-post-page-container" style={{ maxWidth: '1400px', margin: '0 auto', padding: isPhone ? '20px 30px 20px' : isTablet ? '24px 50px 24px' : '25px 4% 20px', boxSizing: 'border-box' }}>
-        {/* ========================================================================= */}
-        {/* 1. TOP BAR: Breadcrumb Navigation                                        */}
-        {/* ========================================================================= */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '12px',
-            marginBottom: isMobile ? '20px' : '30px',
-            paddingLeft: isDesktop ? '200px' : !isPhone ? (winWidth >= 1000 ? '160px' : '80px') : undefined,
-            paddingRight: isDesktop ? '200px' : !isPhone ? (winWidth >= 1000 ? '160px' : '80px') : undefined,
-            boxSizing: 'border-box'
-          }}
-        >
-          {/* Breadcrumbs */}
+          {/* ========================================================================= */}
+          {/* 1. TOP BAR: Breadcrumb Navigation                                        */}
+          {/* ========================================================================= */}
           <div
             style={{
-              fontSize: isMobile ? '0.78rem' : '0.85rem',
-              color: isLight ? '#6b7280' : 'rgba(255,255,255,0.6)',
-              letterSpacing: '0.5px',
-              fontWeight: 600,
-              fontFamily: "'Lora', serif"
-            }}
-          >
-            <Link
-              to="/"
-              style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }}
-              onMouseOver={e => (e.currentTarget.style.color = 'var(--brand-purple)')}
-              onMouseOut={e => (e.currentTarget.style.color = isLight ? '#6b7280' : 'rgba(255,255,255,0.6)')}
-            >
-              Zwosmos
-            </Link>
-            <span style={{ color: 'var(--brand-purple)', margin: '0 6px' }}>›</span>
-            <Link
-              to="/blog"
-              style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }}
-              onMouseOver={e => (e.currentTarget.style.color = 'var(--brand-purple)')}
-              onMouseOut={e => (e.currentTarget.style.color = isLight ? '#6b7280' : 'rgba(255,255,255,0.6)')}
-            >
-              Stories
-            </Link>
-            <span style={{ color: 'var(--brand-purple)', margin: '0 6px' }}>›</span>
-            <Link
-              to={`/${postData.categorySlug || 'space-news'}`}
-              style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }}
-              onMouseOver={e => (e.currentTarget.style.color = 'var(--brand-purple)')}
-              onMouseOut={e => (e.currentTarget.style.color = isLight ? '#6b7280' : 'rgba(255,255,255,0.6)')}
-            >
-              {postData.categoryName}
-            </Link>
-            <span style={{ color: 'var(--brand-purple)', margin: '0 6px' }}>›</span>
-            <span
-              style={{
-                color: isLight ? '#111827' : 'rgba(255,255,255,0.92)',
-                maxWidth: isMobile ? '160px' : '380px',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                display: 'inline-block',
-                verticalAlign: 'bottom'
-              }}
-              title={postData.title}
-            >
-              {postData.title}
-            </span>
-          </div>
-        </div>
-
-        {/* ----------------------------------------------------------------------- */}
-        {/* FULL WIDTH HEADER: Post Title, Excerpt, Details, and Featured Image     */}
-        {/* ----------------------------------------------------------------------- */}
-        <header style={{ width: '100%', marginBottom: isMobile ? '30px' : '45px' }}>
-          {/* Post Title, Excerpt, and Details Container (compacted on desktop and tablet views) */}
-          <div
-            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '12px',
+              marginBottom: isMobile ? '20px' : '30px',
               paddingLeft: isDesktop ? '200px' : !isPhone ? (winWidth >= 1000 ? '160px' : '80px') : undefined,
               paddingRight: isDesktop ? '200px' : !isPhone ? (winWidth >= 1000 ? '160px' : '80px') : undefined,
               boxSizing: 'border-box'
             }}
           >
-            {/* Post Title */}
-            <h1
-              style={{
-                fontFamily: "'Playfair Display', serif",
-                fontSize: isPhone ? '1.65rem' : isSmallTab ? '2.15rem' : '2.65rem',
-                lineHeight: isPhone ? 1.25 : 1.2,
-                margin: isPhone ? '0 0 14px 0' : '0 0 18px 0',
-                fontWeight: 700,
-                color: isLight ? '#111827' : 'white',
-                letterSpacing: isPhone ? '-0.2px' : '-0.4px'
-              }}
-            >
-              {postData.title}
-            </h1>
-
-            {/* Excerpt */}
+            {/* Breadcrumbs */}
             <div
               style={{
-                fontSize: isPhone ? '1rem' : isSmallTab ? '1.15rem' : '1.3rem',
-                lineHeight: isPhone ? 1.6 : 1.65,
-                color: isLight ? '#2b2d42' : 'rgba(255,255,255,0.9)',
-                fontFamily: "'Lora', serif",
-                fontStyle: 'italic',
-                margin: isPhone ? '0 0 18px 0' : '0 0 24px 0',
-                paddingLeft: isPhone ? '12px' : '18px',
-                borderLeft: '3px solid var(--brand-purple)'
+                fontSize: isMobile ? '0.78rem' : '0.85rem',
+                color: isLight ? '#6b7280' : 'rgba(255,255,255,0.6)',
+                letterSpacing: '0.5px',
+                fontWeight: 600,
+                fontFamily: "'Lora', serif"
               }}
             >
-              {postData.excerpt}
-            </div>
-
-            {/* Details Bar (Date, Read Time, Category, Views) */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: isPhone ? '8px 12px' : '18px',
-                marginBottom: isPhone ? '24px' : '35px',
-                fontSize: isPhone ? '0.8rem' : '0.9rem',
-                fontFamily: "'Lora', serif",
-                color: isLight ? '#4b5563' : 'rgba(255,255,255,0.72)'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <ZwosmosIcon size={12} color="#bd75ff" />
-                <span style={{ color: isLight ? '#111827' : 'white', fontWeight: 600 }}>
-                  {postData.publishedDate}
-                </span>
-              </div>
-              <span style={{ color: isLight ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)' }}>•</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <span style={{ color: isLight ? '#4b5563' : 'rgba(255,255,255,0.5)' }}>Read Time:</span>
-                <span style={{ color: isLight ? '#111827' : 'white', fontWeight: 600 }}>
-                  {postData.readTime}
-                </span>
-              </div>
-              <span style={{ color: isLight ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)' }}>•</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <span style={{ color: isLight ? '#4b5563' : 'rgba(255,255,255,0.5)' }}>Category:</span>
-                <span
-                  style={{
-                    color: '#bd75ff',
-                    fontFamily: '"Noto Sans", sans-serif',
-                    fontWeight: 400,
-                    letterSpacing: '2px',
-                    textTransform: 'uppercase'
-                  }}
-                >
-                  {postData.category}
-                </span>
-              </div>
+              <Link
+                to="/"
+                style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }}
+                onMouseOver={e => (e.currentTarget.style.color = 'var(--brand-purple)')}
+                onMouseOut={e => (e.currentTarget.style.color = isLight ? '#6b7280' : 'rgba(255,255,255,0.6)')}
+              >
+                Zwosmos
+              </Link>
+              <span style={{ color: 'var(--brand-purple)', margin: '0 6px' }}>›</span>
+              <Link
+                to="/blog"
+                style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }}
+                onMouseOver={e => (e.currentTarget.style.color = 'var(--brand-purple)')}
+                onMouseOut={e => (e.currentTarget.style.color = isLight ? '#6b7280' : 'rgba(255,255,255,0.6)')}
+              >
+                Stories
+              </Link>
+              <span style={{ color: 'var(--brand-purple)', margin: '0 6px' }}>›</span>
+              <Link
+                to={`/${postData.categorySlug || 'space-news'}`}
+                style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }}
+                onMouseOver={e => (e.currentTarget.style.color = 'var(--brand-purple)')}
+                onMouseOut={e => (e.currentTarget.style.color = isLight ? '#6b7280' : 'rgba(255,255,255,0.6)')}
+              >
+                {postData.categoryName}
+              </Link>
+              <span style={{ color: 'var(--brand-purple)', margin: '0 6px' }}>›</span>
+              <span
+                style={{
+                  color: isLight ? '#111827' : 'rgba(255,255,255,0.92)',
+                  maxWidth: isMobile ? '160px' : '380px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  display: 'inline-block',
+                  verticalAlign: 'bottom'
+                }}
+                title={postData.title}
+              >
+                {postData.title}
+              </span>
             </div>
           </div>
 
-          {/* Featured Image Block */}
-          <div
-            style={{
-              position: 'relative',
-              width: '100%'
-            }}
-          >
+          {/* ----------------------------------------------------------------------- */}
+          {/* FULL WIDTH HEADER: Post Title, Excerpt, Details, and Featured Image     */}
+          {/* ----------------------------------------------------------------------- */}
+          <header style={{ width: '100%', marginBottom: isMobile ? '30px' : '45px' }}>
+            {/* Post Title, Excerpt, and Details Container (compacted on desktop and tablet views) */}
             <div
               style={{
-                width: '100%',
-                aspectRatio: 'auto',
-                maxHeight: 'none',
-                height: 'auto',
-                borderRadius: isMobile ? '10px' : '14px',
-                overflow: 'hidden',
-                border: isLight ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255, 255, 255, 0.12)',
-                boxShadow: isLight ? '0 15px 35px rgba(0,0,0,0.15)' : '0 25px 50px rgba(0,0,0,0.5)',
-                position: 'relative',
-                zIndex: 1
+                paddingLeft: isDesktop ? '200px' : !isPhone ? (winWidth >= 1000 ? '160px' : '80px') : undefined,
+                paddingRight: isDesktop ? '200px' : !isPhone ? (winWidth >= 1000 ? '160px' : '80px') : undefined,
+                boxSizing: 'border-box'
               }}
             >
-              <img
-                src={postData.featuredImage}
-                alt={postData.title}
+              {/* Post Title */}
+              <h1
                 style={{
-                  width: '100%',
-                  height: 'auto',
-                  display: 'block',
-                  objectFit: 'contain'
-                }}
-              />
-            </div>
-
-            {/* Image Caption - Only rendered if caption is present */}
-            {postData.imageCaption ? (
-              <div
-                style={{
-                  marginTop: isMobile ? '12px' : '16px',
-                  marginBottom: isMobile ? '30px' : '40px',
-                  fontSize: isMobile ? '15px' : '16px',
-                  color: isDark ? 'rgba(255, 255, 255, 0.82)' : isSepia ? '#5c3a21' : '#374151',
-                  fontFamily: "'Lora', serif",
-                  fontStyle: 'italic',
-                  fontWeight: 400,
-                  textAlign: 'center',
-                  maxWidth: '850px',
-                  marginLeft: 'auto',
-                  marginRight: 'auto',
-                  lineHeight: 1.6,
-                  letterSpacing: '0.2px'
+                  fontFamily: "'Playfair Display', serif",
+                  fontSize: isPhone ? '1.65rem' : isSmallTab ? '2.15rem' : '2.65rem',
+                  lineHeight: isPhone ? 1.25 : 1.2,
+                  margin: isPhone ? '0 0 14px 0' : '0 0 18px 0',
+                  fontWeight: 700,
+                  color: isLight ? '#111827' : 'white',
+                  letterSpacing: isPhone ? '-0.2px' : '-0.4px'
                 }}
               >
-                {postData.imageCaption}
+                {postData.title}
+              </h1>
+
+              {/* Excerpt */}
+              <div
+                style={{
+                  fontSize: isPhone ? '1rem' : isSmallTab ? '1.15rem' : '1.3rem',
+                  lineHeight: isPhone ? 1.6 : 1.65,
+                  color: isLight ? '#2b2d42' : 'rgba(255,255,255,0.9)',
+                  fontFamily: "'Lora', serif",
+                  fontStyle: 'italic',
+                  margin: isPhone ? '0 0 18px 0' : '0 0 24px 0',
+                  paddingLeft: isPhone ? '12px' : '18px',
+                  borderLeft: '3px solid var(--brand-purple)'
+                }}
+              >
+                {postData.excerpt}
               </div>
-            ) : null}
 
-            {/* Font Size Adjuster (- A +): Placed right after featured image / caption */}
-            {renderFontSizeControl()}
-          </div>
-        </header>
+              {/* Details Bar (Date, Read Time, Category, Views) */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: isPhone ? '8px 12px' : '18px',
+                  marginBottom: isPhone ? '24px' : '35px',
+                  fontSize: isPhone ? '0.8rem' : '0.9rem',
+                  fontFamily: "'Lora', serif",
+                  color: isLight ? '#4b5563' : 'rgba(255,255,255,0.72)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <ZwosmosIcon size={12} color="#bd75ff" />
+                  <span style={{ color: isLight ? '#111827' : 'white', fontWeight: 600 }}>
+                    {postData.publishedDate}
+                  </span>
+                </div>
+                <span style={{ color: isLight ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)' }}>•</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ color: isLight ? '#4b5563' : 'rgba(255,255,255,0.5)' }}>Read Time:</span>
+                  <span style={{ color: isLight ? '#111827' : 'white', fontWeight: 600 }}>
+                    {postData.readTime}
+                  </span>
+                </div>
+                <span style={{ color: isLight ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)' }}>•</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ color: isLight ? '#4b5563' : 'rgba(255,255,255,0.5)' }}>Category:</span>
+                  <span
+                    style={{
+                      color: '#bd75ff',
+                      fontFamily: '"Noto Sans", sans-serif',
+                      fontWeight: 400,
+                      letterSpacing: '2px',
+                      textTransform: 'uppercase'
+                    }}
+                  >
+                    {postData.category}
+                  </span>
+                </div>
+              </div>
+            </div>
 
-        {/* ----------------------------------------------------------------------- */}
-        {/* CONTENT AREA WITH SIDEBARS                                              */}
-        {/* Mobile Sequence: Main Content -> Author -> Tags -> Latest Posts -> Share   */}
-        {/* Desktop: Left Aside (Author, Tags) | Main Content | Right Aside (Share, Latest) */}
-        {/* ----------------------------------------------------------------------- */}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: isMobileView ? 'column' : 'row',
-            gap: isMobileView ? '24px' : (winWidth >= 1440 ? '120px' : '60px'),
-            alignItems: isMobileView ? 'stretch' : 'flex-start',
-            justifyContent: 'center',
-            marginTop: '10px'
-          }}
-        >
-          {/* --------------------------------------------------------------------- */}
-          {/* MIDDLE: Main Reading Article Content                                  */}
-          {/* Mobile Order: 1 (Comes immediately after featured image)              */}
-          {/* --------------------------------------------------------------------- */}
-          <article
-            className={`blog-article-content-area ${enableDropCap ? 'has-dropcap' : ''}`}
+            {/* Featured Image Block */}
+            <div
+              style={{
+                position: 'relative',
+                width: '100%'
+              }}
+            >
+              <div
+                style={{
+                  width: '100%',
+                  aspectRatio: 'auto',
+                  maxHeight: 'none',
+                  height: 'auto',
+                  borderRadius: isMobile ? '10px' : '14px',
+                  overflow: 'hidden',
+                  border: isLight ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255, 255, 255, 0.12)',
+                  boxShadow: isLight ? '0 15px 35px rgba(0,0,0,0.15)' : '0 25px 50px rgba(0,0,0,0.5)',
+                  position: 'relative',
+                  zIndex: 1
+                }}
+              >
+                <img
+                  src={postData.featuredImage}
+                  alt={postData.title}
+                  style={{
+                    width: '100%',
+                    height: 'auto',
+                    display: 'block',
+                    objectFit: 'contain'
+                  }}
+                />
+              </div>
+
+              {/* Image Caption - Only rendered if caption is present */}
+              {postData.imageCaption ? (
+                <div
+                  style={{
+                    marginTop: isMobile ? '12px' : '16px',
+                    marginBottom: isMobile ? '30px' : '40px',
+                    fontSize: isMobile ? '15px' : '16px',
+                    color: isDark ? 'rgba(255, 255, 255, 0.82)' : isSepia ? '#5c3a21' : '#374151',
+                    fontFamily: "'Lora', serif",
+                    fontStyle: 'italic',
+                    fontWeight: 400,
+                    textAlign: 'center',
+                    maxWidth: '850px',
+                    marginLeft: 'auto',
+                    marginRight: 'auto',
+                    lineHeight: 1.6,
+                    letterSpacing: '0.2px'
+                  }}
+                >
+                  {postData.imageCaption}
+                </div>
+              ) : null}
+
+              {/* Font Size Adjuster (- A +): Placed right after featured image / caption */}
+              {renderFontSizeControl()}
+            </div>
+          </header>
+
+          {/* ----------------------------------------------------------------------- */}
+          {/* CONTENT AREA WITH SIDEBARS                                              */}
+          {/* Mobile Sequence: Main Content -> Author -> Tags -> Latest Posts -> Share   */}
+          {/* Desktop: Left Aside (Author, Tags) | Main Content | Right Aside (Share, Latest) */}
+          {/* ----------------------------------------------------------------------- */}
+          <div
             style={{
-              order: isMobileView ? 1 : 2,
-              flex: isMobileView ? '1 1 auto' : '1 1 auto',
-              minWidth: 0,
-              maxWidth: isMobileView ? '100%' : (winWidth >= 1440 ? '800px' : '740px'),
-              fontSize: `calc(${isMobile ? '1.02rem' : '1.14rem'} * ${fontScale})`,
-              lineHeight: isMobile ? 1.75 : 1.9,
-              color: isLight ? '#2b2d42' : 'rgba(255,255,255,0.88)',
-              fontFamily: "'Lora', serif",
-              paddingLeft: isMobileView
-                ? (!isPhone ? (winWidth >= 1000 ? '160px' : '80px') : '0')
-                : '10px',
-              paddingRight: isMobileView
-                ? (!isPhone ? (winWidth >= 1000 ? '160px' : '80px') : '0')
-                : '10px',
-              width: '100%',
-              boxSizing: 'border-box'
+              display: 'flex',
+              flexDirection: isMobileView ? 'column' : 'row',
+              gap: isMobileView ? '24px' : (winWidth >= 1440 ? '120px' : '60px'),
+              alignItems: isMobileView ? 'stretch' : 'flex-start',
+              justifyContent: 'center',
+              marginTop: '10px'
             }}
           >
-            <style>{`
+            {/* --------------------------------------------------------------------- */}
+            {/* MIDDLE: Main Reading Article Content                                  */}
+            {/* Mobile Order: 1 (Comes immediately after featured image)              */}
+            {/* --------------------------------------------------------------------- */}
+            <article
+              className={`blog-article-content-area ${enableDropCap ? 'has-dropcap' : ''}`}
+              style={{
+                order: isMobileView ? 1 : 2,
+                flex: isMobileView ? '1 1 auto' : '1 1 auto',
+                minWidth: 0,
+                maxWidth: isMobileView ? '100%' : (winWidth >= 1440 ? '800px' : '740px'),
+                fontSize: `calc(${isMobile ? '1.02rem' : '1.14rem'} * ${fontScale})`,
+                lineHeight: isMobile ? 1.75 : 1.9,
+                color: isLight ? '#2b2d42' : 'rgba(255,255,255,0.88)',
+                fontFamily: "'Lora', serif",
+                paddingLeft: isMobileView
+                  ? (!isPhone ? (winWidth >= 1000 ? '160px' : '80px') : '0')
+                  : '10px',
+                paddingRight: isMobileView
+                  ? (!isPhone ? (winWidth >= 1000 ? '160px' : '80px') : '0')
+                  : '10px',
+                width: '100%',
+                boxSizing: 'border-box'
+              }}
+            >
+              <style>{`
               .blog-article-content-area,
               .blog-article-content-area p,
               .blog-article-content-area li,
@@ -2116,17 +2158,17 @@ const BlogPostPage: React.FC = () => {
                 text-transform: uppercase !important;
               }
             `}</style>
-            {activePost?.content ? (
-              <div
-                className={`zw-blog-content zw-blog-content-wrapper ${isSepia ? 'sepia-mode' : isDark ? 'dark-mode' : 'light-mode'}`}
-                style={{
-                  color: isSepia ? '#451a03' : isLight ? '#1e293b' : 'rgba(255,255,255,0.88)',
-                  fontSize: `calc(${isMobile ? '1.05rem' : '1.18rem'} * ${fontScale})`,
-                  lineHeight: isMobile ? 1.75 : 1.9,
-                  marginBottom: '30px'
-                }}
-              >
-                <style>{`
+              {activePost?.content || activePost?.content_html ? (
+                <div
+                  className={`zw-blog-content zw-blog-content-wrapper ${isSepia ? 'sepia-mode' : isDark ? 'dark-mode' : 'light-mode'}`}
+                  style={{
+                    color: isSepia ? '#451a03' : isLight ? '#1e293b' : 'rgba(255,255,255,0.88)',
+                    fontSize: `calc(${isMobile ? '1.05rem' : '1.18rem'} * ${fontScale})`,
+                    lineHeight: isMobile ? 1.75 : 1.9,
+                    marginBottom: '30px'
+                  }}
+                >
+                  <style>{`
                     .zw-blog-content-wrapper.light-mode,
                     .zw-blog-content-wrapper.light-mode *,
                     .zw-blog-content-wrapper.light-mode p,
@@ -2303,6 +2345,145 @@ const BlogPostPage: React.FC = () => {
                       color: rgba(255, 255, 255, 0.75) !important;
                     }
 
+                    /* ==================================================== */
+                    /* Tables (Light, Dark, Sepia Mode Support)             */
+                    /* ==================================================== */
+                    .zw-blog-table-wrap {
+                      width: 100% !important;
+                      overflow-x: auto !important;
+                      margin: 2rem 0 !important;
+                      border-radius: 8px !important;
+                      -webkit-overflow-scrolling: touch !important;
+                    }
+                    .zw-blog-content table,
+                    .zw-blog-content-wrapper table {
+                      width: 100% !important;
+                      border-collapse: collapse !important;
+                      text-align: left !important;
+                      font-size: 0.95rem !important;
+                      line-height: 1.5 !important;
+                      margin: 0 !important;
+                    }
+                    .zw-blog-content th,
+                    .zw-blog-content td,
+                    .zw-blog-content-wrapper th,
+                    .zw-blog-content-wrapper td {
+                      padding: 12px 16px !important;
+                      vertical-align: middle !important;
+                      font-size: 0.95rem !important;
+                    }
+                    .zw-blog-content th p,
+                    .zw-blog-content td p,
+                    .zw-blog-content-wrapper th p,
+                    .zw-blog-content-wrapper td p {
+                      margin: 0 !important;
+                      padding: 0 !important;
+                      line-height: 1.5 !important;
+                      color: inherit !important;
+                    }
+
+                    /* Light Mode Table */
+                    .zw-blog-content-wrapper.light-mode table,
+                    body.light-theme .zw-blog-content-wrapper table,
+                    [data-theme="light"] .zw-blog-content-wrapper table {
+                      border: 1px solid #cbd5e1 !important;
+                      background-color: #ffffff !important;
+                    }
+                    .zw-blog-content-wrapper.light-mode th,
+                    body.light-theme .zw-blog-content-wrapper th,
+                    [data-theme="light"] .zw-blog-content-wrapper th {
+                      background-color: #f1f5f9 !important;
+                      color: #0f172a !important;
+                      font-weight: 600 !important;
+                      border: 1px solid #cbd5e1 !important;
+                      border-bottom: 2px solid #94a3b8 !important;
+                    }
+                    .zw-blog-content-wrapper.light-mode td,
+                    body.light-theme .zw-blog-content-wrapper td,
+                    [data-theme="light"] .zw-blog-content-wrapper td {
+                      background-color: #ffffff !important;
+                      color: #334155 !important;
+                      border: 1px solid #e2e8f0 !important;
+                    }
+                    .zw-blog-content-wrapper.light-mode tr:nth-child(even) td,
+                    body.light-theme .zw-blog-content-wrapper tr:nth-child(even) td,
+                    [data-theme="light"] .zw-blog-content-wrapper tr:nth-child(even) td {
+                      background-color: #f8fafc !important;
+                    }
+                    .zw-blog-content-wrapper.light-mode tr:hover td,
+                    body.light-theme .zw-blog-content-wrapper tr:hover td,
+                    [data-theme="light"] .zw-blog-content-wrapper tr:hover td {
+                      background-color: #f1f5f9 !important;
+                    }
+
+                    /* Dark Mode Table */
+                    .zw-blog-content-wrapper.dark-mode table,
+                    body.dark-theme .zw-blog-content-wrapper table,
+                    [data-theme="dark"] .zw-blog-content-wrapper table {
+                      border: 1px solid rgba(255, 255, 255, 0.14) !important;
+                      background-color: transparent !important;
+                    }
+                    .zw-blog-content-wrapper.dark-mode th,
+                    body.dark-theme .zw-blog-content-wrapper th,
+                    [data-theme="dark"] .zw-blog-content-wrapper th {
+                      background-color: rgba(255, 255, 255, 0.08) !important;
+                      color: #ffffff !important;
+                      font-weight: 600 !important;
+                      border: 1px solid rgba(255, 255, 255, 0.14) !important;
+                      border-bottom: 2px solid rgba(255, 255, 255, 0.28) !important;
+                    }
+                    .zw-blog-content-wrapper.dark-mode td,
+                    body.dark-theme .zw-blog-content-wrapper td,
+                    [data-theme="dark"] .zw-blog-content-wrapper td {
+                      background-color: transparent !important;
+                      color: rgba(255, 255, 255, 0.88) !important;
+                      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                    }
+                    .zw-blog-content-wrapper.dark-mode tr:nth-child(even) td,
+                    body.dark-theme .zw-blog-content-wrapper tr:nth-child(even) td,
+                    [data-theme="dark"] .zw-blog-content-wrapper tr:nth-child(even) td {
+                      background-color: rgba(255, 255, 255, 0.035) !important;
+                    }
+                    .zw-blog-content-wrapper.dark-mode tr:hover td,
+                    body.dark-theme .zw-blog-content-wrapper tr:hover td,
+                    [data-theme="dark"] .zw-blog-content-wrapper tr:hover td {
+                      background-color: rgba(255, 255, 255, 0.07) !important;
+                    }
+
+                    /* Sepia Mode Table */
+                    .zw-blog-content-wrapper.sepia-mode table,
+                    body.sepia-theme .zw-blog-content-wrapper table,
+                    [data-theme="sepia"] .zw-blog-content-wrapper table {
+                      border: 1px solid rgba(180, 83, 9, 0.25) !important;
+                      background-color: rgba(254, 243, 199, 0.2) !important;
+                    }
+                    .zw-blog-content-wrapper.sepia-mode th,
+                    body.sepia-theme .zw-blog-content-wrapper th,
+                    [data-theme="sepia"] .zw-blog-content-wrapper th {
+                      background-color: rgba(180, 83, 9, 0.12) !important;
+                      color: #451a03 !important;
+                      font-weight: 600 !important;
+                      border: 1px solid rgba(180, 83, 9, 0.25) !important;
+                      border-bottom: 2px solid rgba(180, 83, 9, 0.4) !important;
+                    }
+                    .zw-blog-content-wrapper.sepia-mode td,
+                    body.sepia-theme .zw-blog-content-wrapper td,
+                    [data-theme="sepia"] .zw-blog-content-wrapper td {
+                      background-color: transparent !important;
+                      color: #451a03 !important;
+                      border: 1px solid rgba(180, 83, 9, 0.18) !important;
+                    }
+                    .zw-blog-content-wrapper.sepia-mode tr:nth-child(even) td,
+                    body.sepia-theme .zw-blog-content-wrapper tr:nth-child(even) td,
+                    [data-theme="sepia"] .zw-blog-content-wrapper tr:nth-child(even) td {
+                      background-color: rgba(180, 83, 9, 0.045) !important;
+                    }
+                    .zw-blog-content-wrapper.sepia-mode tr:hover td,
+                    body.sepia-theme .zw-blog-content-wrapper tr:hover td,
+                    [data-theme="sepia"] .zw-blog-content-wrapper tr:hover td {
+                      background-color: rgba(180, 83, 9, 0.09) !important;
+                    }
+
                     /* ---------------------------------------------------- */
                     /* Reference Citation Badges (Light, Dark, Sepia)        */
                     /* No glow, no movement on hover: border & text color only */
@@ -2316,7 +2497,7 @@ const BlogPostPage: React.FC = () => {
                       padding: 2px 8px !important;
                       margin: 0 3px !important;
                       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace !important;
-                      font-size: 0.84em !important;
+                      font-size: 0.54em !important;
                       font-weight: 500 !important;
                       line-height: 1.45 !important;
                       border-radius: 5px !important;
@@ -2405,513 +2586,574 @@ const BlogPostPage: React.FC = () => {
                       box-shadow: none !important;
                       transform: none !important;
                     }
+
+                    /* ---------------------------------------------------- */
+                    /* Embedded Content Images & Captions                   */
+                    /* ---------------------------------------------------- */
+                    .zw-blog-content-wrapper .zw-blog-figure,
+                    .zw-blog-content .zw-blog-figure,
+                    .zw-blog-figure {
+                      margin: 2rem 0 !important;
+                      text-align: center !important;
+                    }
+                    .zw-blog-content-wrapper .zw-blog-figure img,
+                    .zw-blog-content .zw-blog-figure img,
+                    .zw-blog-figure img,
+                    .zw-blog-editor-image {
+                      max-width: 100% !important;
+                      height: auto !important;
+                      border-radius: 8px !important;
+                      display: block !important;
+                      margin: 0 auto !important;
+                    }
+                    .zw-blog-content-wrapper .zw-blog-caption,
+                    .zw-blog-content .zw-blog-caption,
+                    .zw-blog-caption,
+                    figcaption.zw-blog-caption {
+                      font-family: 'Lora', Georgia, serif !important;
+                      font-size: 0.95rem !important;
+                      font-style: italic !important;
+                      font-weight: 400 !important;
+                      line-height: 1.6 !important;
+                      margin-top: 0.75rem !important;
+                      text-align: center !important;
+                      display: block !important;
+                    }
+                    .zw-blog-content-wrapper.light-mode .zw-blog-caption,
+                    body.light-theme .zw-blog-caption,
+                    [data-theme="light"] .zw-blog-caption {
+                      color: #475569 !important;
+                    }
+                    .zw-blog-content-wrapper.dark-mode .zw-blog-caption,
+                    body.dark-theme .zw-blog-caption,
+                    [data-theme="dark"] .zw-blog-caption {
+                      color: rgba(255, 255, 255, 0.75) !important;
+                    }
+                    .zw-blog-content-wrapper.sepia-mode .zw-blog-caption,
+                    body.sepia-theme .zw-blog-caption,
+                    [data-theme="sepia"] .zw-blog-caption {
+                      color: #78350f !important;
+                    }
                   `}</style>
-                {(() => {
-                  const contentHasCit = JSON.stringify(activePost?.content || '').includes('citation');
-                  const htmlHasCit = Boolean(activePost?.content_html && (activePost.content_html.includes('zw-blog-citation') || activePost.content_html.includes('data-citation')));
-                  const shouldUseHtml = htmlHasCit && !contentHasCit && activePost?.content_html;
+                  {(() => {
+                    const enrichHtmlWithCaptions = (html: string, captionsMap: Record<string, string>) => {
+                      if (!html || !captionsMap || Object.keys(captionsMap).length === 0) return html;
+                      return html.replace(/<figure[\s\S]*?<\/figure>|(<img\s+[^>]*?src=["']([^"']+)["'][^>]*?>)/gi, (match, imgTag, src) => {
+                        if (!imgTag || !src) return match;
+                        const cleanSrc = src.split('?')[0];
+                        const caption = captionsMap[src] || captionsMap[cleanSrc];
+                        if (caption) {
+                          return `<figure class="zw-blog-figure">${imgTag}<figcaption class="zw-blog-caption">${caption}</figcaption></figure>`;
+                        }
+                        return match;
+                      });
+                    };
 
-                  if (shouldUseHtml) {
-                    return (
-                      <div
-                        className={`zw-blog-content zw-blog-content-wrapper ${isSepia ? 'sepia-mode' : isDark ? 'dark-mode' : 'light-mode'}`}
-                        dangerouslySetInnerHTML={{ __html: activePost.content_html }}
-                        style={{
-                          color: isSepia ? '#451a03' : isLight ? '#1e293b' : 'rgba(255,255,255,0.88)',
-                          fontSize: `calc(${isMobile ? '1.05rem' : '1.18rem'} * ${fontScale})`,
-                          lineHeight: isMobile ? 1.75 : 1.9,
-                          marginBottom: '30px'
-                        }}
-                      />
-                    );
-                  }
+                    const contentHasCit = JSON.stringify(activePost?.content || '').includes('citation');
+                    const htmlHasCit = Boolean(activePost?.content_html && (activePost.content_html.includes('zw-blog-citation') || activePost.content_html.includes('data-citation')));
+                    const shouldUseHtml = htmlHasCit && !contentHasCit && activePost?.content_html;
 
-                  if (activePost?.content) {
-                    return (
-                      <div
-                        className={`zw-blog-content zw-blog-content-wrapper ${isSepia ? 'sepia-mode' : isDark ? 'dark-mode' : 'light-mode'}`}
-                      >
-                        <BlogContent content={activePost.content} />
-                      </div>
-                    );
-                  }
+                    if (shouldUseHtml) {
+                      return (
+                        <div
+                          className={`zw-blog-content zw-blog-content-wrapper ${isSepia ? 'sepia-mode' : isDark ? 'dark-mode' : 'light-mode'}`}
+                          dangerouslySetInnerHTML={{ __html: enrichHtmlWithCaptions(activePost.content_html, mediaCaptionMap) }}
+                          style={{
+                            color: isSepia ? '#451a03' : isLight ? '#1e293b' : 'rgba(255,255,255,0.88)',
+                            fontSize: `calc(${isMobile ? '1.05rem' : '1.18rem'} * ${fontScale})`,
+                            lineHeight: isMobile ? 1.75 : 1.9,
+                            marginBottom: '30px'
+                          }}
+                        />
+                      );
+                    }
 
-                  if (activePost?.content_html) {
-                    return (
-                      <div
-                        className={`zw-blog-content zw-blog-content-wrapper ${isSepia ? 'sepia-mode' : isDark ? 'dark-mode' : 'light-mode'}`}
-                        dangerouslySetInnerHTML={{ __html: activePost.content_html }}
-                        style={{
-                          color: isSepia ? '#451a03' : isLight ? '#1e293b' : 'rgba(255,255,255,0.88)',
-                          fontSize: `calc(${isMobile ? '1.05rem' : '1.18rem'} * ${fontScale})`,
-                          lineHeight: isMobile ? 1.75 : 1.9,
-                          marginBottom: '30px'
-                        }}
-                      />
-                    );
-                  }
+                    if (activePost?.content) {
+                      return (
+                        <div
+                          className={`zw-blog-content zw-blog-content-wrapper ${isSepia ? 'sepia-mode' : isDark ? 'dark-mode' : 'light-mode'}`}
+                        >
+                          <BlogContent content={activePost.content} mediaCaptionMap={mediaCaptionMap} />
+                        </div>
+                      );
+                    }
 
-                  return null;
-                })()}
+                    if (activePost?.content_html) {
+                      return (
+                        <div
+                          className={`zw-blog-content zw-blog-content-wrapper ${isSepia ? 'sepia-mode' : isDark ? 'dark-mode' : 'light-mode'}`}
+                          dangerouslySetInnerHTML={{ __html: enrichHtmlWithCaptions(activePost.content_html, mediaCaptionMap) }}
+                          style={{
+                            color: isSepia ? '#451a03' : isLight ? '#1e293b' : 'rgba(255,255,255,0.88)',
+                            fontSize: `calc(${isMobile ? '1.05rem' : '1.18rem'} * ${fontScale})`,
+                            lineHeight: isMobile ? 1.75 : 1.9,
+                            marginBottom: '30px'
+                          }}
+                        />
+                      );
+                    }
+
+                    return null;
+                  })()}
+                </div>
+              ) : null}
+
+
+
+            </article>
+
+            {/* Desktop Left Sidebar: Author & Tags */}
+            {!isMobileView && (
+              <aside
+                style={{
+                  order: 1,
+                  flex: '0 0 190px',
+                  width: '190px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '24px',
+                  position: 'sticky',
+                  top: '100px'
+                }}
+              >
+                {renderAuthorWidget()}
+                {renderDesktopTags()}
+              </aside>
+            )}
+
+            {/* Desktop Right Sidebar: Share & Latest */}
+            {!isMobileView && (
+              <aside
+                style={{
+                  order: 3,
+                  flex: '0 0 200px',
+                  width: '200px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '24px',
+                  position: 'sticky',
+                  top: '100px'
+                }}
+              >
+                {renderDesktopShare()}
+                {renderLatestWidget()}
+              </aside>
+            )}
+
+            {/* Mobile & Tablet Post-Content Section: Share -> Tags -> Author & Latest (Full width) */}
+            {isMobileView && (
+              <div
+                style={{
+                  order: 2,
+                  width: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '16px',
+                  marginTop: '10px',
+                  boxSizing: 'border-box'
+                }}
+              >
+                {/* 1. Share Row */}
+                {renderMobileShare()}
+
+                {/* 2. Tags Row (JUST AFTER SHARE) */}
+                {renderMobileTags()}
+
+                {/* 3. Author and Latest: side by side in tablet / small tab views, stacked on phone */}
+                {!isPhone ? (
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'row',
+                      gap: '20px',
+                      width: '100%',
+                      alignItems: 'stretch',
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <div style={{ flex: '0 0 37%', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+                      {renderAuthorWidget()}
+                    </div>
+                    <div style={{ flex: '1 1 0', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+                      {renderLatestWidget()}
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '18px',
+                      width: '100%',
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    {renderAuthorWidget()}
+                    {renderLatestWidget()}
+                  </div>
+                )}
               </div>
-            ) : null}
+            )}
+          </div>
 
-
-
-          </article>
-
-          {/* Desktop Left Sidebar: Author & Tags */}
-          {!isMobileView && (
-            <aside
-              style={{
-                order: 1,
-                flex: '0 0 190px',
-                width: '190px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '24px',
-                position: 'sticky',
-                top: '100px'
-              }}
-            >
-              {renderAuthorWidget()}
-              {renderDesktopTags()}
-            </aside>
-          )}
-
-          {/* Desktop Right Sidebar: Share & Latest */}
-          {!isMobileView && (
-            <aside
-              style={{
-                order: 3,
-                flex: '0 0 200px',
-                width: '200px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '24px',
-                position: 'sticky',
-                top: '100px'
-              }}
-            >
-              {renderDesktopShare()}
-              {renderLatestWidget()}
-            </aside>
-          )}
-
-          {/* Mobile & Tablet Post-Content Section: Share -> Tags -> Author & Latest (Full width) */}
-          {isMobileView && (
+          {/* ========================================================================= */}
+          {/* PREVIOUS / NEXT POST NAVIGATION (FULL WIDTH OF CONTENT SECTION)           */}
+          {/* ========================================================================= */}
+          {(prevPost || nextPost) && (
             <div
               style={{
-                order: 2,
                 width: '100%',
+                marginTop: isMobile ? '28px' : '40px',
+                paddingTop: isMobile ? '20px' : '28px',
+                borderTop: isDark ? '1px solid rgba(255,255,255,0.1)' : (isSepia ? '1px solid rgba(217, 119, 6, 0.2)' : '1px solid rgba(0,0,0,0.08)'),
                 display: 'flex',
-                flexDirection: 'column',
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
                 gap: '16px',
-                marginTop: '10px',
                 boxSizing: 'border-box'
               }}
             >
-              {/* 1. Share Row */}
-              {renderMobileShare()}
-
-              {/* 2. Tags Row (JUST AFTER SHARE) */}
-              {renderMobileTags()}
-
-              {/* 3. Author and Latest: side by side in tablet / small tab views, stacked on phone */}
-              {!isPhone ? (
-                <div
+              {/* PREVIOUS POST BUTTON (Anchored Far Left, Box Hugs Text Only) */}
+              {prevPost ? (
+                <Link
+                  to={`/blog/${prevPost.id}`}
                   style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    gap: '20px',
-                    width: '100%',
-                    alignItems: 'stretch',
-                    boxSizing: 'border-box'
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: (isMobile || isTablet) ? '8px' : '14px',
+                    padding: (isMobile || isTablet) ? '10px 16px' : '11px 18px',
+                    borderRadius: '12px',
+                    background: isDark ? 'rgba(255, 255, 255, 0.025)' : (isSepia ? '#fef6ea' : '#f9fafb'),
+                    border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : (isSepia ? '1px solid rgba(217, 119, 6, 0.28)' : '1px solid #e5e7eb'),
+                    boxShadow: isSepia ? '0 4px 14px rgba(217, 119, 6, 0.06)' : 'none',
+                    textDecoration: 'none',
+                    color: 'inherit',
+                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    boxSizing: 'border-box',
+                    flex: (isMobile || isTablet) ? '0 0 auto' : '0 1 360px',
+                    width: (isMobile || isTablet) ? 'auto' : '100%',
+                    maxWidth: (isMobile || isTablet) ? 'none' : '360px'
+                  }}
+                  onMouseOver={e => {
+                    e.currentTarget.style.borderColor = 'var(--brand-purple)';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = isSepia
+                      ? '0 8px 20px rgba(217, 119, 6, 0.15)'
+                      : isLight
+                        ? '0 8px 20px rgba(147, 51, 234, 0.1)'
+                        : '0 10px 24px rgba(0, 0, 0, 0.4), 0 0 16px rgba(147, 51, 234, 0.2)';
+                  }}
+                  onMouseOut={e => {
+                    e.currentTarget.style.borderColor = isDark ? 'rgba(255, 255, 255, 0.1)' : (isSepia ? 'rgba(217, 119, 6, 0.28)' : '#e5e7eb');
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = isSepia ? '0 4px 14px rgba(217, 119, 6, 0.06)' : 'none';
                   }}
                 >
-                  <div style={{ flex: '0 0 37%', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                    {renderAuthorWidget()}
+                  {/* Direction Arrow */}
+                  <div
+                    style={{
+                      width: (isMobile || isTablet) ? '28px' : '36px',
+                      height: (isMobile || isTablet) ? '28px' : '36px',
+                      borderRadius: '50%',
+                      background: isDark ? 'rgba(147, 51, 234, 0.2)' : (isSepia ? '#fde8c8' : 'rgba(147, 51, 234, 0.08)'),
+                      border: isSepia ? '1px solid #d97706' : '1px solid var(--brand-purple)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: isSepia ? '#b45309' : 'var(--brand-purple)',
+                      fontSize: (isMobile || isTablet) ? '0.85rem' : '1.05rem',
+                      fontWeight: 700,
+                      flexShrink: 0
+                    }}
+                  >
+                    ←
                   </div>
-                  <div style={{ flex: '1 1 0', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                    {renderLatestWidget()}
+
+                  {/* Content (No extra empty space after text) */}
+                  <div
+                    style={{
+                      flex: (isMobile || isTablet) ? '0 0 auto' : 1,
+                      minWidth: 0,
+                      textAlign: 'left',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontFamily: '"Noto Sans", sans-serif',
+                        fontSize: (isMobile || isTablet) ? '0.68rem' : '0.72rem',
+                        fontWeight: 400,
+                        letterSpacing: '3px',
+                        color: isSepia ? '#b45309' : '#bd75ff',
+                        textTransform: 'uppercase',
+                        marginBottom: (isMobile || isTablet) ? '0px' : '4px',
+                        textAlign: 'left',
+                        whiteSpace: 'nowrap',
+                        width: 'auto'
+                      }}
+                    >
+                      PREVIOUS POST
+                    </div>
+                    {(!isMobile && !isTablet) && (
+                      <div
+                        style={{
+                          fontFamily: "'Playfair Display', serif",
+                          fontSize: '0.92rem',
+                          fontWeight: 600,
+                          color: isDark ? '#ffffff' : (isSepia ? '#2a1a08' : '#111827'),
+                          lineHeight: 1.35,
+                          whiteSpace: 'normal',
+                          wordBreak: 'break-word',
+                          textAlign: 'left',
+                          width: '100%'
+                        }}
+                      >
+                        {prevPost.title}
+                      </div>
+                    )}
                   </div>
-                </div>
+                </Link>
               ) : (
-                <div
+                <div style={{ display: (isMobile || isTablet) ? 'none' : 'block' }} />
+              )}
+
+              {/* NEXT POST BUTTON (Anchored Far Right, Box Hugs Text Only) */}
+              {nextPost && (
+                <Link
+                  to={`/blog/${nextPost.id}`}
                   style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '18px',
-                    width: '100%',
-                    boxSizing: 'border-box'
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: (isMobile || isTablet) ? '8px' : '14px',
+                    padding: (isMobile || isTablet) ? '10px 16px' : '11px 18px',
+                    borderRadius: '12px',
+                    background: isDark ? 'rgba(255, 255, 255, 0.025)' : (isSepia ? '#fef6ea' : '#f9fafb'),
+                    border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : (isSepia ? '1px solid rgba(217, 119, 6, 0.28)' : '1px solid #e5e7eb'),
+                    boxShadow: isSepia ? '0 4px 14px rgba(217, 119, 6, 0.06)' : 'none',
+                    textDecoration: 'none',
+                    color: 'inherit',
+                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    boxSizing: 'border-box',
+                    flex: (isMobile || isTablet) ? '0 0 auto' : '0 1 360px',
+                    width: (isMobile || isTablet) ? 'auto' : '100%',
+                    maxWidth: (isMobile || isTablet) ? 'none' : '360px',
+                    marginLeft: 'auto'
+                  }}
+                  onMouseOver={e => {
+                    e.currentTarget.style.borderColor = 'var(--brand-purple)';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = isSepia
+                      ? '0 8px 20px rgba(217, 119, 6, 0.15)'
+                      : isLight
+                        ? '0 8px 20px rgba(147, 51, 234, 0.1)'
+                        : '0 10px 24px rgba(0, 0, 0, 0.4), 0 0 16px rgba(147, 51, 234, 0.2)';
+                  }}
+                  onMouseOut={e => {
+                    e.currentTarget.style.borderColor = isDark ? 'rgba(255, 255, 255, 0.1)' : (isSepia ? 'rgba(217, 119, 6, 0.28)' : '#e5e7eb');
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = isSepia ? '0 4px 14px rgba(217, 119, 6, 0.06)' : 'none';
                   }}
                 >
-                  {renderAuthorWidget()}
-                  {renderLatestWidget()}
-                </div>
+                  {/* Content (Aligned Right, No extra empty space before text) */}
+                  <div
+                    style={{
+                      flex: (isMobile || isTablet) ? '0 0 auto' : 1,
+                      minWidth: 0,
+                      textAlign: 'right',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-end',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontFamily: '"Noto Sans", sans-serif',
+                        fontSize: (isMobile || isTablet) ? '0.68rem' : '0.72rem',
+                        fontWeight: 400,
+                        letterSpacing: '3px',
+                        color: isSepia ? '#b45309' : '#bd75ff',
+                        textTransform: 'uppercase',
+                        marginBottom: (isMobile || isTablet) ? '0px' : '4px',
+                        textAlign: 'right',
+                        whiteSpace: 'nowrap',
+                        width: 'auto'
+                      }}
+                    >
+                      NEXT POST
+                    </div>
+                    {(!isMobile && !isTablet) && (
+                      <div
+                        style={{
+                          fontFamily: "'Playfair Display', serif",
+                          fontSize: '0.92rem',
+                          fontWeight: 600,
+                          color: isDark ? '#ffffff' : (isSepia ? '#2a1a08' : '#111827'),
+                          lineHeight: 1.35,
+                          whiteSpace: 'normal',
+                          wordBreak: 'break-word',
+                          textAlign: 'right',
+                          width: '100%'
+                        }}
+                      >
+                        {nextPost.title}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Direction Arrow */}
+                  <div
+                    style={{
+                      width: (isMobile || isTablet) ? '28px' : '36px',
+                      height: (isMobile || isTablet) ? '28px' : '36px',
+                      borderRadius: '50%',
+                      background: isDark ? 'rgba(189, 117, 255, 0.15)' : (isSepia ? '#fde8c8' : 'rgba(189, 117, 255, 0.08)'),
+                      border: isSepia ? '1px solid #d97706' : '1px solid #bd75ff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: isSepia ? '#b45309' : '#bd75ff',
+                      fontSize: (isMobile || isTablet) ? '0.85rem' : '1.05rem',
+                      fontWeight: 400,
+                      flexShrink: 0
+                    }}
+                  >
+                    →
+                  </div>
+                </Link>
               )}
             </div>
           )}
-        </div>
 
-        {/* ========================================================================= */}
-        {/* PREVIOUS / NEXT POST NAVIGATION (FULL WIDTH OF CONTENT SECTION)           */}
-        {/* ========================================================================= */}
-        {(prevPost || nextPost) && (
-          <div
-            style={{
-              width: '100%',
-              marginTop: isMobile ? '28px' : '40px',
-              paddingTop: isMobile ? '20px' : '28px',
-              borderTop: isDark ? '1px solid rgba(255,255,255,0.1)' : (isSepia ? '1px solid rgba(217, 119, 6, 0.2)' : '1px solid rgba(0,0,0,0.08)'),
-              display: 'flex',
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: '16px',
-              boxSizing: 'border-box'
-            }}
-          >
-            {/* PREVIOUS POST BUTTON (Anchored Far Left, Box Hugs Text Only) */}
-            {prevPost ? (
-              <Link
-                to={`/blog/${prevPost.id}`}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: (isMobile || isTablet) ? '8px' : '14px',
-                  padding: (isMobile || isTablet) ? '10px 16px' : '11px 18px',
-                  borderRadius: '12px',
-                  background: isDark ? 'rgba(255, 255, 255, 0.025)' : (isSepia ? '#fef6ea' : '#f9fafb'),
-                  border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : (isSepia ? '1px solid rgba(217, 119, 6, 0.28)' : '1px solid #e5e7eb'),
-                  boxShadow: isSepia ? '0 4px 14px rgba(217, 119, 6, 0.06)' : 'none',
-                  textDecoration: 'none',
-                  color: 'inherit',
-                  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                  position: 'relative',
-                  overflow: 'hidden',
-                  boxSizing: 'border-box',
-                  flex: (isMobile || isTablet) ? '0 0 auto' : '0 1 360px',
-                  width: (isMobile || isTablet) ? 'auto' : '100%',
-                  maxWidth: (isMobile || isTablet) ? 'none' : '360px'
-                }}
-                onMouseOver={e => {
-                  e.currentTarget.style.borderColor = 'var(--brand-purple)';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = isSepia
-                    ? '0 8px 20px rgba(217, 119, 6, 0.15)'
-                    : isLight
-                    ? '0 8px 20px rgba(147, 51, 234, 0.1)'
-                    : '0 10px 24px rgba(0, 0, 0, 0.4), 0 0 16px rgba(147, 51, 234, 0.2)';
-                }}
-                onMouseOut={e => {
-                  e.currentTarget.style.borderColor = isDark ? 'rgba(255, 255, 255, 0.1)' : (isSepia ? 'rgba(217, 119, 6, 0.28)' : '#e5e7eb');
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = isSepia ? '0 4px 14px rgba(217, 119, 6, 0.06)' : 'none';
-                }}
-              >
-                {/* Direction Arrow */}
-                <div
-                  style={{
-                    width: (isMobile || isTablet) ? '28px' : '36px',
-                    height: (isMobile || isTablet) ? '28px' : '36px',
-                    borderRadius: '50%',
-                    background: isDark ? 'rgba(147, 51, 234, 0.2)' : (isSepia ? '#fde8c8' : 'rgba(147, 51, 234, 0.08)'),
-                    border: isSepia ? '1px solid #d97706' : '1px solid var(--brand-purple)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: isSepia ? '#b45309' : 'var(--brand-purple)',
-                    fontSize: (isMobile || isTablet) ? '0.85rem' : '1.05rem',
-                    fontWeight: 700,
-                    flexShrink: 0
-                  }}
-                >
-                  ←
-                </div>
-
-                {/* Content (No extra empty space after text) */}
-                <div
-                  style={{
-                    flex: (isMobile || isTablet) ? '0 0 auto' : 1,
-                    minWidth: 0,
-                    textAlign: 'left',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'flex-start',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <div
-                    style={{
-                      fontFamily: '"Noto Sans", sans-serif',
-                      fontSize: (isMobile || isTablet) ? '0.68rem' : '0.72rem',
-                      fontWeight: 400,
-                      letterSpacing: '3px',
-                      color: isSepia ? '#b45309' : '#bd75ff',
-                      textTransform: 'uppercase',
-                      marginBottom: (isMobile || isTablet) ? '0px' : '4px',
-                      textAlign: 'left',
-                      whiteSpace: 'nowrap',
-                      width: 'auto'
-                    }}
-                  >
-                    PREVIOUS POST
-                  </div>
-                  {(!isMobile && !isTablet) && (
-                    <div
-                      style={{
-                        fontFamily: "'Playfair Display', serif",
-                        fontSize: '0.92rem',
-                        fontWeight: 600,
-                        color: isDark ? '#ffffff' : (isSepia ? '#2a1a08' : '#111827'),
-                        lineHeight: 1.35,
-                        whiteSpace: 'normal',
-                        wordBreak: 'break-word',
-                        textAlign: 'left',
-                        width: '100%'
-                      }}
-                    >
-                      {prevPost.title}
-                    </div>
-                  )}
-                </div>
-              </Link>
-            ) : (
-              <div style={{ display: (isMobile || isTablet) ? 'none' : 'block' }} />
-            )}
-
-            {/* NEXT POST BUTTON (Anchored Far Right, Box Hugs Text Only) */}
-            {nextPost && (
-              <Link
-                to={`/blog/${nextPost.id}`}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: (isMobile || isTablet) ? '8px' : '14px',
-                  padding: (isMobile || isTablet) ? '10px 16px' : '11px 18px',
-                  borderRadius: '12px',
-                  background: isDark ? 'rgba(255, 255, 255, 0.025)' : (isSepia ? '#fef6ea' : '#f9fafb'),
-                  border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : (isSepia ? '1px solid rgba(217, 119, 6, 0.28)' : '1px solid #e5e7eb'),
-                  boxShadow: isSepia ? '0 4px 14px rgba(217, 119, 6, 0.06)' : 'none',
-                  textDecoration: 'none',
-                  color: 'inherit',
-                  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                  position: 'relative',
-                  overflow: 'hidden',
-                  boxSizing: 'border-box',
-                  flex: (isMobile || isTablet) ? '0 0 auto' : '0 1 360px',
-                  width: (isMobile || isTablet) ? 'auto' : '100%',
-                  maxWidth: (isMobile || isTablet) ? 'none' : '360px',
-                  marginLeft: 'auto'
-                }}
-                onMouseOver={e => {
-                  e.currentTarget.style.borderColor = 'var(--brand-purple)';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = isSepia
-                    ? '0 8px 20px rgba(217, 119, 6, 0.15)'
-                    : isLight
-                    ? '0 8px 20px rgba(147, 51, 234, 0.1)'
-                    : '0 10px 24px rgba(0, 0, 0, 0.4), 0 0 16px rgba(147, 51, 234, 0.2)';
-                }}
-                onMouseOut={e => {
-                  e.currentTarget.style.borderColor = isDark ? 'rgba(255, 255, 255, 0.1)' : (isSepia ? 'rgba(217, 119, 6, 0.28)' : '#e5e7eb');
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = isSepia ? '0 4px 14px rgba(217, 119, 6, 0.06)' : 'none';
-                }}
-              >
-                {/* Content (Aligned Right, No extra empty space before text) */}
-                <div
-                  style={{
-                    flex: (isMobile || isTablet) ? '0 0 auto' : 1,
-                    minWidth: 0,
-                    textAlign: 'right',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'flex-end',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <div
-                    style={{
-                      fontFamily: '"Noto Sans", sans-serif',
-                      fontSize: (isMobile || isTablet) ? '0.68rem' : '0.72rem',
-                      fontWeight: 400,
-                      letterSpacing: '3px',
-                      color: isSepia ? '#b45309' : '#bd75ff',
-                      textTransform: 'uppercase',
-                      marginBottom: (isMobile || isTablet) ? '0px' : '4px',
-                      textAlign: 'right',
-                      whiteSpace: 'nowrap',
-                      width: 'auto'
-                    }}
-                  >
-                    NEXT POST
-                  </div>
-                  {(!isMobile && !isTablet) && (
-                    <div
-                      style={{
-                        fontFamily: "'Playfair Display', serif",
-                        fontSize: '0.92rem',
-                        fontWeight: 600,
-                        color: isDark ? '#ffffff' : (isSepia ? '#2a1a08' : '#111827'),
-                        lineHeight: 1.35,
-                        whiteSpace: 'normal',
-                        wordBreak: 'break-word',
-                        textAlign: 'right',
-                        width: '100%'
-                      }}
-                    >
-                      {nextPost.title}
-                    </div>
-                  )}
-                </div>
-
-                {/* Direction Arrow */}
-                <div
-                  style={{
-                    width: (isMobile || isTablet) ? '28px' : '36px',
-                    height: (isMobile || isTablet) ? '28px' : '36px',
-                    borderRadius: '50%',
-                    background: isDark ? 'rgba(189, 117, 255, 0.15)' : (isSepia ? '#fde8c8' : 'rgba(189, 117, 255, 0.08)'),
-                    border: isSepia ? '1px solid #d97706' : '1px solid #bd75ff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: isSepia ? '#b45309' : '#bd75ff',
-                    fontSize: (isMobile || isTablet) ? '0.85rem' : '1.05rem',
-                    fontWeight: 400,
-                    flexShrink: 0
-                  }}
-                >
-                  →
-                </div>
-              </Link>
-            )}
-          </div>
-        )}
-
-        {/* ========================================================================= */}
-        {/* COMMENTS SECTION (Powered by @zwantum/blog)                               */}
-        {/* ========================================================================= */}
-        <section
-          style={{
-            width: '100%',
-            boxSizing: 'border-box'
-          }}
-        >
-          <CommentSection postId={activePost?.id || String(id || '1')} />
-        </section>
-
-        {/* ========================================================================= */}
-        {/* RELATED POSTS SECTION                                                     */}
-        {/* ========================================================================= */}
-        {relatedPosts.length > 0 && (
+          {/* ========================================================================= */}
+          {/* COMMENTS SECTION (Powered by @zwantum/blog)                               */}
+          {/* ========================================================================= */}
           <section
             style={{
               width: '100%',
-              marginTop: isMobile ? '36px' : '55px',
-              paddingTop: isMobile ? '24px' : '36px',
-              borderTop: isDark ? '1px solid rgba(255,255,255,0.1)' : (isSepia ? '1px solid rgba(217, 119, 6, 0.2)' : '1px solid rgba(0,0,0,0.08)'),
               boxSizing: 'border-box'
             }}
           >
-            {/* Section Header */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: isMobile ? 'flex-start' : 'flex-end',
-                justifyContent: 'space-between',
-                flexDirection: isMobile ? 'column' : 'row',
-                gap: '12px',
-                marginBottom: isMobile ? '20px' : '28px'
-              }}
-            >
-              <div>
-                <div
-                  style={{
-                    fontFamily: '"Noto Sans", sans-serif',
-                    fontSize: '0.78rem',
-                    fontWeight: 400,
-                    letterSpacing: '3px',
-                    color: isSepia ? '#b45309' : '#bd75ff',
-                    textTransform: 'uppercase',
-                    marginBottom: '6px'
-                  }}
-                >
-                  EXPLORE FURTHER
-                </div>
-                <h3
-                  style={{
-                    margin: 0,
-                    fontFamily: "'Playfair Display', serif",
-                    fontSize: isMobile ? '1.45rem' : '1.85rem',
-                    fontWeight: 700,
-                    color: isDark ? '#ffffff' : (isSepia ? '#2a1a08' : '#111827'),
-                    lineHeight: 1.25,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px'
-                  }}
-                >
-                  Related Posts
-                  <ZwosmosIcon size={14} color={isSepia ? '#d97706' : '#bd75ff'} />
-                </h3>
-              </div>
+            <CommentSection postId={activePost?.id || String(id || '1')} />
+          </section>
 
-              <Link
-                to={`/${postData.categorySlug || 'space-news'}`}
-                style={{
-                  fontFamily: '"Noto Sans", sans-serif',
-                  fontSize: '0.84rem',
-                  fontWeight: 400,
-                  letterSpacing: '3px',
-                  color: isSepia ? '#b45309' : '#bd75ff',
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  transition: 'opacity 0.2s',
-                  paddingBottom: '2px',
-                  textTransform: 'uppercase'
-                }}
-                onMouseOver={e => (e.currentTarget.style.opacity = '0.75')}
-                onMouseOut={e => (e.currentTarget.style.opacity = '1')}
-              >
-                <span>More in {postData.categoryName || 'Space'}</span>
-                <span>→</span>
-              </Link>
-            </div>
-
-            {/* Related Posts Grid using standard BlogCard */}
-            <div
+          {/* ========================================================================= */}
+          {/* RELATED POSTS SECTION                                                     */}
+          {/* ========================================================================= */}
+          {relatedPosts.length > 0 && (
+            <section
               style={{
-                display: 'grid',
-                gridTemplateColumns: isPhone ? '1fr' : 'repeat(3, 1fr)',
-                gap: isPhone ? '28px 16px' : (isSmallTab ? '24px 14px' : '36px 24px'),
+                width: '100%',
+                marginTop: isMobile ? '36px' : '55px',
+                paddingTop: isMobile ? '24px' : '36px',
+                borderTop: isDark ? '1px solid rgba(255,255,255,0.1)' : (isSepia ? '1px solid rgba(217, 119, 6, 0.2)' : '1px solid rgba(0,0,0,0.08)'),
                 boxSizing: 'border-box'
               }}
             >
-              {relatedPosts.map(post => (
-                <BlogCard
-                  key={post.id}
-                  id={post.id}
-                  category={post.category}
-                  title={post.title}
-                  desc={post.desc}
-                  img={String(post.img || '')}
-                  authorName={post.authorName}
-                  authorImg={post.authorImg}
-                  date={post.date}
-                  variant="standard"
-                  showExcerpt={false}
-                />
-              ))}
-            </div>
-          </section>
-        )}
-      </div>
+              {/* Section Header */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: isMobile ? 'flex-start' : 'flex-end',
+                  justifyContent: 'space-between',
+                  flexDirection: isMobile ? 'column' : 'row',
+                  gap: '12px',
+                  marginBottom: isMobile ? '20px' : '28px'
+                }}
+              >
+                <div>
+                  <div
+                    style={{
+                      fontFamily: '"Noto Sans", sans-serif',
+                      fontSize: '0.78rem',
+                      fontWeight: 400,
+                      letterSpacing: '3px',
+                      color: isSepia ? '#b45309' : '#bd75ff',
+                      textTransform: 'uppercase',
+                      marginBottom: '6px'
+                    }}
+                  >
+                    EXPLORE FURTHER
+                  </div>
+                  <h3
+                    style={{
+                      margin: 0,
+                      fontFamily: "'Playfair Display', serif",
+                      fontSize: isMobile ? '1.45rem' : '1.85rem',
+                      fontWeight: 700,
+                      color: isDark ? '#ffffff' : (isSepia ? '#2a1a08' : '#111827'),
+                      lineHeight: 1.25,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px'
+                    }}
+                  >
+                    Related Posts
+                    <ZwosmosIcon size={14} color={isSepia ? '#d97706' : '#bd75ff'} />
+                  </h3>
+                </div>
+
+                <Link
+                  to={`/${postData.categorySlug || 'space-news'}`}
+                  style={{
+                    fontFamily: '"Noto Sans", sans-serif',
+                    fontSize: '0.84rem',
+                    fontWeight: 400,
+                    letterSpacing: '3px',
+                    color: isSepia ? '#b45309' : '#bd75ff',
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    transition: 'opacity 0.2s',
+                    paddingBottom: '2px',
+                    textTransform: 'uppercase'
+                  }}
+                  onMouseOver={e => (e.currentTarget.style.opacity = '0.75')}
+                  onMouseOut={e => (e.currentTarget.style.opacity = '1')}
+                >
+                  <span>More in {postData.categoryName || 'Space'}</span>
+                  <span>→</span>
+                </Link>
+              </div>
+
+              {/* Related Posts Grid using standard BlogCard */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: isPhone ? '1fr' : 'repeat(3, 1fr)',
+                  gap: isPhone ? '28px 16px' : (isSmallTab ? '24px 14px' : '36px 24px'),
+                  boxSizing: 'border-box'
+                }}
+              >
+                {relatedPosts.map(post => (
+                  <BlogCard
+                    key={post.id}
+                    id={post.id}
+                    category={post.category}
+                    title={post.title}
+                    desc={post.desc}
+                    img={String(post.img || '')}
+                    authorName={post.authorName}
+                    authorImg={post.authorImg}
+                    date={post.date}
+                    variant="standard"
+                    showExcerpt={false}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
       )}
       <Footer isLight={isLight} />
     </div>

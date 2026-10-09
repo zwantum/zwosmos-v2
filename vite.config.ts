@@ -11,6 +11,14 @@ export default defineConfig(() => {
         {
           find: /^@zwantum\/blog-editor$/,
           replacement: path.resolve(process.cwd(), 'src/admin/blog-editor/index.ts')
+        },
+        {
+          find: /^@zwantum\/blog\/admin$/,
+          replacement: path.resolve(process.cwd(), 'node_modules/@zwantum/blog-admin/src/index.ts')
+        },
+        {
+          find: /^@zwantum\/blog-admin$/,
+          replacement: path.resolve(process.cwd(), 'node_modules/@zwantum/blog-admin/src/index.ts')
         }
       ]
     },

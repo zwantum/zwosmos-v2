@@ -55,6 +55,7 @@ export const EditorModal: React.FC<EditorModalProps> = ({ type, editor, onClose 
   // Image state
   const [imageUrl, setImageUrl] = useState('');
   const [imageAlt, setImageAlt] = useState('');
+  const [imageCaption, setImageCaption] = useState('');
 
   // Initialize values when dialog opens or changes
   useEffect(() => {
@@ -277,7 +278,11 @@ export const EditorModal: React.FC<EditorModalProps> = ({ type, editor, onClose 
       editor
         .chain()
         .focus()
-        .setImage({ src: url, alt: imageAlt.trim() || undefined })
+        .setImage({
+          src: url,
+          alt: imageAlt.trim() || undefined,
+          caption: imageCaption.trim() || undefined,
+        } as any)
         .run();
     }
     onClose();
@@ -670,6 +675,16 @@ export const EditorModal: React.FC<EditorModalProps> = ({ type, editor, onClose 
                   placeholder="Brief description of the image"
                   value={imageAlt}
                   onChange={(e) => setImageAlt(e.target.value)}
+                />
+              </div>
+              <div className="zw-blog-modal-field">
+                <label className="zw-blog-modal-label">Caption (Optional - displayed below image)</label>
+                <input
+                  type="text"
+                  className="zw-blog-modal-input"
+                  placeholder="Caption text (leave blank for none)"
+                  value={imageCaption}
+                  onChange={(e) => setImageCaption(e.target.value)}
                 />
               </div>
             </div>

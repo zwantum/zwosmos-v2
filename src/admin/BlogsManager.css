@@ -18,7 +18,38 @@
 
 .zw-blog-admin-box-wrapper .zw-blog-admin-root {
   min-height: calc(100vh - 96px) !important;
+  height: auto !important;
+  max-height: none !important;
   flex: 1;
+  overflow: visible !important;
+}
+
+/* Eliminate duplicate inner scrollbars across all blog module views (Posts, Edit, Add New, etc.) */
+.zw-blog-admin-box-wrapper .zw-blog-admin-root>div,
+.zw-blog-admin-boxed>div {
+  overflow: visible !important;
+  height: auto !important;
+  max-height: none !important;
+}
+
+.zw-blog-admin-box-wrapper .zw-blog-admin-root main,
+.zw-blog-admin-boxed main {
+  height: auto !important;
+  max-height: none !important;
+  overflow-y: visible !important;
+  min-height: 0 !important;
+}
+
+.zw-blog-admin-box-wrapper .zw-blog-admin-root aside,
+.zw-blog-admin-boxed aside {
+  align-self: stretch !important;
+  height: auto !important;
+  min-height: 100% !important;
+  max-height: none !important;
+  position: static !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex-shrink: 0 !important;
 }
 
 /* 
@@ -26,8 +57,8 @@
  * 1. Sidebar bottom duplicate
  * 2. Main workspace bottom duplicate
  */
-.zw-blog-admin-box-wrapper aside > div:last-child,
-.zw-blog-admin-boxed aside > div:last-child {
+.zw-blog-admin-box-wrapper aside>div:last-child,
+.zw-blog-admin-boxed aside>div:last-child {
   display: none !important;
 }
 
@@ -37,7 +68,7 @@
 }
 
 /* Hide redundant editor status bar Powered by Zwantum */
-.zw-blog-editor-footer > div:last-child > span:last-child {
+.zw-blog-editor-footer>div:last-child>span:last-child {
   display: none !important;
 }
 
@@ -351,7 +382,7 @@
   padding: 2px 8px !important;
   margin: 0 3px !important;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
-  font-size: 0.85em !important;
+  font-size: 0.55em !important;
   font-weight: 500 !important;
   line-height: 1.45 !important;
   color: #475569 !important;
@@ -416,6 +447,3 @@ body.sepia-theme .tiptap .zw-blog-citation:hover,
   box-shadow: none !important;
   transform: none !important;
 }
-
-
-

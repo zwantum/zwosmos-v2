@@ -18,7 +18,7 @@ export interface BlogEditorHandle {
   getJSON: () => Record<string, unknown>;
   focus: () => void;
   isEmpty: () => boolean;
-  insertImage: (src: string, alt?: string) => void;
+  insertImage: (src: string, alt?: string, caption?: string) => void;
 }
 
 export interface BlogEditorProps {
@@ -348,9 +348,14 @@ export const BlogEditor = forwardRef<BlogEditorHandle, BlogEditorProps>(({
       const html = editor.getHTML();
       return !text.trim() || html === '<p></p>' || html === '';
     },
-    insertImage: (src: string, alt?: string) => {
+    insertImage: (src: string, alt?: string, caption?: string) => {
+      const cleanCap = typeof caption === 'string' ? caption.trim() : '';
       if (isCodeView) {
-        handleInsertTag(`<img src="${src}" alt="${alt || ''}" />`);
+        if (cleanCap) {
+          handleInsertTag(`<figure class="zw-blog-figure"><img src="${src}" alt="${alt || ''}" /><figcaption class="zw-blog-caption">${cleanCap}</figcaption></figure>`);
+        } else {
+          handleInsertTag(`<img src="${src}" alt="${alt || ''}" />`);
+        }
         return;
       }
       if (!editor || !src) return;
@@ -359,7 +364,7 @@ export const BlogEditor = forwardRef<BlogEditorHandle, BlogEditorProps>(({
         ran = editor
           .chain()
           .focus()
-          .setImage({ src, alt: alt || '' })
+          .setImage({ src, alt: alt || '', caption: cleanCap || undefined } as any)
           .run();
       } catch {
         ran = false;
@@ -371,11 +376,15 @@ export const BlogEditor = forwardRef<BlogEditorHandle, BlogEditorProps>(({
             .focus()
             .insertContent({
               type: 'image',
-              attrs: { src, alt: alt || '' },
+              attrs: { src, alt: alt || '', caption: cleanCap || undefined },
             })
             .run();
         } catch {
-          editor.commands.insertContent(`<img src="${src}" alt="${alt || ''}" class="zw-blog-editor-image" />`);
+          if (cleanCap) {
+            editor.commands.insertContent(`<figure class="zw-blog-figure"><img src="${src}" alt="${alt || ''}" class="zw-blog-editor-image" /><figcaption class="zw-blog-caption">${cleanCap}</figcaption></figure>`);
+          } else {
+            editor.commands.insertContent(`<img src="${src}" alt="${alt || ''}" class="zw-blog-editor-image" />`);
+          }
         }
       }
     },

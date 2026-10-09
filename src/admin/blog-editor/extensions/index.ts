@@ -46,7 +46,69 @@ export function getBlogEditorExtensions(config?: BlogEditorConfig) {
       },
     }),
     BlogCitation,
-    Image.configure({
+    Image.extend({
+      addAttributes() {
+        return {
+          ...this.parent?.(),
+          caption: {
+            default: null,
+            parseHTML: (element) => element.getAttribute('data-caption') || element.getAttribute('caption') || null,
+            renderHTML: (attributes) => {
+              if (!attributes.caption) {
+                return {};
+              }
+              return {
+                'data-caption': attributes.caption,
+              };
+            },
+          },
+        };
+      },
+      renderHTML({ HTMLAttributes }) {
+        const { 'data-caption': captionAttr, caption: rawCaption, ...rest } = HTMLAttributes;
+        const caption = (captionAttr || rawCaption || '').toString().trim();
+        if (caption) {
+          return [
+            'figure',
+            { class: 'zw-blog-figure' },
+            ['img', rest],
+            ['figcaption', { class: 'zw-blog-caption' }, caption],
+          ];
+        }
+        return ['img', rest];
+      },
+      parseHTML() {
+        return [
+          {
+            tag: 'figure.zw-blog-figure',
+            getAttrs: (element) => {
+              const el = element as HTMLElement;
+              const img = el.querySelector('img');
+              if (!img) return false;
+              const captionEl = el.querySelector('figcaption');
+              return {
+                src: img.getAttribute('src'),
+                alt: img.getAttribute('alt'),
+                title: img.getAttribute('title'),
+                caption: captionEl?.textContent?.trim() || img.getAttribute('data-caption') || null,
+              };
+            },
+          },
+          {
+            tag: 'img[src]',
+            getAttrs: (element) => {
+              const el = element as HTMLElement;
+              return {
+                src: el.getAttribute('src'),
+                alt: el.getAttribute('alt'),
+                title: el.getAttribute('title'),
+                caption: el.getAttribute('data-caption') || el.getAttribute('caption') || null,
+              };
+            },
+          },
+        ];
+      },
+    }).configure({
       inline: false,
       allowBase64: true,
       HTMLAttributes: {

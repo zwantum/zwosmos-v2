@@ -4,7 +4,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useMobile } from '../contexts/MobileContext';
 import Header from './Header';
 import Footer from './Footer';
-import { Compass, BookOpen, Sparkles } from 'lucide-react';
+import { Compass, BookOpen, Book } from 'lucide-react';
 
 export const NotFoundPage: React.FC = () => {
   const { theme, isDark } = useTheme();
@@ -220,7 +220,7 @@ export const NotFoundPage: React.FC = () => {
               e.currentTarget.style.background = isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.05)';
             }}
           >
-            <Sparkles size={17} />
+            <Book size={17} />
             COSMIC BOOKS
           </Link>
         </div>

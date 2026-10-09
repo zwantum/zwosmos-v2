@@ -1,5 +1,6 @@
 import { Component, ErrorInfo, ReactNode, useEffect } from 'react';
 import { BlogAdmin } from '@zwantum/blog/admin';
+// Cache bust: full height sidebar stretching to match content height
 import { blogClient } from '../lib/blogClient';
 import { PushNotificationContainer } from './PushNotification';
 import '@zwantum/blog-admin/styles.css';

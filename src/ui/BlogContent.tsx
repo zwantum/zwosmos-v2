@@ -12,12 +12,14 @@ export interface BlogContentProps {
   content?: TiptapNode | Record<string, any> | string | null;
   className?: string;
   customRenderers?: Record<string, (node: TiptapNode, index: number) => React.ReactNode>;
+  mediaCaptionMap?: Record<string, string>;
 }
 
 export const BlogContent: React.FC<BlogContentProps> = ({
   content,
   className = 'zw-blog-prose',
   customRenderers = {},
+  mediaCaptionMap = {},
 }) => {
   if (!content) return null;
 
@@ -33,7 +35,7 @@ export const BlogContent: React.FC<BlogContentProps> = ({
 
   return (
     <div className={`zw-blog-content ${className}`}>
-      {doc.content.map((node, index) => renderNode(node, index, customRenderers))}
+      {doc.content.map((node, index) => renderNode(node, index, customRenderers, mediaCaptionMap))}
     </div>
   );
 };
@@ -41,7 +43,8 @@ export const BlogContent: React.FC<BlogContentProps> = ({
 function renderNode(
   node: TiptapNode,
   index: number,
-  customRenderers: Record<string, (node: TiptapNode, index: number) => React.ReactNode>
+  customRenderers: Record<string, (node: TiptapNode, index: number) => React.ReactNode>,
+  mediaCaptionMap: Record<string, string> = {}
 ): React.ReactNode {
   if (node.type && customRenderers[node.type]) {
     return customRenderers[node.type](node, index);
@@ -108,10 +111,13 @@ function renderNode(
     case 'image': {
       const { src, alt, title, caption } = node.attrs || {};
       if (!src) return null;
+      const cleanCaption = (typeof caption === 'string' && caption.trim()) ||
+        (src && (mediaCaptionMap[src] || mediaCaptionMap[src.split('?')[0]])) ||
+        '';
       return (
         <figure key={index} className="zw-blog-figure">
           <img src={src} alt={alt || ''} title={title || ''} loading="lazy" />
-          {(caption || alt) && <figcaption className="zw-blog-caption">{caption || alt}</figcaption>}
+          {cleanCaption ? <figcaption className="zw-blog-caption">{cleanCaption}</figcaption> : null}
         </figure>
       );
     }
@@ -166,8 +172,8 @@ function renderNode(
 
     case 'table': {
       return (
-        <div key={index} className="zw-blog-table-wrap" style={{ overflowX: 'auto', margin: '1.2em 0' }}>
-          <table>
+        <div key={index} className="zw-blog-table-wrap" style={{ overflowX: 'auto', margin: '1.5rem 0' }}>
+          <table className={node.attrs?.class || undefined}>
             <tbody>{renderChildren(node.content, customRenderers)}</tbody>
           </table>
         </div>
@@ -175,15 +181,73 @@ function renderNode(
     }
 
     case 'tableRow': {
-      return <tr key={index}>{renderChildren(node.content, customRenderers)}</tr>;
+      return (
+        <tr key={index} className={node.attrs?.class || undefined}>
+          {renderChildren(node.content, customRenderers)}
+        </tr>
+      );
     }
 
     case 'tableHeader': {
-      return <th key={index}>{renderChildren(node.content, customRenderers)}</th>;
+      const colSpan = Number(node.attrs?.colspan ?? node.attrs?.colSpan) || 1;
+      const rowSpan = Number(node.attrs?.rowspan ?? node.attrs?.rowSpan) || 1;
+      const colwidth = node.attrs?.colwidth;
+      let width: string | undefined = undefined;
+      if (Array.isArray(colwidth) && colwidth.length > 0) {
+        const total = colwidth.reduce((sum: number, w: any) => sum + (typeof w === 'number' ? w : 0), 0);
+        if (total > 0) width = `${total}px`;
+      }
+      const cellStyle: React.CSSProperties = {
+        textAlign: (node.attrs?.textAlign as any) || undefined,
+        width,
+        ...(typeof node.attrs?.style === 'object' && node.attrs?.style !== null ? node.attrs.style : {})
+      };
+      if (node.attrs?.background) {
+        cellStyle.backgroundColor = node.attrs.background;
+      }
+
+      return (
+        <th
+          key={index}
+          colSpan={colSpan > 1 ? colSpan : undefined}
+          rowSpan={rowSpan > 1 ? rowSpan : undefined}
+          className={node.attrs?.class || undefined}
+          style={cellStyle}
+        >
+          {renderChildren(node.content, customRenderers)}
+        </th>
+      );
     }
 
     case 'tableCell': {
-      return <td key={index}>{renderChildren(node.content, customRenderers)}</td>;
+      const colSpan = Number(node.attrs?.colspan ?? node.attrs?.colSpan) || 1;
+      const rowSpan = Number(node.attrs?.rowspan ?? node.attrs?.rowSpan) || 1;
+      const colwidth = node.attrs?.colwidth;
+      let width: string | undefined = undefined;
+      if (Array.isArray(colwidth) && colwidth.length > 0) {
+        const total = colwidth.reduce((sum: number, w: any) => sum + (typeof w === 'number' ? w : 0), 0);
+        if (total > 0) width = `${total}px`;
+      }
+      const cellStyle: React.CSSProperties = {
+        textAlign: (node.attrs?.textAlign as any) || undefined,
+        width,
+        ...(typeof node.attrs?.style === 'object' && node.attrs?.style !== null ? node.attrs.style : {})
+      };
+      if (node.attrs?.background) {
+        cellStyle.backgroundColor = node.attrs.background;
+      }
+
+      return (
+        <td
+          key={index}
+          colSpan={colSpan > 1 ? colSpan : undefined}
+          rowSpan={rowSpan > 1 ? rowSpan : undefined}
+          className={node.attrs?.class || undefined}
+          style={cellStyle}
+        >
+          {renderChildren(node.content, customRenderers)}
+        </td>
+      );
     }
 
     default: {
@@ -194,7 +258,8 @@ function renderNode(
 
 function renderChildren(
   children?: TiptapNode[],
-  customRenderers: Record<string, (node: TiptapNode, index: number) => React.ReactNode> = {}
+  customRenderers: Record<string, (node: TiptapNode, index: number) => React.ReactNode> = {},
+  mediaCaptionMap: Record<string, string> = {}
 ): React.ReactNode {
   if (!children || !Array.isArray(children)) return null;
 
@@ -202,7 +267,7 @@ function renderChildren(
     if (child.type === 'text' && typeof child.text === 'string') {
       return applyMarks(child.text, child.marks, idx);
     }
-    return renderNode(child, idx, customRenderers);
+    return renderNode(child, idx, customRenderers, mediaCaptionMap);
   });
 }
 

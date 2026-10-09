@@ -75,6 +75,13 @@ async function patch() {
     fs.unlinkSync(tempMjs);
     fs.unlinkSync(tempCjs);
 
+    const dtsPath = path.join(rootDir, 'node_modules/@zwantum/blog-editor/dist/index.d.ts');
+    if (fs.existsSync(dtsPath)) {
+      let dts = fs.readFileSync(dtsPath, 'utf8');
+      dts = dts.replace(/insertImage: \(src: string, alt\?: string\) => void;/g, 'insertImage: (src: string, alt?: string, caption?: string) => void;');
+      fs.writeFileSync(dtsPath, dts, 'utf8');
+    }
+
     console.log('[patch-blog-editor] Successfully compiled @zwantum/blog-editor dist files with Citation support');
 
     // Also compile @zwantum/blog-react dist files with Citation support
@@ -99,6 +106,30 @@ async function patch() {
         loader: { '.tsx': 'tsx', '.ts': 'ts' }
       });
       console.log('[patch-blog-editor] Successfully compiled @zwantum/blog-react dist files with Citation support');
+    }
+
+    // Also compile @zwantum/blog-admin dist files
+    const adminEntry = path.join(rootDir, 'node_modules/@zwantum/blog-admin/src/index.ts');
+    const adminOutMjs = path.join(rootDir, 'node_modules/@zwantum/blog-admin/dist/index.mjs');
+    const adminOutCjs = path.join(rootDir, 'node_modules/@zwantum/blog-admin/dist/index.js');
+    if (fs.existsSync(adminEntry)) {
+      await esbuild.build({
+        entryPoints: [adminEntry],
+        outfile: adminOutMjs,
+        bundle: true,
+        format: 'esm',
+        external: ['react', 'react-dom', 'react/*', 'react-dom/*', '@zwantum/blog-core', '@zwantum/blog-types', '@zwantum/blog-editor', '@zwantum/blog-seo', 'lucide-react'],
+        loader: { '.tsx': 'tsx', '.ts': 'ts', '.css': 'empty' }
+      });
+      await esbuild.build({
+        entryPoints: [adminEntry],
+        outfile: adminOutCjs,
+        bundle: true,
+        format: 'cjs',
+        external: ['react', 'react-dom', 'react/*', 'react-dom/*', '@zwantum/blog-core', '@zwantum/blog-types', '@zwantum/blog-editor', '@zwantum/blog-seo', 'lucide-react'],
+        loader: { '.tsx': 'tsx', '.ts': 'ts', '.css': 'empty' }
+      });
+      console.log('[patch-blog-editor] Successfully compiled @zwantum/blog-admin dist files');
     }
   } catch (err) {
     console.error('[patch-blog-editor] Error bundling dist files:', err);

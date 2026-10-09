@@ -58,7 +58,7 @@
   transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1), padding 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-.admin-dashboard main {
+.admin-dashboard > main {
   height: 100vh !important;
   max-height: 100vh !important;
   overflow-y: auto !important;
