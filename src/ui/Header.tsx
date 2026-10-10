@@ -5,6 +5,7 @@ import MegaMenu, { ALL_MEGA_MENU_ITEMS, MenuItem } from './MegaMenu';
 import { ALL_BLOG_POSTS } from '../data/blogData';
 import { useBlogPosts } from '@zwantum/blog/react';
 import ZwosmosIcon from './ZwosmosIcon';
+import CelestialReadingToggle from './CelestialReadingToggle';
 
 export interface HeaderProps {
   isLight?: boolean;
@@ -30,7 +31,7 @@ const MEGA_MENU_TWO_COLUMNS = {
 
 export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, theme: propTheme, onThemeToggle }) => {
   const navigate = useNavigate();
-  const { theme: contextTheme, toggleTheme: contextToggleTheme } = useTheme();
+  const { theme: contextTheme } = useTheme();
 
   // Width tracking for pure responsive layout independent of DevTools touch emulation
   const [winWidth, setWinWidth] = useState(() => window.innerWidth);
@@ -214,13 +215,6 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, theme: pro
     }
   };
 
-  const handleToggle = () => {
-    if (onThemeToggle) {
-      onThemeToggle();
-    } else {
-      contextToggleTheme();
-    }
-  };
 
   const currentIsDark = activeTheme === 'dark';
   const currentIsSepia = activeTheme === 'sepia';
@@ -275,68 +269,8 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, theme: pro
           {/* Right: Controls */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
 
-            {/* Theme Toggle: 3-position pill (Dark -> Sepia -> Light -> Sepia -> Dark) */}
-            <button
-              type="button"
-              onClick={handleToggle}
-              title={`Theme: ${activeTheme.charAt(0).toUpperCase() + activeTheme.slice(1)} (Click to switch)`}
-              aria-label="Toggle theme (Dark, Sepia, Light)"
-              style={{
-                width: '54px',
-                height: '22px',
-                borderRadius: '9999px',
-                border: currentIsDark ? '1px solid rgba(255,255,255,0.3)' : (currentIsSepia ? '1px solid rgba(217, 119, 6, 0.4)' : '1px solid #d1d5db'),
-                background: currentIsDark ? 'rgba(255,255,255,0.15)' : (currentIsSepia ? '#fde8c8' : '#ffffff'),
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '2px',
-                cursor: 'pointer',
-                transition: 'all 0.25s ease',
-                flexShrink: 0,
-                position: 'relative'
-              }}
-            >
-              <span
-                style={{
-                  width: '16px',
-                  height: '16px',
-                  borderRadius: '50%',
-                  background: currentIsDark
-                    ? 'var(--brand-purple)'
-                    : (currentIsSepia ? '#d97706' : '#111827'),
-                  transform: currentIsDark
-                    ? 'translateX(0px)'
-                    : (currentIsSepia ? 'translateX(17px)' : 'translateX(34px)'),
-                  transition: 'transform 0.25s cubic-bezier(0.4,0,0.2,1), background 0.25s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '0.58rem',
-                  color: '#ffffff'
-                }}
-              >
-                {currentIsDark ? (
-                  '☾'
-                ) : currentIsSepia ? (
-                  <svg
-                    width="10"
-                    height="10"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#ffffff"
-                    strokeWidth="2.4"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    style={{ display: 'block' }}
-                  >
-                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 1 3-3H2z" />
-                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-                  </svg>
-                ) : (
-                  '☼'
-                )}
-              </span>
-            </button>
+            {/* Celestial Reading Toggle (Real-time Night Moon / Sepia Jupiter / Day Sun) */}
+            <CelestialReadingToggle onModeChange={onThemeToggle ? () => onThemeToggle() : undefined} />
 
             {/* Search Icon */}
             <button
@@ -1105,68 +1039,8 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, theme: pro
           </div>
         )}
 
-        {/* Dark, Sepia & Light Tone Toggle Pill */}
-        <button
-          type="button"
-          onClick={handleToggle}
-          title={`Theme: ${activeTheme.charAt(0).toUpperCase() + activeTheme.slice(1)} (Click to switch)`}
-          aria-label="Toggle theme (Dark, Sepia, Light)"
-          style={{
-            width: '64px',
-            height: '26px',
-            borderRadius: '9999px',
-            border: currentIsDark ? '1px solid rgba(255, 255, 255, 0.3)' : (currentIsSepia ? '1px solid rgba(217, 119, 6, 0.4)' : '1px solid #d1d5db'),
-            background: currentIsDark ? 'rgba(255, 255, 255, 0.15)' : (currentIsSepia ? '#fde8c8' : '#ffffff'),
-            display: 'inline-flex',
-            alignItems: 'center',
-            padding: '2px',
-            cursor: 'pointer',
-            transition: 'all 0.25s ease',
-            position: 'relative'
-          }}
-        >
-          <span
-            style={{
-              width: '20px',
-              height: '20px',
-              borderRadius: '50%',
-              background: currentIsDark
-                ? 'var(--brand-purple)'
-                : (currentIsSepia ? '#d97706' : '#111827'),
-              transform: currentIsDark
-                ? 'translateX(0px)'
-                : (currentIsSepia ? 'translateX(20px)' : 'translateX(40px)'),
-              transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), background 0.25s ease',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '0.68rem',
-              color: '#ffffff',
-              boxShadow: '0 1px 4px rgba(0,0,0,0.2)'
-            }}
-          >
-            {currentIsDark ? (
-              '☾'
-            ) : currentIsSepia ? (
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#ffffff"
-                strokeWidth="2.4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                style={{ display: 'block' }}
-              >
-                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 1 3-3H2z" />
-                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-              </svg>
-            ) : (
-              '☼'
-            )}
-          </span>
-        </button>
+        {/* Celestial Reading Toggle (Real-time Night Moon / Sepia Jupiter / Day Sun) */}
+        <CelestialReadingToggle onModeChange={onThemeToggle ? () => onThemeToggle() : undefined} />
 
         {/* Enhanced Modern Search Bar Pill with Live Results */}
         <div

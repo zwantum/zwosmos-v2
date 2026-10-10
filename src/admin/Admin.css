@@ -37,6 +37,20 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
 }
 
+/* Enforce Light color-scheme for admin components to prevent black checkboxes */
+.admin-app,
+.admin-dashboard {
+  color-scheme: light !important;
+}
+
+.admin-app input[type="checkbox"],
+.admin-dashboard input[type="checkbox"] {
+  color-scheme: light !important;
+  appearance: auto;
+  accent-color: #ffcc00 !important;
+  cursor: pointer !important;
+}
+
 /* ==========================================================================
    Sticky Sidebar & Scrollable Main Content Layout
    ========================================================================== */

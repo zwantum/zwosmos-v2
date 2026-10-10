@@ -2486,11 +2486,20 @@ const BlogPostPage: React.FC = () => {
 
                     /* ---------------------------------------------------- */
                     /* Reference Citation Badges (Light, Dark, Sepia)        */
-                    /* No glow, no movement on hover: border & text color only */
+                    /* Auto-numbered sequentially in content reading order   */
                     /* ---------------------------------------------------- */
+                    .zw-blog-content-wrapper,
+                    .zw-blog-content,
+                    .zw-blog-prose,
+                    .blog-article-content-area,
+                    .blog-content {
+                      counter-reset: zw-citation-num;
+                    }
+
                     .zw-blog-content-wrapper .zw-blog-citation,
                     .zw-blog-content .zw-blog-citation,
                     .zw-blog-citation {
+                      counter-increment: zw-citation-num;
                       display: inline-flex !important;
                       align-items: center !important;
                       gap: 4px !important;
@@ -2507,6 +2516,16 @@ const BlogPostPage: React.FC = () => {
                       box-shadow: none !important;
                       transform: none !important;
                       transition: color 0.15s ease, border-color 0.15s ease !important;
+                    }
+
+                    .zw-blog-content-wrapper .zw-blog-citation::before,
+                    .zw-blog-content .zw-blog-citation::before,
+                    .zw-blog-citation::before {
+                      content: "[" counter(zw-citation-num) "]";
+                      font-weight: 700 !important;
+                      display: inline-block !important;
+                      opacity: 0.9 !important;
+                      letter-spacing: -0.02em !important;
                     }
 
                     .zw-blog-content-wrapper .zw-blog-citation:active,

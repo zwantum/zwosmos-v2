@@ -15,6 +15,12 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>(() => {
+    try {
+      const savedReading = localStorage.getItem('zwosmos-reading-mode');
+      if (savedReading === 'night') return 'dark';
+      if (savedReading === 'day') return 'light';
+      if (savedReading === 'sepia') return 'sepia';
+    } catch (_) {}
     const saved = localStorage.getItem('zwosmos_theme');
     return (saved === 'light' || saved === 'dark' || saved === 'sepia') ? saved : 'dark';
   });
@@ -22,8 +28,15 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const directionRef = useRef<'forward' | 'backward'>('forward');
 
   useEffect(() => {
-    localStorage.setItem('zwosmos_theme', theme);
+    const zwTheme = theme === 'dark' ? 'night' : (theme === 'light' ? 'day' : 'sepia');
+    try {
+      localStorage.setItem('zwosmos_theme', theme);
+      localStorage.setItem('zwosmos-reading-mode', zwTheme);
+    } catch (_) {}
+
     document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute('data-zw-theme', zwTheme);
+    document.documentElement.dataset.zwTheme = zwTheme;
 
     document.body.classList.remove('dark-theme', 'sepia-theme', 'light-theme');
     if (theme === 'sepia') {
@@ -33,6 +46,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } else {
       document.body.classList.add('dark-theme');
     }
+
+    try {
+      document.dispatchEvent(new CustomEvent('zwosmos:themechange', { detail: { mode: zwTheme } }));
+    } catch (_) {}
   }, [theme]);
 
   const toggleTheme = () => {

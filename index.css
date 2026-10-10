@@ -70,6 +70,32 @@ html[data-theme="sepia"] #root {
   font-synthesis: weight style !important;
 }
 
+/* ==========================================================================
+   Automatic Document-Order Citation Numbering (Wikipedia-Style Auto-Reordering)
+   ========================================================================== */
+.zw-blog-content-wrapper,
+.zw-blog-content,
+.zw-blog-prose,
+.blog-article-content-area,
+.zw-blog-editor-content,
+.ProseMirror,
+.tiptap,
+article {
+  counter-reset: zw-citation-num;
+}
+
+.zw-blog-citation {
+  counter-increment: zw-citation-num;
+}
+
+.zw-blog-citation::before {
+  content: "[" counter(zw-citation-num) "]";
+  font-weight: 700 !important;
+  display: inline-block !important;
+  opacity: 0.9 !important;
+  letter-spacing: -0.02em !important;
+}
+
 /* Universal Italic Guarantee for Blog Editor & Content */
 .zw-blog-content em,
 .zw-blog-content i,

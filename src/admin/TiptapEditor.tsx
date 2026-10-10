@@ -304,13 +304,14 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px', onR
         : (target === '_blank' ? 'noopener noreferrer' : null);
 
       const { selection } = editor.state;
+      const displayText = text || 'Source';
       if (selection.empty) {
         if (editor.isActive('blogCitation')) {
           editor.chain().focus().extendMarkRange('blogCitation').setCitation({ href: finalUrl, target, rel }).run();
-        } else if (text) {
+        } else {
           editor.chain().focus().insertContent({
             type: 'text',
-            text,
+            text: displayText,
             marks: [{ type: 'blogCitation', attrs: { href: finalUrl, target, rel, 'data-citation': 'true', class: 'zw-blog-citation' } }]
           }).run();
         }
@@ -926,7 +927,7 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px', onR
             type="text"
             value={citationText}
             onChange={(e) => setCitationText(e.target.value)}
-            placeholder="Badge label (e.g. NASA black-hole guide)"
+            placeholder="Badge label (e.g. NASA black-hole guide — [1], [2] auto-numbered)"
             style={{
               flex: 1,
               minWidth: '180px',
