@@ -139,7 +139,6 @@ Supabase migrations are in `supabase/migrations/`:
 - `00005_create_daily_cosmic.sql` — Daily cosmic facts
 
 ---
-
 ## 📝 License
 
 MIT
