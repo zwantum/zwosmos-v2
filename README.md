@@ -4,7 +4,6 @@ A premium cosmic-themed blog and space exploration platform built with React, Th
 
 **Live:** [zwosmos.com](https://zwosmos.com)
 
-
 ---
 ## ✨ Features
 
