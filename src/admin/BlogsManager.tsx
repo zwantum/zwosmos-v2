@@ -1,6 +1,6 @@
 import { Component, ErrorInfo, ReactNode, useEffect } from 'react';
-import { BlogAdmin } from '../../node_modules/@zwantum/blog-admin/src/index';
-// Cache bust: update article button label on edit post
+import { BlogAdmin } from './blog-admin/index';
+// Production-ready: using local version tracked in git
 import { blogClient } from '../lib/blogClient';
 import { PushNotificationContainer } from './PushNotification';
 import '@zwantum/blog-admin/styles.css';

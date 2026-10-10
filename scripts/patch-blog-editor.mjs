@@ -44,6 +44,31 @@ async function patch() {
     fs.copyFileSync(localBlogContentPath, targetBlogContentPath);
   }
 
+  // Sync local blog-admin modifications
+  const localBlogAdminDir = path.join(rootDir, 'src/admin/blog-admin');
+  const targetBlogAdminDir = path.join(rootDir, 'node_modules/@zwantum/blog-admin/src');
+  if (fs.existsSync(localBlogAdminDir) && fs.existsSync(path.dirname(targetBlogAdminDir))) {
+    fs.cpSync(localBlogAdminDir, targetBlogAdminDir, { recursive: true });
+  }
+
+  // Patch enableDropCap across all @zwantum/blog-types definitions if present
+  function patchTypesDir(dir) {
+    if (!fs.existsSync(dir)) return;
+    for (const f of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, f.name);
+      if (f.isDirectory() && f.name !== '.git') {
+        patchTypesDir(full);
+      } else if (f.name.endsWith('.ts') || f.name.endsWith('.d.ts')) {
+        let c = fs.readFileSync(full, 'utf8');
+        if (c.includes('enableRedirects: boolean;') && !c.includes('enableDropCap')) {
+          c = c.replace('enableRedirects: boolean;', 'enableRedirects: boolean;\n  enableDropCap?: boolean;');
+          fs.writeFileSync(full, c, 'utf8');
+        }
+      }
+    }
+  }
+  patchTypesDir(path.join(rootDir, 'node_modules/@zwantum'));
+
   try {
     const { default: esbuild } = await import('esbuild');
     const entry = path.join(rootDir, 'src/admin/blog-editor/index.ts');
