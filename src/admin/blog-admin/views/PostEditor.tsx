@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Post, PostCreateInput, PostStatus, Category, Tag, Author, Media, PostSEO } from '@zwantum/blog-types';
 import { BlogClient, stripHtml } from '@zwantum/blog-core';
-import { BlogEditor, BlogEditorHandle } from '@zwantum/blog-editor';
+import { BlogEditor } from '@zwantum/blog-editor';
 import { SEOHealthBadge } from '../components/SEOHealthBadge';
 import { RevisionHistoryModal } from '../components/RevisionHistoryModal';
 
@@ -37,7 +37,7 @@ export const PostEditor: React.FC<PostEditorProps> = ({
     content: [{ type: 'paragraph' }],
   });
   const [contentHtml, setContentHtml] = useState<string>('');
-  const editorRef = useRef<BlogEditorHandle>(null);
+  const editorRef = useRef<any>(null);
   const contentJsonRef = useRef<Record<string, unknown>>({ type: 'doc', content: [{ type: 'paragraph' }] });
   const contentHtmlRef = useRef<string>('');
   const [status, setStatus] = useState<PostStatus>('draft');
@@ -741,7 +741,7 @@ export const PostEditor: React.FC<PostEditorProps> = ({
                 if (onOpenMediaLibrary) {
                   onOpenMediaLibrary((m) => {
                     if (m && m.url) {
-                      editorRef.current?.insertImage(m.url, m.alt_text || m.title || '', m.caption || '');
+                      editorRef.current?.insertImage?.(m.url, m.alt_text || m.title || '', m.caption || '');
                     }
                   });
                 }

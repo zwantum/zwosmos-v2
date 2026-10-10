@@ -103,7 +103,11 @@ async function patch() {
     const dtsPath = path.join(rootDir, 'node_modules/@zwantum/blog-editor/dist/index.d.ts');
     if (fs.existsSync(dtsPath)) {
       let dts = fs.readFileSync(dtsPath, 'utf8');
-      dts = dts.replace(/insertImage: \(src: string, alt\?: string\) => void;/g, 'insertImage: (src: string, alt?: string, caption?: string) => void;');
+      if (dts.includes('insertImage: (src: string, alt?: string) => void;')) {
+        dts = dts.replace(/insertImage: \(src: string, alt\?: string\) => void;/g, 'insertImage: (src: string, alt?: string, caption?: string) => void;');
+      } else if (!dts.includes('insertImage')) {
+        dts = dts.replace('isEmpty: () => boolean;', 'isEmpty: () => boolean;\n    insertImage: (src: string, alt?: string, caption?: string) => void;');
+      }
       fs.writeFileSync(dtsPath, dts, 'utf8');
     }
 
