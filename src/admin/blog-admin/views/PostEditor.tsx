@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Post, PostCreateInput, PostStatus, Category, Tag, Author, Media, PostSEO } from '@zwantum/blog-types';
 import { BlogClient, stripHtml } from '@zwantum/blog-core';
 import { BlogEditor } from '@zwantum/blog-editor';
@@ -25,7 +25,6 @@ export const PostEditor: React.FC<PostEditorProps> = ({
   const [loading, setLoading] = useState(!!postId);
   const [saving, setSaving] = useState(false);
   const [showRevisionModal, setShowRevisionModal] = useState(false);
-  const [showTitlePreview, setShowTitlePreview] = useState(false);
 
   // Form State
   const [title, setTitle] = useState('');
@@ -45,7 +44,8 @@ export const PostEditor: React.FC<PostEditorProps> = ({
   const [scheduledAt, setScheduledAt] = useState('');
   const [selectedAuthorId, setSelectedAuthorId] = useState('');
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
-  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [tagNames, setTagNames] = useState<string[]>([]);
+  const [tagInputValue, setTagInputValue] = useState('');
   const [featuredMedia, setFeaturedMedia] = useState<Media | null>(null);
 
   // SEO State
@@ -87,12 +87,8 @@ export const PostEditor: React.FC<PostEditorProps> = ({
         .getById(postId)
         .then((post) => {
           if (post) {
-            setTitle(post.title);
-            // Sync HTML title into contentEditable
-            if (titleEditableRef.current) {
-              titleEditableRef.current.innerHTML = post.title;
-            }
-            setSlug(post.slug);
+            setTitle(post.title || '');
+            setSlug(post.slug || '');
             setSlugCustomized(true);
             setExcerpt(post.excerpt || '');
             const contentHasCit = JSON.stringify(post.content || '').includes('citation');
@@ -114,7 +110,7 @@ export const PostEditor: React.FC<PostEditorProps> = ({
               setSelectedAuthorId(postAuthorId);
             }
             setSelectedCategoryIds(post.categories?.map((c) => c.id) || []);
-            setSelectedTagIds(post.tags?.map((t) => t.id) || []);
+            setTagNames(post.tags?.map((t: any) => t.name || '').filter(Boolean) || []);
             if (post.featured_image) {
               const customCap = (post.custom_fields as any)?.featured_image_caption ?? (post.custom_fields as any)?.image_caption ?? (post.custom_fields as any)?.caption;
               const cap = customCap !== undefined && customCap !== null ? String(customCap) : (post.featured_image.caption || '');
@@ -153,30 +149,16 @@ export const PostEditor: React.FC<PostEditorProps> = ({
   const [copiedSlug, setCopiedSlug] = useState(false);
   const [metaTitleCustomized, setMetaTitleCustomized] = useState(false);
   const [metaDescCustomized, setMetaDescCustomized] = useState(false);
-  const titleEditableRef = useRef<HTMLDivElement>(null);
-  const isTypingRef = useRef(false);
-  const initialTitleInjectedRef = useRef(false);
+  const titleTextareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const setTitleEditableEl = useCallback((node: HTMLDivElement | null) => {
-    (titleEditableRef as any).current = node;
-    if (node) {
-      if (title && !initialTitleInjectedRef.current) {
-        node.innerHTML = title;
-        initialTitleInjectedRef.current = true;
-      } else if (title && node.innerHTML !== title && !isTypingRef.current) {
-        node.innerHTML = title;
-      }
+  // Auto-resize textarea to fit title content smoothly without clipping
+  useEffect(() => {
+    const el = titleTextareaRef.current;
+    if (el) {
+      el.style.height = 'auto';
+      el.style.height = `${Math.max(el.scrollHeight, 44)}px`;
     }
   }, [title]);
-
-  useEffect(() => {
-    if (titleEditableRef.current && title) {
-      if (titleEditableRef.current.innerHTML !== title && !isTypingRef.current) {
-        titleEditableRef.current.innerHTML = title;
-        initialTitleInjectedRef.current = true;
-      }
-    }
-  }, [title, loading]);
 
   const generateSlug = (text: string) =>
     stripHtml(text)
@@ -200,20 +182,16 @@ export const PostEditor: React.FC<PostEditorProps> = ({
   };
 
   // Auto-slug generation and auto-SEO title from title until user edits them manually
-  // `title` stores the raw HTML; SEO/slug always uses stripped plain text
-  const handleTitleInput = useCallback(() => {
-    const el = titleEditableRef.current;
-    if (!el) return;
-    const html = el.innerHTML;
-    setTitle(html);
-    const plain = stripHtml(html);
+  const handleTitleChange = (val: string) => {
+    setTitle(val);
+    const plain = stripHtml(val).trim();
     if (!slugCustomized) {
       setSlug(generateSlug(plain));
     }
     if (!metaTitleCustomized) {
       setSeo((prev) => ({ ...prev, meta_title: plain }));
     }
-  }, [slugCustomized, metaTitleCustomized]);
+  };
 
   // Auto-sync SEO description from excerpt or content
   const handleExcerptChange = (val: string) => {
@@ -237,6 +215,45 @@ export const PostEditor: React.FC<PostEditorProps> = ({
         setSeo((prev) => ({ ...prev, meta_description: extracted }));
       }
     }
+  };
+
+  const tagInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAddTagsFromText = (text: string) => {
+    const parts = text.split(',');
+    const newNames = [...tagNames];
+    for (const p of parts) {
+      const trimmed = p.trim();
+      if (trimmed && !newNames.some((t) => t.toLowerCase() === trimmed.toLowerCase())) {
+        newNames.push(trimmed);
+      }
+    }
+    setTagNames(newNames);
+  };
+
+  const handleTagInputChange = (val: string) => {
+    if (val.includes(',')) {
+      handleAddTagsFromText(val);
+      setTagInputValue('');
+    } else {
+      setTagInputValue(val);
+    }
+  };
+
+  const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      if (tagInputValue.trim()) {
+        handleAddTagsFromText(tagInputValue);
+        setTagInputValue('');
+      }
+    } else if (e.key === 'Backspace' && !tagInputValue && tagNames.length > 0) {
+      setTagNames(tagNames.slice(0, -1));
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTagNames(tagNames.filter((t) => t.toLowerCase() !== tagToRemove.toLowerCase()));
   };
 
   const featuredImageInputRef = useRef<HTMLInputElement | null>(null);
@@ -292,8 +309,47 @@ export const PostEditor: React.FC<PostEditorProps> = ({
           const ep = await client.posts.getById(postId);
           if (ep?.custom_fields) existingCustom = ep.custom_fields;
           if (ep?.published_at) existingPublishedAt = ep.published_at;
-        } catch {}
+        } catch { }
       }
+
+      // Commit any pending tag text from input
+      const combinedTagNames = [...tagNames];
+      if (tagInputValue.trim() && !combinedTagNames.some((t) => t.toLowerCase() === tagInputValue.trim().toLowerCase())) {
+        combinedTagNames.push(tagInputValue.trim());
+        setTagNames(combinedTagNames);
+        setTagInputValue('');
+      }
+
+      // Synchronize and auto-create tags on-the-fly in database
+      const finalTagIds: string[] = [];
+      let latestTags = tags;
+      try {
+        const fetched = await client.tags.getAll();
+        if (fetched && fetched.length > 0) latestTags = fetched;
+      } catch { }
+
+      for (const name of combinedTagNames) {
+        const trimmed = name.trim();
+        if (!trimmed) continue;
+        const found = latestTags.find((t) => t.name.toLowerCase() === trimmed.toLowerCase());
+        if (found) {
+          if (!finalTagIds.includes(found.id)) finalTagIds.push(found.id);
+        } else {
+          try {
+            const createdTag = await client.tags.create({
+              name: trimmed,
+              slug: generateSlug(trimmed) || trimmed.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+            });
+            if (createdTag?.id && !finalTagIds.includes(createdTag.id)) {
+              finalTagIds.push(createdTag.id);
+              latestTags = [...latestTags, createdTag];
+            }
+          } catch (e) {
+            console.warn('Failed to auto-create tag', trimmed, e);
+          }
+        }
+      }
+      setTags(latestTags);
 
       const payload: PostCreateInput & { featured_image?: any } = {
         title: plainTitle || title,
@@ -307,7 +363,7 @@ export const PostEditor: React.FC<PostEditorProps> = ({
         scheduled_at: targetStatus === 'scheduled' && scheduledAt ? new Date(scheduledAt).toISOString() : null,
         author_id: selectedAuthorId || null,
         category_ids: selectedCategoryIds,
-        tag_ids: selectedTagIds,
+        tag_ids: finalTagIds,
         featured_image_id: featuredMedia?.id || null,
         featured_image: featuredMedia ? {
           ...featuredMedia,
@@ -339,7 +395,8 @@ export const PostEditor: React.FC<PostEditorProps> = ({
         if (savedPost?.id) sessionStorage.removeItem(`zw_post_${savedPost.id}`);
         if (savedPost?.slug) sessionStorage.removeItem(`zw_post_${savedPost.slug}`);
         sessionStorage.removeItem('zw_cached_all_posts');
-      } catch {}
+        localStorage.removeItem('zwosmos_featured_post');
+      } catch { }
 
       if (savedPost?.content) {
         setContentJson(savedPost.content);
@@ -348,6 +405,9 @@ export const PostEditor: React.FC<PostEditorProps> = ({
       if (savedPost?.content_html) {
         setContentHtml(savedPost.content_html);
         contentHtmlRef.current = savedPost.content_html;
+      }
+      if (savedPost?.tags) {
+        setTagNames(savedPost.tags.map((t: any) => t.name || '').filter(Boolean) || []);
       }
 
       setStatus(savedPost.status);
@@ -358,6 +418,90 @@ export const PostEditor: React.FC<PostEditorProps> = ({
     } finally {
       setSaving(false);
     }
+  };
+
+  const handlePreview = () => {
+    const plainTitle = stripHtml(title);
+    const flushed = editorRef.current?.flush();
+    const activeContent = flushed?.json || contentJsonRef.current || contentJson;
+    const activeHtml = flushed?.html || contentHtmlRef.current || contentHtml;
+
+    const currentAuthor = authors.find((a) => a.id === selectedAuthorId) || {
+      id: selectedAuthorId || 'preview-author',
+      name: 'Editorial Team',
+      slug: 'editorial-team',
+    };
+
+    const currentCategories = categories.filter((c) => selectedCategoryIds.includes(c.id));
+
+    const allActiveTagNames = [...tagNames];
+    if (tagInputValue.trim() && !allActiveTagNames.some((t) => t.toLowerCase() === tagInputValue.trim().toLowerCase())) {
+      allActiveTagNames.push(tagInputValue.trim());
+    }
+    const currentTags = allActiveTagNames.map((name) => {
+      const existing = tags.find((t) => t.name.toLowerCase() === name.toLowerCase());
+      return existing || {
+        id: 'preview-' + name.toLowerCase(),
+        name: name,
+        slug: generateSlug(name) || name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      };
+    });
+
+    const finalSlug = slug.trim()
+      || (plainTitle ? plainTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : '')
+      || (postId || 'draft-preview');
+
+    const previewPost = {
+      id: postId || 'draft-preview',
+      slug: finalSlug,
+      title: plainTitle || title || 'Untitled Article',
+      excerpt: excerpt.trim(),
+      content: activeContent,
+      content_html: activeHtml,
+      status: status || 'draft',
+      is_featured: isFeatured,
+      published_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      author: currentAuthor,
+      author_id: selectedAuthorId,
+      categories: currentCategories,
+      tags: currentTags,
+      featured_image: featuredMedia ? {
+        id: featuredMedia.id,
+        url: featuredMedia.url,
+        alt_text: featuredMedia.alt_text?.trim() || '',
+        caption: featuredMedia.caption?.trim() || '',
+      } : null,
+      custom_fields: {
+        featured_image_url: featuredMedia?.url || '',
+        featured_image_caption: featuredMedia?.caption?.trim() || '',
+        featured_image_alt: featuredMedia?.alt_text?.trim() || '',
+      },
+      seo: {
+        ...seo,
+        meta_title: seo.meta_title?.trim() || plainTitle,
+        meta_description: seo.meta_description?.trim() || excerpt.trim(),
+      },
+      reading_time: Math.max(1, Math.ceil(stripHtml(activeHtml || '').split(/\s+/).filter(Boolean).length / 200)),
+    };
+
+    try {
+      localStorage.setItem(`zw_preview_${finalSlug}`, JSON.stringify(previewPost));
+      if (postId) {
+        localStorage.setItem(`zw_preview_${postId}`, JSON.stringify(previewPost));
+      }
+      localStorage.setItem('zw_preview_latest', JSON.stringify(previewPost));
+      sessionStorage.setItem(`zw_post_${finalSlug}`, JSON.stringify(previewPost));
+      if (postId) {
+        sessionStorage.setItem(`zw_post_${postId}`, JSON.stringify(previewPost));
+      }
+    } catch (e) {
+      console.warn('Failed to store preview data in storage', e);
+    }
+
+    const previewUrl = `/blog/${finalSlug}?preview=true`;
+    window.open(previewUrl, '_blank');
   };
 
   const handleAutosave = async (newContent: Record<string, unknown>) => {
@@ -393,6 +537,10 @@ export const PostEditor: React.FC<PostEditorProps> = ({
     return <div style={{ padding: '60px', textAlign: 'center', color: '#64748b' }}>Loading post editor...</div>;
   }
 
+  const blogBaseUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/blog/`
+    : 'https://zwosmos.com/blog/';
+
   return (
     <div className={`zw-admin-container ${className}`}>
       {/* Top Bar Navigation & Actions */}
@@ -418,10 +566,29 @@ export const PostEditor: React.FC<PostEditorProps> = ({
               type="button"
               className="zw-admin-btn zw-admin-btn-secondary"
               onClick={() => setShowRevisionModal(true)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
             >
-              🕒 Revisions
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+              <span>Revisions</span>
             </button>
           )}
+
+          <button
+            type="button"
+            className="zw-admin-btn zw-admin-btn-secondary"
+            onClick={handlePreview}
+            title="Preview how this article looks on the live website"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2 12s3-7 10-7 7 7 10 7-3 7-10 7-10-7-10-7Z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+            <span>Preview</span>
+          </button>
 
           <button
             type="button"
@@ -462,96 +629,35 @@ export const PostEditor: React.FC<PostEditorProps> = ({
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '15px' }}>✍️</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#64748b' }}>
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                </svg>
                 <span style={{ fontSize: '13.5px', fontWeight: 700, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
                   Article Title & Permalink
                 </span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                {/* Live Preview Toggle */}
-                <button
-                  type="button"
-                  onClick={() => setShowTitlePreview((v) => !v)}
-                  title="Toggle live preview of styled title"
-                  style={{
-                    background: showTitlePreview ? '#f0f9ff' : '#f8fafc',
-                    border: `1px solid ${showTitlePreview ? '#7dd3fc' : '#e2e8f0'}`,
-                    borderRadius: '6px',
-                    padding: '3px 10px',
-                    fontSize: '11.5px',
-                    fontWeight: 600,
-                    color: showTitlePreview ? '#0369a1' : '#64748b',
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
-                >
-                  {showTitlePreview ? '✕ Close Preview' : '👁 Preview'}
-                </button>
+              <div>
                 <span
                   style={{
                     fontSize: '12px',
                     fontWeight: 600,
-                    color: stripHtml(title).length === 0 ? '#94a3b8' : stripHtml(title).length > 70 ? '#d97706' : '#16a34a',
+                    color: title.trim().length === 0 ? '#94a3b8' : '#64748b',
                   }}
                 >
-                  {stripHtml(title).length} chars {stripHtml(title).length > 0 && stripHtml(title).length <= 70 ? '• Optimal' : ''}
+                  {title.trim().length} chars
                 </span>
               </div>
             </div>
 
             <div style={{ padding: '20px' }}>
-              {/* HTML formatting hints */}
-              <div style={{ marginBottom: '8px', display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600 }}>Formatting:</span>
-                {[
-                  { label: '<i>italic</i>', title: 'Italic text' },
-                  { label: '<span style="color:#e53e3e">colored</span>', title: 'Colored text' },
-                  { label: '<strong>bold</strong>', title: 'Bold text' },
-                ].map((hint) => (
-                  <button
-                    key={hint.title}
-                    type="button"
-                    title={hint.title}
-                    onClick={() => {
-                      const el = titleEditableRef.current;
-                      if (!el) return;
-                      document.execCommand('insertHTML', false, hint.label);
-                      handleTitleInput();
-                    }}
-                    style={{
-                      background: '#f8fafc',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '4px',
-                      padding: '2px 8px',
-                      fontSize: '11.5px',
-                      cursor: 'pointer',
-                      color: '#475569',
-                    }}
-                    dangerouslySetInnerHTML={{ __html: hint.label }}
-                  />
-                ))}
-              </div>
-
-              {/* Rich contentEditable title field */}
-              <div
-                ref={setTitleEditableEl}
-                contentEditable
-                suppressContentEditableWarning
-                data-placeholder="Enter article headline or post title..."
-                dangerouslySetInnerHTML={!initialTitleInjectedRef.current && title ? { __html: title } : undefined}
-                onInput={() => {
-                  isTypingRef.current = true;
-                  handleTitleInput();
-                }}
-                onPaste={(e) => {
-                  e.preventDefault();
-                  const text = e.clipboardData.getData('text/plain');
-                  document.execCommand('insertText', false, text);
-                  isTypingRef.current = true;
-                  handleTitleInput();
-                }}
+              {/* Native Auto-Growing Title Textarea */}
+              <textarea
+                ref={titleTextareaRef}
+                value={title}
+                onChange={(e) => handleTitleChange(e.target.value)}
+                placeholder="Enter article headline or post title..."
+                rows={1}
                 style={{
                   width: '100%',
                   fontSize: '1.5rem',
@@ -561,51 +667,26 @@ export const PostEditor: React.FC<PostEditorProps> = ({
                   color: '#0f172a',
                   fontFamily: 'inherit',
                   letterSpacing: '-0.01em',
-                  padding: '0 0 12px 0',
+                  padding: '2px 0 10px 0',
                   borderBottom: '2px solid #f1f5f9',
                   transition: 'border-color 0.2s ease',
-                  minHeight: '2.5rem',
-                  lineHeight: 1.4,
-                  wordBreak: 'break-word',
+                  minHeight: '4.75rem',
+                  lineHeight: 1.35,
+                  resize: 'none',
+                  overflow: 'hidden',
+                  background: 'transparent',
+                  boxSizing: 'border-box',
+                  display: 'block',
                 }}
                 onFocus={(e) => {
                   e.currentTarget.style.borderBottomColor = '#ffcc00';
                 }}
                 onBlur={(e) => {
-                  isTypingRef.current = false;
                   e.currentTarget.style.borderBottomColor = '#f1f5f9';
                 }}
               />
 
-              {/* Live Preview Panel */}
-              {showTitlePreview && (
-                <div
-                  style={{
-                    marginTop: '12px',
-                    padding: '14px 18px',
-                    background: 'linear-gradient(135deg, #f8fafc 0%, #f0f9ff 100%)',
-                    border: '1px solid #bae6fd',
-                    borderRadius: '10px',
-                    position: 'relative',
-                  }}
-                >
-                  <div style={{ fontSize: '10px', fontWeight: 700, color: '#7dd3fc', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
-                    👁 Live Preview — How readers will see it
-                  </div>
-                  <div
-                    style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a', lineHeight: 1.35 }}
-                    dangerouslySetInnerHTML={{ __html: title || '<span style="color:#94a3b8">No title yet...</span>' }}
-                  />
-                  <div style={{ marginTop: '8px', borderTop: '1px solid #e0f2fe', paddingTop: '8px', fontSize: '11px', color: '#64748b' }}>
-                    <strong>SEO / SERP title:</strong>&nbsp;
-                    <span style={{ fontFamily: 'monospace', background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' }}>
-                      {stripHtml(title) || '(empty)'}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* Enhanced URL Slug / Permalink Bar */}
+              {/* Dynamic URL Slug / Permalink Bar */}
               <div
                 style={{
                   marginTop: '16px',
@@ -620,9 +701,12 @@ export const PostEditor: React.FC<PostEditorProps> = ({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '12.5px', fontWeight: 600 }}>
-                  <span style={{ fontSize: '14px' }}>🔗</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                  </svg>
                   <span>Permalink:</span>
-                  <span style={{ color: '#94a3b8' }}>https://example.com/blog/</span>
+                  <span style={{ color: '#94a3b8', fontFamily: 'monospace', fontSize: '12px' }}>{blogBaseUrl}</span>
                 </div>
 
                 <input
@@ -636,14 +720,14 @@ export const PostEditor: React.FC<PostEditorProps> = ({
                   style={{
                     border: '1px solid #cbd5e1',
                     borderRadius: '6px',
-                    padding: '4px 10px',
-                    fontSize: '13px',
+                    padding: '5px 10px',
+                    fontSize: '12.5px',
                     fontWeight: 600,
                     color: '#0f172a',
                     background: '#ffffff',
                     flex: 1,
                     minWidth: '180px',
-                    maxWidth: '360px',
+                    maxWidth: '380px',
                     outline: 'none',
                   }}
                 />
@@ -668,10 +752,14 @@ export const PostEditor: React.FC<PostEditorProps> = ({
                         cursor: 'pointer',
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: '4px',
+                        gap: '5px',
                       }}
                     >
-                      🔄 Reset
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                        <path d="M3 3v5h5" />
+                      </svg>
+                      <span>Reset</span>
                     </button>
                   )}
 
@@ -679,7 +767,7 @@ export const PostEditor: React.FC<PostEditorProps> = ({
                     type="button"
                     onClick={() => {
                       if (navigator.clipboard) {
-                        navigator.clipboard.writeText(`https://example.com/blog/${slug}`);
+                        navigator.clipboard.writeText(`${blogBaseUrl}${slug}`);
                         setCopiedSlug(true);
                         setTimeout(() => setCopiedSlug(false), 2000);
                       }
@@ -698,10 +786,25 @@ export const PostEditor: React.FC<PostEditorProps> = ({
                       cursor: 'pointer',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '4px',
+                      gap: '5px',
                     }}
                   >
-                    {copiedSlug ? '✓ Copied' : '📋 Copy URL'}
+                    {copiedSlug ? (
+                      <>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        <span>Copied</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                          <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                        </svg>
+                        <span>Copy URL</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -721,14 +824,17 @@ export const PostEditor: React.FC<PostEditorProps> = ({
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '15px' }}>📝</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#64748b' }}>
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                </svg>
                 <span style={{ fontSize: '13.5px', fontWeight: 700, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
                   Article Content
                 </span>
               </div>
-              <div style={{ fontSize: '12px', color: '#64748b' }}>
-                Use toolbar or type <kbd style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '1px 5px', fontSize: '11px' }}>/</kbd> for blocks
-              </div>
+
             </div>
 
             {/* Tiptap Rich Text Editor */}
@@ -778,7 +884,10 @@ export const PostEditor: React.FC<PostEditorProps> = ({
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '16px' }}>🔍</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#d97706' }}>
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
                 <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: '#0f172a' }}>
                   SEO & Metadata
                 </h3>
@@ -1034,24 +1143,99 @@ export const PostEditor: React.FC<PostEditorProps> = ({
               </div>
 
               <div className="zw-admin-form-group">
-                <label className="zw-admin-label">Tags</label>
-                <div style={{ maxHeight: '120px', overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '8px' }}>
-                  {tags.map((t) => (
-                    <label key={t.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', margin: '4px 0', cursor: 'pointer' }}>
-                      <input
-                        type="checkbox"
-                        checked={selectedTagIds.includes(t.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedTagIds([...selectedTagIds, t.id]);
-                          } else {
-                            setSelectedTagIds(selectedTagIds.filter((id) => id !== t.id));
-                          }
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <label className="zw-admin-label" style={{ margin: 0 }}>Tags</label>
+                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>Separate with comma</span>
+                </div>
+
+                <div
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 10px',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '8px',
+                    background: '#ffffff',
+                    minHeight: '44px',
+                    boxSizing: 'border-box',
+                    cursor: 'text',
+                  }}
+                  onClick={() => tagInputRef.current?.focus()}
+                >
+                  {tagNames.map((tag) => (
+                    <span
+                      key={tag}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        padding: '3px 8px',
+                        borderRadius: '6px',
+                        background: '#f1f5f9',
+                        color: '#0f172a',
+                        fontSize: '12px',
+                        fontWeight: 500,
+                        border: '1px solid #e2e8f0',
+                      }}
+                    >
+                      <span>{tag}</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveTag(tag);
                         }}
-                      />
-                      <span>{t.name}</span>
-                    </label>
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          padding: 0,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          color: '#64748b',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = '#ef4444';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = '#64748b';
+                        }}
+                        title={`Remove tag ${tag}`}
+                      >
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
+                    </span>
                   ))}
+
+                  <input
+                    ref={tagInputRef}
+                    type="text"
+                    value={tagInputValue}
+                    onChange={(e) => handleTagInputChange(e.target.value)}
+                    onKeyDown={handleTagInputKeyDown}
+                    onBlur={() => {
+                      if (tagInputValue.trim()) {
+                        handleAddTagsFromText(tagInputValue);
+                        setTagInputValue('');
+                      }
+                    }}
+                    placeholder={tagNames.length === 0 ? 'Type tags and press comma...' : 'Add tag...'}
+                    style={{
+                      border: 'none',
+                      outline: 'none',
+                      fontSize: '12.5px',
+                      flex: 1,
+                      minWidth: '110px',
+                      padding: '2px 4px',
+                      background: 'transparent',
+                      color: '#0f172a',
+                    }}
+                  />
                 </div>
               </div>
             </div>

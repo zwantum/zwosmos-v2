@@ -6,7 +6,7 @@ import App from './App.tsx'
 import AdminApp from './admin/AdminApp.tsx'
 
 const isSubdomainAdmin = window.location.hostname.startsWith('admin.');
-const isPathAdmin = window.location.pathname.startsWith('/admin');
+const isPathAdmin = window.location.pathname.startsWith('/missioncontrol');
 const isAdmin = isSubdomainAdmin || isPathAdmin;
 
 if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
@@ -15,7 +15,7 @@ if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter basename={isPathAdmin ? '/admin' : undefined}>
+    <BrowserRouter basename={isPathAdmin ? '/missioncontrol' : undefined}>
       {isAdmin ? <AdminApp /> : <App />}
     </BrowserRouter>
   </StrictMode>,

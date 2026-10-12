@@ -12,6 +12,7 @@ export interface SEOMetaOptions {
   keywords?: string;
   author?: string;
   publishedTime?: string;
+  modifiedTime?: string;
   section?: string;
   tags?: string[];
   twitterCard?: 'summary_large_image' | 'summary';
@@ -118,6 +119,9 @@ export function applySEOMeta(options: SEOMetaOptions = {}, siteSettings: SiteSet
   if (type === 'article') {
     if (options.publishedTime) {
       setMetaTag('property', 'article:published_time', options.publishedTime);
+    }
+    if (options.modifiedTime) {
+      setMetaTag('property', 'article:modified_time', options.modifiedTime);
     }
     if (options.author) {
       setMetaTag('property', 'article:author', options.author);

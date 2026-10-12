@@ -1,5 +1,5 @@
 import { Component, ErrorInfo, ReactNode, useEffect } from 'react';
-import { BlogAdmin } from './blog-admin/index';
+import { BlogAdmin, BlogAdminView } from './blog-admin/index';
 // Production-ready: using local version tracked in git
 import { blogClient } from '../lib/blogClient';
 import { PushNotificationContainer } from './PushNotification';
@@ -91,7 +91,12 @@ class BlogAdminErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundary
   }
 }
 
-export default function BlogsManager() {
+export interface BlogsManagerProps {
+  view?: BlogAdminView;
+  onViewChange?: (view: BlogAdminView) => void;
+}
+
+export default function BlogsManager({ view, onViewChange }: BlogsManagerProps) {
   useEffect(() => {
     // Prevent toolbar buttons and bubble menu buttons from stealing focus / collapsing selection on mousedown
     const handleMouseDown = (e: MouseEvent) => {
@@ -117,6 +122,9 @@ export default function BlogsManager() {
           title="Blog"
           subtitle="Manage articles & discussions"
           className="zw-blog-admin-boxed"
+          hideSidebar={true}
+          view={view}
+          onViewChange={onViewChange}
         />
       </BlogAdminErrorBoundary>
       {/* Exactly one clean copyright line in the blog module */}

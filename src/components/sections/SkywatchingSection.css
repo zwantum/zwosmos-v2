@@ -1,0 +1,642 @@
+/* ==========================================================================
+   Zwosmos · Skywatching (Moon Phase Strip & Lunar Calendar)
+   Ported 1-to-1 from Zwosmos_Moon_Phase_Strip_Final.html
+   ========================================================================== */
+
+.zw-sky-section {
+  position: relative;
+  width: 100%;
+  padding: 10px 32px 40px;
+  box-sizing: border-box;
+  z-index: 10;
+}
+
+@media (max-width: 640px) {
+  .zw-sky-section {
+    padding: 10px 16px 30px;
+  }
+}
+
+.zw-sky-page {
+  width: min(1200px, 100%);
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.zw-sky-module {
+  background: linear-gradient(135deg, #142238 0%, #101b2d 44%, #0d182a 100%);
+  border: 1px solid #33425b;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  color: #f2f2ec;
+  font-family: "Lora", Georgia, "Times New Roman", serif;
+  box-sizing: border-box;
+}
+
+.zw-sky-module * {
+  box-sizing: border-box;
+}
+
+.zw-sky-module button {
+  font: inherit;
+  cursor: pointer;
+}
+
+.zw-sky-module button:focus-visible {
+  outline: 2px solid #f8db9b;
+  outline-offset: 3px;
+}
+
+.zw-sky-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 22px 10px;
+}
+
+.zw-sky-eyebrow {
+  color: #ffba00;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  font: 600 0.65rem/1.2 system-ui, -apple-system, sans-serif;
+  margin: 0 0 4px;
+}
+
+.zw-sky-head h2 {
+  margin: 0;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #f2f2ec;
+}
+
+.zw-sky-range {
+  margin: 3px 0 0;
+  color: #a6b3c7;
+  font: 500 0.72rem/1.3 system-ui, -apple-system, sans-serif;
+}
+
+.zw-sky-switch-wrap {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+}
+
+.zw-sky-switch-caption {
+  color: #a6b3c7;
+  font: 600 0.62rem/1 system-ui, -apple-system, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+
+.zw-sky-switch {
+  display: flex;
+  padding: 2px;
+  background: #0b1526;
+  border: 1px solid #46546c;
+  border-radius: 99px;
+}
+
+.zw-sky-switch button {
+  background: none;
+  color: #bbc7d8;
+  border: 0;
+  border-radius: 99px;
+  padding: 5px 12px;
+  font: 600 0.68rem/1 system-ui, -apple-system, sans-serif;
+  min-height: 27px;
+  transition: all 0.18s ease;
+}
+
+.zw-sky-switch button[aria-pressed="true"] {
+  color: #161d2b;
+  background: #ffba00;
+}
+
+/* Today's Moon is added alongside the seven-day strip */
+.zw-sky-content {
+  display: grid;
+  grid-template-columns: minmax(330px, 36%) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 4px 18px 12px;
+}
+
+.zw-sky-today-feature {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 16px;
+  padding: 6px 10px;
+}
+
+.zw-sky-today-feature .zw-sky-moon {
+  width: 88px;
+  height: 88px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 12px rgba(238, 224, 177, 0.35));
+}
+
+.zw-sky-today-copy {
+  min-width: 0;
+}
+
+.zw-sky-today-copy h3 {
+  font: 700 1.35rem/1.1 "Playfair Display", Georgia, serif;
+  margin: 0 0 5px;
+  color: #f2f2ec;
+  white-space: nowrap;
+}
+
+.zw-sky-today-date {
+  color: #e3e9f5;
+  font: 500 0.72rem/1.3 system-ui, -apple-system, sans-serif;
+  white-space: nowrap;
+}
+
+.zw-sky-today-date strong {
+  color: #ffba00;
+}
+
+.zw-sky-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 11px 0 0;
+}
+
+.zw-sky-facts div {
+  display: flex;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.zw-sky-facts dt,
+.zw-sky-facts dd {
+  font: 500 0.68rem/1.2 system-ui, -apple-system, sans-serif;
+  margin: 0;
+}
+
+.zw-sky-facts dt {
+  color: #b2c7e7;
+}
+
+.zw-sky-facts dd {
+  color: #f4f3ed;
+  font-weight: 700;
+}
+
+.zw-sky-timeline {
+  min-width: 0;
+}
+
+.zw-sky-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  padding: 0 8px 7px;
+}
+
+.zw-sky-day {
+  position: relative;
+  text-align: center;
+  min-width: 0;
+  padding: 6px 3px 8px;
+  border-left: 1px solid #344158;
+}
+
+.zw-sky-day:first-child {
+  border-left: 0;
+}
+
+.zw-sky-day.zw-sky-today {
+  background: linear-gradient(#36445777, #17263b33);
+  border: 1px solid rgba(130, 144, 162, 0.55);
+  border-radius: 8px;
+  margin: -1px 0;
+}
+
+.zw-sky-day.zw-sky-today+.zw-sky-day {
+  border-left-color: transparent;
+}
+
+.zw-sky-date-top {
+  font: 600 0.6rem/1.2 system-ui, -apple-system, sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #b6c3d5;
+}
+
+.zw-sky-date-top span {
+  display: inline;
+}
+
+.zw-sky-date-num {
+  font: 400 1.15rem/1.1 Georgia, serif;
+  color: #f2f0e8;
+  margin-top: 2px;
+}
+
+.zw-sky-moon-wrap {
+  display: grid;
+  place-items: center;
+  height: 48px;
+  margin: 2px auto;
+}
+
+.zw-sky-moon {
+  width: 40px;
+  height: 40px;
+  display: block;
+  filter: drop-shadow(0 0 8px rgba(222, 197, 161, 0.18));
+  transition: transform 0.3s ease;
+}
+
+.zw-sky-day:hover .zw-sky-moon {
+  transform: scale(1.08);
+}
+
+.zw-sky-phase-name {
+  font-size: 0.54rem;
+  font-family: 'Noto Sans';
+  line-height: 1.15;
+  min-height: 1.15em;
+  color: #f2f2ec;
+}
+
+.zw-sky-phase-short {
+  display: none;
+}
+
+.zw-sky-percent {
+  margin-top: 3px;
+  font: 500 0.63rem/1.2 system-ui, -apple-system, sans-serif;
+  color: #b9c6d7;
+}
+
+.zw-sky-today-tag {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ffba00;
+  font-size: 0;
+}
+
+.zw-sky-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 1px solid #344058;
+  padding: 9px 22px;
+}
+
+.zw-sky-local-note {
+  color: #a6b3c7;
+  font: 400 0.65rem/1.3 system-ui, -apple-system, sans-serif;
+}
+
+.zw-sky-calendar-trigger {
+  flex-shrink: 0;
+  border: 0;
+  background: none;
+  color: #ffba00;
+  padding: 3px 0;
+  font: 700 0.7rem/1.2 system-ui, -apple-system, sans-serif;
+  letter-spacing: 0.015em;
+  transition: color 0.15s ease;
+}
+
+.zw-sky-calendar-trigger:hover {
+  text-decoration: underline;
+  color: #f8db9b;
+}
+
+/* Modal Dialog */
+.zw-sky-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 8, 19, 0.8);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.zw-sky-dialog {
+  border: 1px solid #52617b;
+  background: #0f1b2e;
+  color: #f2f2ec;
+  border-radius: 18px;
+  width: min(950px, calc(100% - 20px));
+  max-height: 90vh;
+  padding: 0;
+  box-shadow: 0 35px 100px rgba(0, 0, 0, 0.75);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.zw-sky-cal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #344058;
+  padding: 20px clamp(18px, 3vw, 32px);
+}
+
+.zw-sky-cal-head h2 {
+  margin: 0;
+  font-size: clamp(1.4rem, 2.5vw, 2.1rem);
+  font-weight: 400;
+  font-family: "Playfair Display", Georgia, serif;
+  color: #f2f2ec;
+}
+
+.zw-sky-cal-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.zw-sky-cal-controls button {
+  border: 1px solid #42516c;
+  background: #1d2d45;
+  border-radius: 8px;
+  color: #fff;
+  min-width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  transition: background 0.15s;
+}
+
+.zw-sky-cal-controls button:hover {
+  background: #33445c;
+}
+
+.zw-sky-cal-controls .zw-sky-close {
+  margin-left: 9px;
+  font-size: 1.25rem;
+}
+
+.zw-sky-calendar-body {
+  padding: 18px clamp(10px, 2vw, 30px) 30px;
+  overflow: auto;
+  max-height: calc(90vh - 90px);
+}
+
+.zw-sky-weekdays,
+.zw-sky-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.zw-sky-weekdays div {
+  color: #aebbd0;
+  text-align: center;
+  font: 700 0.65rem/1 system-ui, -apple-system, sans-serif;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  padding: 6px 0 12px;
+}
+
+.zw-sky-cal-cell {
+  min-height: 109px;
+  border: 1px solid #334159;
+  padding: 9px 6px;
+  text-align: center;
+}
+
+.zw-sky-cal-cell.empty {
+  background: #0a1524;
+}
+
+.zw-sky-cal-cell.current {
+  border-color: #ffba00;
+  background: #233248;
+}
+
+.zw-sky-cal-cell .cal-date {
+  color: #e0e9f4;
+  font: 0.72rem/1.1 system-ui, -apple-system, sans-serif;
+  text-align: left;
+  padding-left: 6px;
+}
+
+.zw-sky-cal-cell .cal-moon {
+  width: 43px;
+  height: 43px;
+  margin: 2px auto;
+  display: block;
+}
+
+.zw-sky-cal-cell .cal-label {
+  color: #c6d2e1;
+  font: 0.6rem/1.15 system-ui, -apple-system, sans-serif;
+}
+
+/* Responsive Queries from Final File */
+@media (max-width: 900px) {
+  .zw-sky-content {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .zw-sky-today-feature {
+    padding: 3px 4px;
+  }
+}
+
+@media (max-width: 760px) {
+  .zw-sky-head {
+    padding: 10px 14px 8px;
+  }
+
+  .zw-sky-head h2 {
+    font-size: 1.08rem;
+  }
+
+  .zw-sky-eyebrow {
+    font-size: 0.52rem;
+  }
+
+  .zw-sky-range {
+    font-size: 0.56rem;
+    max-width: 155px;
+  }
+
+  .zw-sky-switch-wrap {
+    gap: 4px;
+  }
+
+  .zw-sky-switch-caption {
+    font-size: 0.52rem;
+  }
+
+  .zw-sky-switch button {
+    padding: 5px 7px;
+    font-size: 0.58rem;
+    min-height: 27px;
+  }
+
+  .zw-sky-content {
+    padding: 4px 10px 10px;
+    gap: 6px;
+  }
+
+  .zw-sky-today-feature {
+    gap: 12px;
+  }
+
+  .zw-sky-today-feature .zw-sky-moon {
+    width: 68px;
+    height: 68px;
+  }
+
+  .zw-sky-today-copy {
+    flex: 1;
+  }
+
+  .zw-sky-today-copy h3 {
+    font-size: 1.1rem;
+    margin: 0 0 3px;
+  }
+
+  .zw-sky-today-date {
+    font-size: 0.62rem;
+  }
+
+  .zw-sky-facts {
+    display: grid;
+    grid-template-columns: repeat(4, max-content);
+    gap: 5px 8px;
+    margin-top: 8px;
+  }
+
+  .zw-sky-facts div {
+    display: block;
+  }
+
+  .zw-sky-facts dt,
+  .zw-sky-facts dd {
+    font-size: 0.58rem;
+  }
+
+  .zw-sky-facts dd {
+    margin-top: 2px;
+  }
+
+  .zw-sky-days {
+    padding: 0 5px 5px;
+  }
+
+  .zw-sky-day {
+    padding: 5px 1px 6px;
+  }
+
+  .zw-sky-date-top {
+    font-size: 0.52rem;
+    letter-spacing: 0;
+  }
+
+  .zw-sky-date-top span {
+    display: block;
+  }
+
+  .zw-sky-date-num {
+    font-size: 0.88rem;
+  }
+
+  .zw-sky-moon-wrap {
+    height: 33px;
+  }
+
+  .zw-sky-moon {
+    width: 29px;
+    height: 29px;
+  }
+
+  .zw-sky-phase-name {
+    font-size: 0.52rem;
+    min-height: 2.25em;
+    display: grid;
+    place-items: center;
+  }
+
+  .zw-sky-phase-full {
+    display: none;
+  }
+
+  .zw-sky-phase-short {
+    display: inline;
+  }
+
+  .zw-sky-percent {
+    font-size: 0.5rem;
+    margin-top: 1px;
+  }
+
+  .zw-sky-foot {
+    padding: 7px 12px;
+  }
+
+  .zw-sky-local-note {
+    font-size: 0.55rem;
+  }
+
+  .zw-sky-calendar-trigger {
+    font-size: 0.58rem;
+  }
+
+  .zw-sky-cal-cell {
+    min-height: 80px;
+    padding: 6px 0;
+  }
+
+  .zw-sky-cal-cell .cal-moon {
+    width: 30px;
+    height: 30px;
+  }
+
+  .zw-sky-cal-cell .cal-label {
+    font-size: 0.48rem;
+  }
+}
+
+@media (max-width: 390px) {
+  .zw-sky-facts {
+    gap: 4px 7px;
+  }
+
+  .zw-sky-facts dt,
+  .zw-sky-facts dd {
+    font-size: 0.52rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .zw-sky-switch-caption {
+    display: none;
+  }
+
+  .zw-sky-head {
+    gap: 4px;
+  }
+
+  .zw-sky-local-note {
+    max-width: 150px;
+  }
+}

@@ -6,6 +6,7 @@ import {
   Save,
   Rocket,
   Calendar,
+  BookOpen,
   Eye,
   CheckCircle2,
   FileText,
@@ -34,7 +35,10 @@ import {
   CosmicEntry,
   CosmicEntryType,
   parseMilestoneDateForRollover,
-  FACT_TOPIC_PRESETS
+  FACT_TOPIC_PRESETS,
+  getScheduledFactForToday,
+  getScheduledTerminologyForToday,
+  getPastCosmicEntryIds
 } from '../lib/cosmicService';
 import { supabase } from '../lib/supabase';
 import TiptapEditor from './TiptapEditor';
@@ -82,20 +86,20 @@ function stripHtml(html: string): string {
 const ITEMS_PER_PAGE = 30;
 
 export default function FactsManager() {
-  const getInitialSubTab = (): 'astronomy' | 'fact' | 'preview' => {
+  const getInitialSubTab = (): 'astronomy' | 'fact' | 'terminology' | 'preview' => {
     try {
       const params = new URLSearchParams(window.location.search);
       const sub = params.get('subtab');
-      if (sub === 'astronomy' || sub === 'fact' || sub === 'preview') return sub;
+      if (sub === 'astronomy' || sub === 'fact' || sub === 'terminology' || sub === 'preview') return sub;
       const stored = localStorage.getItem('zwosmos_admin_facts_subtab');
-      if (stored === 'astronomy' || stored === 'fact' || stored === 'preview') return stored;
+      if (stored === 'astronomy' || stored === 'fact' || stored === 'terminology' || stored === 'preview') return stored;
     } catch { }
     return 'astronomy';
   };
 
-  const [activeSubTab, setActiveSubTabState] = useState<'astronomy' | 'fact' | 'preview'>(getInitialSubTab);
+  const [activeSubTab, setActiveSubTabState] = useState<'astronomy' | 'fact' | 'terminology' | 'preview'>(getInitialSubTab);
 
-  const setActiveSubTab = (tab: 'astronomy' | 'fact' | 'preview') => {
+  const setActiveSubTab = (tab: 'astronomy' | 'fact' | 'terminology' | 'preview') => {
     setActiveSubTabState(tab);
     try {
       localStorage.setItem('zwosmos_admin_facts_subtab', tab);
@@ -105,7 +109,7 @@ export default function FactsManager() {
     } catch { }
   };
 
-  // List vs Form view mode for both astronomy & fact tabs (defaults to 'list')
+  // List vs Form view mode for astronomy, fact & terminology tabs (defaults to 'list')
   const [viewMode, setViewMode] = useState<'list' | 'form'>('list');
   const [filterStatus, setFilterStatus] = useState<'all' | 'live' | 'draft' | 'archived'>('all');
 
@@ -126,6 +130,19 @@ export default function FactsManager() {
   const [bulkSelectedTopic, setBulkSelectedTopic] = useState<string>(FACT_TOPIC_PRESETS[0]);
   const [bulkCustomTopic, setBulkCustomTopic] = useState<string>('');
   const [bulkUpdatingTopic, setBulkUpdatingTopic] = useState(false);
+
+  // Scheduled Rotation Sequences for Facts & Terminologies
+  const scheduledFact = useMemo(() => getScheduledFactForToday(entries), [entries]);
+  const scheduledTerminology = useMemo(() => getScheduledTerminologyForToday(entries), [entries]);
+
+  // Compute set of entry IDs that have actually appeared in the past on the frontend (Past Till Date)
+  const pastFactIds = useMemo(() => {
+    return getPastCosmicEntryIds('fact', entries);
+  }, [entries]);
+
+  const pastTerminologyIds = useMemo(() => {
+    return getPastCosmicEntryIds('terminology', entries);
+  }, [entries]);
 
   // Identify calendar date duplicates in the Astronomy tab only
   const { duplicateGroups, redundantIds } = useMemo(() => {
@@ -268,6 +285,10 @@ export default function FactsManager() {
     if (type === 'astronomy') {
       setFormTitle('This Day in Astronomy');
       setFormContent('<p>On this day in space history...</p>');
+    } else if (type === 'terminology') {
+      setFormTitle('');
+      setFormSubtitle('');
+      setFormContent('<p>Enter clear terminology definition...</p>');
     } else {
       setFormTitle('You & the Cosmos');
       setFormContent('<p>Did you know...</p>');
@@ -281,6 +302,9 @@ export default function FactsManager() {
     if (activeSubTab === 'astronomy') {
       setFormTitle('This Day in Astronomy');
       setFormSubtitle(entry.subtitle || (entry.title !== 'This Day in Astronomy' ? entry.title : ''));
+    } else if (activeSubTab === 'terminology') {
+      setFormTitle(entry.title);
+      setFormSubtitle('');
     } else {
       setFormTitle(entry.title);
       setFormSubtitle(entry.subtitle || '');
@@ -318,11 +342,11 @@ export default function FactsManager() {
     const finalContent = (rawContent && rawContent.trim() && rawContent !== '<p></p>') ? rawContent : formContent;
 
     if (!formTitle.trim()) {
-      alert('Please enter a module title');
+      alert(activeSubTab === 'terminology' ? 'Please enter a terminology / term name' : 'Please enter a module title');
       return;
     }
     if (!stripHtml(finalContent).trim()) {
-      alert('Please enter content for this fact');
+      alert(activeSubTab === 'terminology' ? 'Please enter a definition for this terminology' : 'Please enter content for this entry');
       return;
     }
 
@@ -330,12 +354,17 @@ export default function FactsManager() {
     try {
       const finalStatus = asDraft ? 'draft' : 'live';
       const isAstronomy = activeSubTab === 'astronomy';
+      const isTerminology = activeSubTab === 'terminology';
 
       const res = await saveCosmicEntry({
         id: editingId || undefined,
         type: activeSubTab as CosmicEntryType,
-        title: isAstronomy ? 'This Day in Astronomy' : formTitle,
-        subtitle: isAstronomy ? formSubtitle.trim() : (formSubtitle.trim() || formTitle),
+        title: isAstronomy ? 'This Day in Astronomy' : formTitle.trim(),
+        subtitle: isAstronomy
+          ? formSubtitle.trim()
+          : isTerminology
+            ? (formSubtitle.trim() || 'General')
+            : (formSubtitle.trim() || formTitle.trim()),
         astronomyDate: astronomyDateStr || undefined,
         content: finalContent,
         scheduledAt: null,
@@ -343,21 +372,24 @@ export default function FactsManager() {
       });
 
       if (res.success && res.data) {
+        const itemLabel = isTerminology ? 'Terminology' : (activeSubTab === 'fact' ? 'Fact' : 'Entry');
         let notif = '';
         if (editingId) {
           if (finalStatus === 'live') {
             notif = isEditingLive
-              ? 'Live fact updated successfully!'
-              : 'Fact updated and published live to homepage!';
+              ? `Live ${itemLabel.toLowerCase()} updated successfully!`
+              : `${itemLabel} updated and published live to homepage!`;
           } else {
             notif = isEditingLive
-              ? 'Fact moved to rotation queue (unpublished).'
-              : 'Fact updated successfully!';
+              ? `${itemLabel} moved to rotation queue (unpublished).`
+              : `${itemLabel} updated successfully!`;
           }
         } else {
           notif = finalStatus === 'live'
-            ? 'Fact published live to homepage!'
-            : (activeSubTab === 'fact' ? 'Fact saved to rotation queue successfully!' : 'Astronomy entry saved successfully!');
+            ? `${itemLabel} published live to homepage!`
+            : (activeSubTab === 'astronomy'
+                ? 'Astronomy entry saved successfully!'
+                : `${itemLabel} saved to rotation queue successfully!`);
         }
         showNotification(notif);
         await loadAllData();
@@ -400,21 +432,44 @@ export default function FactsManager() {
   // Filtered & sorted entries for active tab
   const todayIST = getTodayIST();
 
+  const isEntryLive = (e: CosmicEntry): boolean => {
+    if (activeSubTab === 'astronomy') return e.status === 'live';
+    if (activeSubTab === 'terminology') {
+      return (scheduledTerminology.entry?.id === e.id) || e.status === 'live';
+    }
+    return (scheduledFact.entry?.id === e.id) || e.status === 'live';
+  };
+
+  const isEntryPast = (e: CosmicEntry): boolean => {
+    if (isEntryLive(e)) return false;
+    if (activeSubTab === 'astronomy') return e.status === 'archived';
+    if (activeSubTab === 'terminology') {
+      return pastTerminologyIds.has(e.id) || e.status === 'archived';
+    }
+    return pastFactIds.has(e.id) || e.status === 'archived';
+  };
+
   const allTabEntries = entries
     .filter(e => e.type === activeSubTab)
     .filter(e => {
       if (filterStatus === 'all') return true;
-      if (activeSubTab === 'fact') {
-        if (filterStatus === 'live') return e.status === 'live';
-        if (filterStatus === 'draft') return e.status !== 'live';
-        return true;
+      if (filterStatus === 'live') return isEntryLive(e);
+      if (filterStatus === 'draft') {
+        // "Upcoming" (Astronomy only)
+        return activeSubTab === 'astronomy' ? e.status === 'draft' : false;
       }
-      return e.status === filterStatus;
+      if (filterStatus === 'archived') {
+        // "Past Till Date"
+        return isEntryPast(e);
+      }
+      return true;
     })
     .sort((a, b) => {
       // 1. Live entry ALWAYS comes first (#1)
-      if (a.status === 'live' && b.status !== 'live') return -1;
-      if (b.status === 'live' && a.status !== 'live') return 1;
+      const aLive = isEntryLive(a);
+      const bLive = isEntryLive(b);
+      if (aLive && !bLive) return -1;
+      if (bLive && !aLive) return 1;
 
       // 2. Upcoming schedule order for Astronomy
       if (activeSubTab === 'astronomy') {
@@ -431,9 +486,10 @@ export default function FactsManager() {
   const safePage = Math.min(currentPage, totalPages);
   const currentTabEntries = allTabEntries.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE);
 
-  const liveEntryCount = entries.filter(e => e.type === activeSubTab && e.status === 'live').length;
-  const upcomingEntryCount = entries.filter(e => e.type === activeSubTab && e.status === 'draft').length;
-  const pastEntryCount = entries.filter(e => e.type === activeSubTab && e.status === 'archived').length;
+  const tabPool = entries.filter(e => e.type === activeSubTab);
+  const liveEntryCount = tabPool.filter(e => isEntryLive(e)).length;
+  const upcomingEntryCount = tabPool.filter(e => e.status === 'draft').length;
+  const pastEntryCount = tabPool.filter(e => isEntryPast(e)).length;
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
@@ -510,9 +566,11 @@ export default function FactsManager() {
   const handleDeleteSelected = async () => {
     if (selectedIds.size === 0) return;
     const count = selectedIds.size;
+    const itemNoun = activeSubTab === 'astronomy' ? 'milestone' : (activeSubTab === 'terminology' ? 'terminology' : 'fact');
+    const itemsNoun = activeSubTab === 'astronomy' ? 'milestones' : (activeSubTab === 'terminology' ? 'terminologies' : 'facts');
     if (
       !window.confirm(
-        `Are you sure you want to permanently delete the ${count} selected ${count === 1 ? 'fact' : 'facts'}? This cannot be undone.`
+        `Are you sure you want to permanently delete the ${count} selected ${count === 1 ? itemNoun : itemsNoun}? This cannot be undone.`
       )
     ) {
       return;
@@ -522,7 +580,7 @@ export default function FactsManager() {
     try {
       const res = await deleteCosmicEntriesBatch(Array.from(selectedIds));
       if (res.success) {
-        showNotification(`Successfully deleted ${res.count} facts!`);
+        showNotification(`Successfully deleted ${res.count} ${res.count === 1 ? itemNoun : itemsNoun}!`);
         setSelectedIds(new Set());
         await loadAllData();
       } else {
@@ -549,9 +607,12 @@ export default function FactsManager() {
       const nowIso = new Date().toISOString();
 
       if (supabase) {
+        const updatePayload = activeSubTab === 'terminology'
+          ? { subtitle: finalTopic, updated_at: nowIso }
+          : { title: finalTopic, subtitle: finalTopic, updated_at: nowIso };
         const { error } = await supabase
           .from('cosmic_entries')
-          .update({ title: finalTopic, subtitle: finalTopic, updated_at: nowIso })
+          .update(updatePayload)
           .in('id', idsArray);
         if (error) {
           console.warn('Supabase bulk topic update warning:', error.message);
@@ -561,13 +622,17 @@ export default function FactsManager() {
       const currentList = await getCosmicEntries();
       const updatedList = currentList.map(item => {
         if (selectedIds.has(item.id)) {
+          if (activeSubTab === 'terminology') {
+            return { ...item, subtitle: finalTopic, updatedAt: nowIso };
+          }
           return { ...item, title: finalTopic, subtitle: finalTopic, updatedAt: nowIso };
         }
         return item;
       });
       localStorage.setItem('zwosmos_cosmic_entries', JSON.stringify(updatedList));
 
-      showNotification(`Successfully assigned topic "${finalTopic}" to ${idsArray.length} facts!`);
+      const categoryLabel = activeSubTab === 'terminology' ? 'category' : 'topic';
+      showNotification(`Successfully assigned ${categoryLabel} "${finalTopic}" to ${idsArray.length} items!`);
       setIsAssignTopicOpen(false);
       setBulkCustomTopic('');
       setSelectedIds(new Set());
@@ -678,6 +743,29 @@ export default function FactsManager() {
 
           <button
             type="button"
+            onClick={() => setActiveSubTab('terminology')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '9px 18px',
+              borderRadius: '8px',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              border: 'none',
+              background: activeSubTab === 'terminology' ? '#ffcc00' : 'transparent',
+              color: activeSubTab === 'terminology' ? '#0f172a' : '#64748b',
+              boxShadow: activeSubTab === 'terminology' ? '0 2px 8px rgba(255, 204, 0, 0.35)' : 'none',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <BookOpen size={15} />
+            <span>Space Terminologies</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setActiveSubTab('preview')}
             style={{
               display: 'flex',
@@ -702,9 +790,9 @@ export default function FactsManager() {
       </div>
 
       {/* =================================================================== */}
-      {/* TABS 1 & 2: ASTRONOMY OR SPACE FACT (LIST VIEW & FORM VIEW)         */}
+      {/* TABS 1, 2 & 3: ASTRONOMY, SPACE FACT OR TERMINOLOGY                 */}
       {/* =================================================================== */}
-      {(activeSubTab === 'astronomy' || activeSubTab === 'fact') && (
+      {(activeSubTab === 'astronomy' || activeSubTab === 'fact' || activeSubTab === 'terminology') && (
         <div
           style={{
             background: '#ffffff',
@@ -726,12 +814,18 @@ export default function FactsManager() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
                 <div>
                   <h2 style={{ margin: '0 0 6px', fontSize: '1.25rem', fontWeight: 600, color: '#0f172a' }}>
-                    {activeSubTab === 'astronomy' ? 'This Day in Astronomy - Entries & Schedule' : 'Space Fact of the Day - Daily Rotation Deck'}
+                    {activeSubTab === 'astronomy'
+                      ? 'This Day in Astronomy - Entries & Schedule'
+                      : activeSubTab === 'terminology'
+                        ? 'Space Terminologies - Daily Rotation Deck'
+                        : 'Space Fact of the Day - Daily Rotation Deck'}
                   </h2>
                   <p style={{ margin: 0, fontSize: '13px', color: '#64748b', lineHeight: 1.5 }}>
                     {activeSubTab === 'astronomy'
                       ? 'Manage previously uploaded facts, currently active content, and future scheduled rollouts with exact calendar dates.'
-                      : 'Automated midnight IST rollover. Daily facts cycle through all entries with guaranteed non-consecutive topics and zero date maintenance.'}
+                      : activeSubTab === 'terminology'
+                        ? 'Automated midnight IST rollover. Daily terminologies cycle through all entries randomly without repetition until the whole deck has been shown once.'
+                        : 'Automated midnight IST rollover. Daily facts cycle through all entries with guaranteed non-consecutive topics and zero date maintenance.'}
                   </p>
                 </div>
 
@@ -806,7 +900,13 @@ export default function FactsManager() {
                     }}
                   >
                     <Plus size={16} />
-                    <span>{activeSubTab === 'astronomy' ? 'Add New Milestone' : 'Add New Fact'}</span>
+                    <span>
+                      {activeSubTab === 'astronomy'
+                        ? 'Add New Milestone'
+                        : activeSubTab === 'terminology'
+                          ? 'Add New Terminology'
+                          : 'Add New Fact'}
+                    </span>
                   </button>
                 </div>
               </div>
@@ -867,10 +967,14 @@ export default function FactsManager() {
                   { key: 'live', label: `Live Now (${liveEntryCount})`, color: '#10b981' },
                   { key: 'draft', label: `Upcoming (${upcomingEntryCount})`, color: '#64748b' },
                   { key: 'archived', label: `Past Till Date (${pastEntryCount})`, color: '#94a3b8' }
+                ] : activeSubTab === 'terminology' ? [
+                  { key: 'all', label: `All Terminologies (${entries.filter(e => e.type === 'terminology').length})` },
+                  { key: 'live', label: `Live Today (${liveEntryCount})`, color: '#10b981' },
+                  { key: 'archived', label: `Past Till Date (${pastEntryCount})`, color: '#94a3b8' }
                 ] : [
                   { key: 'all', label: `All Facts (${entries.filter(e => e.type === 'fact').length})` },
                   { key: 'live', label: `Live Today (${liveEntryCount})`, color: '#10b981' },
-                  { key: 'draft', label: `In Rotation (${entries.filter(e => e.type === 'fact' && e.status !== 'live').length})`, color: '#6366f1' }
+                  { key: 'archived', label: `Past Till Date (${pastEntryCount})`, color: '#94a3b8' }
                 ]).map(tab => (
                   <button
                     key={tab.key}
@@ -958,7 +1062,7 @@ export default function FactsManager() {
                           cursor: allModuleSelectableEntries.length === 0 ? 'not-allowed' : 'pointer'
                         }}
                       >
-                        Select All Facts ({allModuleSelectableEntries.length})
+                        Select All {activeSubTab === 'astronomy' ? 'Milestones' : activeSubTab === 'terminology' ? 'Terminologies' : 'Facts'} ({allModuleSelectableEntries.length})
                       </button>
 
                       {selectedIds.size > 0 && (
@@ -987,7 +1091,11 @@ export default function FactsManager() {
                       {activeSubTab === 'fact' && (
                         <button
                           type="button"
-                          onClick={() => setIsAssignTopicOpen(true)}
+                          onClick={() => {
+                            setBulkSelectedTopic(FACT_TOPIC_PRESETS[0]);
+                            setBulkCustomTopic('');
+                            setIsAssignTopicOpen(true);
+                          }}
                           style={{
                             display: 'inline-flex',
                             alignItems: 'center',
@@ -1042,10 +1150,10 @@ export default function FactsManager() {
                 <div style={{ padding: '40px 20px', textAlign: 'center', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
                   <Layers size={36} color="#94a3b8" style={{ margin: '0 auto 12px' }} />
                   <p style={{ margin: '0 0 8px', fontSize: '15px', fontWeight: 600, color: '#334155' }}>
-                    No facts found in this filter
+                    No {activeSubTab === 'terminology' ? 'terminologies' : activeSubTab === 'astronomy' ? 'milestones' : 'facts'} found in this filter
                   </p>
                   <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#64748b' }}>
-                    Click "Add New" to create and schedule your first cosmic fact.
+                    Click "{activeSubTab === 'astronomy' ? 'Add New Milestone' : activeSubTab === 'terminology' ? 'Add New Terminology' : 'Add New Fact'}" to create and schedule your first entry.
                   </p>
                   <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
                     <button
@@ -1087,14 +1195,15 @@ export default function FactsManager() {
                       }}
                     >
                       <Plus size={14} />
-                      <span>{activeSubTab === 'astronomy' ? 'Add New Milestone' : 'Add New Fact'}</span>
+                      <span>{activeSubTab === 'astronomy' ? 'Add New Milestone' : activeSubTab === 'terminology' ? 'Add New Terminology' : 'Add New Fact'}</span>
                     </button>
                   </div>
                 </div>
               ) : (
                 <div ref={listTopRef} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {currentTabEntries.map(entry => {
-                    const isLive = entry.status === 'live';
+                    const isLive = isEntryLive(entry);
+                    const isPast = isEntryPast(entry);
                     const isSelected = selectedIds.has(entry.id);
 
                     return (
@@ -1169,7 +1278,7 @@ export default function FactsManager() {
                               </span>
                             )}
 
-                            {entry.status === 'archived' && activeSubTab === 'astronomy' && (
+                            {isPast && (
                               <span
                                 style={{
                                   display: 'inline-flex',
@@ -1221,7 +1330,7 @@ export default function FactsManager() {
                                   fontSize: '11px',
                                   fontWeight: 600
                                 }}
-                                title="This date is already covered by another entry."
+                              title="This date is already covered by another entry."
                               >
                                 <AlertTriangle size={11} color="#d97706" />
                                 <span>Duplicate Date</span>
@@ -1240,6 +1349,11 @@ export default function FactsManager() {
                                   {entry.subtitle || (entry.title !== 'This Day in Astronomy' ? entry.title : '')}
                                 </span>
                               ) : null
+                            )}
+                            {activeSubTab === 'terminology' && entry.subtitle && entry.subtitle.trim().toLowerCase() !== 'general' && (
+                              <span style={{ fontSize: '12px', fontWeight: 600, color: '#7c3aed', fontStyle: 'italic' }}>
+                                {entry.subtitle}
+                              </span>
                             )}
                           </div>
 
@@ -1438,12 +1552,12 @@ export default function FactsManager() {
 
                 <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748b' }}>
                   {editingId
-                    ? (activeSubTab === 'fact' ? 'Editing Fact' : 'Editing Astronomy Entry')
-                    : (activeSubTab === 'fact' ? 'Creating New Fact' : 'Creating New Astronomy Entry')}
+                    ? (activeSubTab === 'terminology' ? 'Editing Terminology' : activeSubTab === 'fact' ? 'Editing Fact' : 'Editing Astronomy Entry')
+                    : (activeSubTab === 'terminology' ? 'Creating New Terminology' : activeSubTab === 'fact' ? 'Creating New Fact' : 'Creating New Astronomy Entry')}
                 </span>
               </div>
 
-              {/* Title Field */}
+              {/* Title & Category Fields */}
               {activeSubTab === 'astronomy' ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1517,6 +1631,34 @@ export default function FactsManager() {
                     {isEditingTitle
                       ? 'Title unlocked: edit text and click "Done Editing" when finished.'
                       : 'Title is locked by default. Click "Edit Title" to modify it.'}
+                  </span>
+                </div>
+              ) : activeSubTab === 'terminology' ? (
+                /* Terminology Word / Concept Name */
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>
+                    Terminology / Word / Concept
+                  </label>
+                  <input
+                    type="text"
+                    value={formTitle}
+                    onChange={(e) => setFormTitle(e.target.value)}
+                    placeholder="e.g. Gravitational Lensing, Schwarzschild Radius, Perihelion, Event Horizon"
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                  <span style={{ fontSize: '11px', color: '#64748b' }}>
+                    The specific space term or concept highlighted on the daily card.
                   </span>
                 </div>
               ) : (
@@ -1807,7 +1949,9 @@ export default function FactsManager() {
                         {saving
                           ? 'Updating...'
                           : isEditingLive
-                          ? 'Update Live Fact'
+                          ? (activeSubTab === 'terminology' ? 'Update Live Terminology' : activeSubTab === 'fact' ? 'Update Live Fact' : 'Update Live Entry')
+                          : activeSubTab === 'terminology'
+                          ? 'Update Terminology'
                           : activeSubTab === 'fact'
                           ? 'Update Fact'
                           : 'Update Entry'}
@@ -1919,7 +2063,7 @@ export default function FactsManager() {
                       }}
                     >
                       <Layers size={15} />
-                      <span>{activeSubTab === 'fact' ? 'Save to Rotation Queue' : 'Save Entry'}</span>
+                      <span>{activeSubTab === 'astronomy' ? 'Save Entry' : 'Save to Rotation Queue'}</span>
                     </button>
                   </>
                 )}
@@ -1967,10 +2111,10 @@ export default function FactsManager() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <h2 style={{ margin: '0 0 6px', fontSize: '1.2rem', fontWeight: 600, color: '#0f172a' }}>
-                Live Homepage Dual-Card Preview
+                Live Homepage Triple-Card Preview
               </h2>
               <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
-                Accurate visual preview of how currently live facts appear on the homepage against the space background.
+                Accurate visual preview of how currently live astronomy milestones, space facts, and space terminologies appear on the homepage against the deep space backdrop.
               </p>
             </div>
           </div>
@@ -1987,12 +2131,12 @@ export default function FactsManager() {
           >
             <div
               style={{
-                maxWidth: '1000px',
+                maxWidth: '1200px',
                 margin: '0 auto',
                 display: 'grid',
-                gridTemplateColumns: '1fr auto 1.15fr',
-                gap: '36px',
-                alignItems: 'center'
+                gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                gap: '24px',
+                alignItems: 'stretch'
               }}
             >
               {/* Left Card: This Day in Astronomy */}
@@ -2000,7 +2144,8 @@ export default function FactsManager() {
                 style={{
                   position: 'relative',
                   marginLeft: '24px',
-                  boxSizing: 'border-box'
+                  boxSizing: 'border-box',
+                  display: 'flex'
                 }}
               >
                 <div
@@ -2008,13 +2153,16 @@ export default function FactsManager() {
                     position: 'relative',
                     border: '1.5px solid var(--brand-purple)',
                     borderRadius: '16px',
-                    padding: '34px 30px 32px 36px',
+                    padding: '30px 22px 28px 28px',
                     background: 'rgba(255, 255, 255, 0.015)',
                     boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(147, 51, 234, 0.2)',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    width: '100%',
+                    display: 'flex',
+                    flexDirection: 'column'
                   }}
                 >
-                  {/* Signature Floating Sidebar Tabs on the Left Border */}
+                  {/* Floating Left Pill */}
                   <div
                     style={{
                       position: 'absolute',
@@ -2029,7 +2177,6 @@ export default function FactsManager() {
                       pointerEvents: 'none'
                     }}
                   >
-                    {/* Date Pill Tab */}
                     <div
                       style={{
                         background: '#080711',
@@ -2050,12 +2197,10 @@ export default function FactsManager() {
                         whiteSpace: 'nowrap'
                       }}
                     >
-                      {currentLiveCosmic.astronomyDate}
+                      {currentLiveCosmic.astronomyDate || 'Calendar Date'}
                     </div>
 
-                    {/* Calendar Icon */}
                     <div
-                      title={currentLiveCosmic.astronomyDate}
                       style={{
                         width: '32px',
                         height: '32px',
@@ -2069,21 +2214,7 @@ export default function FactsManager() {
                         boxShadow: '0 4px 12px rgba(0,0,0,0.6)'
                       }}
                     >
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                        <line x1="16" y1="2" x2="16" y2="6" />
-                        <line x1="8" y1="2" x2="8" y2="6" />
-                        <line x1="3" y1="10" x2="21" y2="10" />
-                      </svg>
+                      <Calendar size={14} />
                     </div>
                   </div>
 
@@ -2091,13 +2222,13 @@ export default function FactsManager() {
                     style={{
                       margin: '0 0 8px',
                       fontFamily: "'Playfair Display', serif",
-                      fontSize: '1.55rem',
+                      fontSize: '1.38rem',
                       fontWeight: 700,
                       color: '#ffffff',
-                      lineHeight: 1.2
+                      lineHeight: 1.22
                     }}
                   >
-                    {currentLiveCosmic.astronomyTitle}
+                    {currentLiveCosmic.astronomyTitle || 'This Day in Astronomy'}
                   </h3>
 
                   {currentLiveCosmic.astronomySubtitle && currentLiveCosmic.astronomySubtitle.trim() && (
@@ -2105,7 +2236,7 @@ export default function FactsManager() {
                       style={{
                         margin: '0 0 10px',
                         fontFamily: "'Playfair Display', serif",
-                        fontSize: '1.1rem',
+                        fontSize: '1.05rem',
                         fontWeight: 600,
                         fontStyle: 'italic',
                         color: '#bd75ff',
@@ -2121,57 +2252,267 @@ export default function FactsManager() {
                     style={{
                       fontFamily: "'Lora', Georgia, 'Times New Roman', serif",
                       fontSynthesis: 'weight style',
-                      fontSize: '0.95rem',
-                      lineHeight: 1.68,
+                      fontSize: '0.93rem',
+                      lineHeight: 1.64,
                       color: '#cbd5e1',
-                      maxHeight: '145px',
+                      maxHeight: '175px',
                       overflowY: 'auto',
-                      paddingRight: '8px'
+                      paddingRight: '6px',
+                      flex: 1
                     }}
                     dangerouslySetInnerHTML={{ __html: currentLiveCosmic.astronomyContent }}
                   />
                 </div>
               </div>
 
-              {/* Flat Divider */}
+              {/* Middle Card: Space Fact of the Day */}
               <div
                 style={{
-                  width: '3px',
-                  height: '140px',
-                  backgroundColor: '#ffba00',
-                  borderRadius: '2px',
-                  flexShrink: 0
+                  position: 'relative',
+                  marginLeft: '24px',
+                  boxSizing: 'border-box',
+                  display: 'flex'
                 }}
-              />
-
-              {/* Right Module: Space Fact */}
-              <div>
-                <h3
+              >
+                <div
                   style={{
-                    margin: '0 0 14px',
-                    fontFamily: "'Playfair Display', serif",
-                    fontSize: '1.45rem',
-                    fontWeight: 700,
-                    letterSpacing: '1.5px',
-                    color: '#ffffff',
-                    textTransform: 'uppercase',
-                    lineHeight: 1.2
+                    position: 'relative',
+                    border: '1.5px solid var(--brand-purple)',
+                    borderRadius: '16px',
+                    padding: '30px 22px 28px 28px',
+                    background: 'rgba(255, 255, 255, 0.015)',
+                    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(147, 51, 234, 0.2)',
+                    boxSizing: 'border-box',
+                    width: '100%',
+                    display: 'flex',
+                    flexDirection: 'column'
                   }}
                 >
-                  {currentLiveCosmic.factTitle}
-                </h3>
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '22px',
+                      left: 0,
+                      transform: 'translateX(-50%)',
+                      zIndex: 5,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '10px',
+                      pointerEvents: 'none'
+                    }}
+                  >
+                    <div
+                      style={{
+                        background: '#4C0086',
+                        border: '1.5px solid var(--brand-purple)',
+                        borderRadius: '20px',
+                        padding: '14px 6px',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        writingMode: 'vertical-rl',
+                        transform: 'rotate(180deg)',
+                        color: '#ffffff',
+                        fontSize: '0.72rem',
+                        fontWeight: 400,
+                        letterSpacing: '1.2px',
+                        textTransform: 'uppercase',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      One Fact, Everyday
+                    </div>
 
+                    <div
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        background: '#080711',
+                        border: '1.5px solid var(--brand-purple)',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        color: '#ffffff',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.6)'
+                      }}
+                    >
+                      <Rocket size={14} />
+                    </div>
+                  </div>
+
+                  <h3
+                    style={{
+                      margin: '0 0 8px',
+                      fontFamily: "'Playfair Display', serif",
+                      fontSize: '1.38rem',
+                      fontWeight: 700,
+                      color: '#ffffff',
+                      lineHeight: 1.22
+                    }}
+                  >
+                    Space Fact of the Day
+                  </h3>
+
+                  {(currentLiveCosmic.factSubtitle || currentLiveCosmic.factTitle) && (
+                    <div
+                      style={{
+                        margin: '0 0 10px',
+                        fontFamily: "'Playfair Display', serif",
+                        fontSize: '1.05rem',
+                        fontWeight: 600,
+                        fontStyle: 'italic',
+                        color: '#bd75ff',
+                        lineHeight: 1.3
+                      }}
+                    >
+                      {currentLiveCosmic.factSubtitle || currentLiveCosmic.factTitle}
+                    </div>
+                  )}
+
+                  <div
+                    className="zw-cosmic-rich-content zw-cosmic-scrollable"
+                    style={{
+                      fontFamily: "'Lora', Georgia, 'Times New Roman', serif",
+                      fontSynthesis: 'weight style',
+                      fontSize: '0.93rem',
+                      lineHeight: 1.64,
+                      color: '#cbd5e1',
+                      maxHeight: '175px',
+                      overflowY: 'auto',
+                      paddingRight: '6px',
+                      flex: 1
+                    }}
+                    dangerouslySetInnerHTML={{ __html: currentLiveCosmic.factContent }}
+                  />
+                </div>
+              </div>
+
+              {/* Right Card: Space Terminologies */}
+              <div
+                style={{
+                  position: 'relative',
+                  marginLeft: '24px',
+                  boxSizing: 'border-box',
+                  display: 'flex'
+                }}
+              >
                 <div
-                  className="zw-cosmic-rich-content"
                   style={{
-                    fontFamily: "'Lora', Georgia, 'Times New Roman', serif",
-                    fontSynthesis: 'weight style',
-                    fontSize: '0.95rem',
-                    lineHeight: 1.68,
-                    color: '#cbd5e1'
+                    position: 'relative',
+                    border: '1.5px solid var(--brand-purple)',
+                    borderRadius: '16px',
+                    padding: '30px 22px 28px 28px',
+                    background: 'rgba(255, 255, 255, 0.015)',
+                    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(147, 51, 234, 0.2)',
+                    boxSizing: 'border-box',
+                    width: '100%',
+                    display: 'flex',
+                    flexDirection: 'column'
                   }}
-                  dangerouslySetInnerHTML={{ __html: currentLiveCosmic.factContent }}
-                />
+                >
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '22px',
+                      left: 0,
+                      transform: 'translateX(-50%)',
+                      zIndex: 5,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '10px',
+                      pointerEvents: 'none'
+                    }}
+                  >
+                    <div
+                      style={{
+                        background: '#4C0086',
+                        border: '1.5px solid var(--brand-purple)',
+                        borderRadius: '20px',
+                        padding: '14px 6px',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        writingMode: 'vertical-rl',
+                        transform: 'rotate(180deg)',
+                        color: '#ffffff',
+                        fontSize: '0.72rem',
+                        fontWeight: 400,
+                        letterSpacing: '1.2px',
+                        textTransform: 'uppercase',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      New Terminology, Everyday
+                    </div>
+
+                    <div
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        background: '#080711',
+                        border: '1.5px solid var(--brand-purple)',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        color: '#ffffff',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.6)'
+                      }}
+                    >
+                      <BookOpen size={14} />
+                    </div>
+                  </div>
+
+                  <h3
+                    style={{
+                      margin: '0 0 8px',
+                      fontFamily: "'Playfair Display', serif",
+                      fontSize: '1.38rem',
+                      fontWeight: 700,
+                      color: '#ffffff',
+                      lineHeight: 1.22
+                    }}
+                  >
+                    Space Terminologies
+                  </h3>
+
+                  {(currentLiveCosmic.terminologySubtitle || currentLiveCosmic.terminologyTitle) && (
+                    <div
+                      style={{
+                        margin: '0 0 10px',
+                        fontFamily: "'Playfair Display', serif",
+                        fontSize: '1.05rem',
+                        fontWeight: 600,
+                        fontStyle: 'italic',
+                        color: '#bd75ff',
+                        lineHeight: 1.3
+                      }}
+                    >
+                      {currentLiveCosmic.terminologySubtitle || currentLiveCosmic.terminologyTitle}
+                    </div>
+                  )}
+
+                  <div
+                    className="zw-cosmic-rich-content zw-cosmic-scrollable"
+                    style={{
+                      fontFamily: "'Lora', Georgia, 'Times New Roman', serif",
+                      fontSynthesis: 'weight style',
+                      fontSize: '0.93rem',
+                      lineHeight: 1.64,
+                      color: '#cbd5e1',
+                      maxHeight: '175px',
+                      overflowY: 'auto',
+                      paddingRight: '6px',
+                      flex: 1
+                    }}
+                    dangerouslySetInnerHTML={{ __html: currentLiveCosmic.terminologyContent || '<p>Loading live terminology...</p>' }}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -2183,23 +2524,24 @@ export default function FactsManager() {
         <FactsBulkUploadModal
           isOpen={isBulkUploadOpen}
           onClose={() => setIsBulkUploadOpen(false)}
-          entryType={activeSubTab === 'fact' ? 'fact' : 'astronomy'}
+          entryType={activeSubTab as CosmicEntryType}
           existingEntries={entries}
           onBatchSave={saveCosmicEntriesBatch}
           onSuccess={async (count, updatedCount, insertedCount) => {
+            const itemWord = activeSubTab === 'terminology' ? 'terminologies' : activeSubTab === 'astronomy' ? 'dates' : 'facts';
             if (updatedCount && insertedCount) {
-              showNotification(`Bulk upload complete: ${updatedCount} existing dates updated, ${insertedCount} new dates added!`);
+              showNotification(`Bulk upload complete: ${updatedCount} existing ${itemWord} updated, ${insertedCount} new ${itemWord} added!`);
             } else if (updatedCount) {
-              showNotification(`Bulk upload complete: ${updatedCount} existing dates updated!`);
+              showNotification(`Bulk upload complete: ${updatedCount} existing ${itemWord} updated!`);
             } else {
-              showNotification(`Successfully imported ${count} facts in bulk!`);
+              showNotification(`Successfully imported ${count} ${itemWord} in bulk!`);
             }
             await loadAllData();
           }}
         />
       )}
 
-      {/* Batch Assign Topic Modal */}
+      {/* Batch Assign Topic / Category Modal */}
       {isAssignTopicOpen && (
         <div
           style={{
@@ -2234,7 +2576,7 @@ export default function FactsManager() {
                 Assign Topic to {selectedIds.size} Selected Facts
               </h3>
               <p style={{ margin: 0, fontSize: '13px', color: '#64748b', lineHeight: 1.5 }}>
-                Categorize selected facts into any topic below. This topic will display as the subtitle on the homepage.
+                Categorize selected facts into any topic below. This will display as the subtitle on the homepage.
               </p>
             </div>
 
@@ -2297,7 +2639,7 @@ export default function FactsManager() {
                     type="text"
                     value={bulkCustomTopic}
                     onChange={e => setBulkCustomTopic(e.target.value)}
-                    placeholder="Enter custom topic title..."
+                    placeholder={`Enter custom ${activeSubTab === 'terminology' ? 'category' : 'topic'}...`}
                     autoFocus
                     style={{
                       width: '100%',
@@ -2349,7 +2691,7 @@ export default function FactsManager() {
                   boxShadow: '0 2px 8px rgba(124, 58, 237, 0.35)'
                 }}
               >
-                {bulkUpdatingTopic ? 'Updating...' : `Apply Topic to ${selectedIds.size} Facts`}
+                {bulkUpdatingTopic ? 'Updating...' : `Apply to ${selectedIds.size} Items`}
               </button>
             </div>
           </div>

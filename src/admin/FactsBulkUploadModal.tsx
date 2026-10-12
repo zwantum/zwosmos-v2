@@ -72,9 +72,14 @@ export default function FactsBulkUploadModal({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const isAstronomy = entryType === 'astronomy';
-  const moduleLabel = isAstronomy ? 'This Day in Astronomy' : 'Space Fact of the Day';
+  const isTerminology = entryType === 'terminology';
+  const moduleLabel = isAstronomy
+    ? 'This Day in Astronomy'
+    : isTerminology
+    ? 'Space Terminologies'
+    : 'Space Fact of the Day';
 
-  // Map existing entries: by calendar date for astronomy, by clean content for facts
+  // Map existing entries: by calendar date for astronomy, by clean content for facts, by term for terminology
   const existingMatchesMap = useMemo(() => {
     const map = new Map<string, CosmicEntry>();
     for (const e of existingEntries) {
@@ -87,6 +92,11 @@ export default function FactsBulkUploadModal({
             map.set(key, e);
           }
         }
+      } else if (isTerminology) {
+        const cleanTerm = (e.title || '').toLowerCase().trim();
+        if (cleanTerm && (!map.has(cleanTerm) || e.status === 'live')) {
+          map.set(cleanTerm, e);
+        }
       } else {
         const cleanContent = e.content.replace(/<[^>]*>?/gm, '').toLowerCase().replace(/\s+/g, ' ').trim().slice(0, 80);
         if (cleanContent && (!map.has(cleanContent) || e.status === 'live')) {
@@ -95,7 +105,7 @@ export default function FactsBulkUploadModal({
       }
     }
     return map;
-  }, [existingEntries, entryType, isAstronomy]);
+  }, [existingEntries, entryType, isAstronomy, isTerminology]);
 
   // Identify how many valid rows in the uploaded file match an existing entry
   const { matchingCount, newCount } = useMemo(() => {
@@ -112,6 +122,10 @@ export default function FactsBulkUploadModal({
         } else {
           newItems++;
         }
+      } else if (isTerminology) {
+        const cleanTerm = (row.title || '').toLowerCase().trim();
+        if (cleanTerm && existingMatchesMap.has(cleanTerm)) matching++;
+        else newItems++;
       } else {
         const cleanContent = row.content.replace(/<[^>]*>?/gm, '').toLowerCase().replace(/\s+/g, ' ').trim().slice(0, 80);
         if (cleanContent && existingMatchesMap.has(cleanContent)) matching++;
@@ -119,7 +133,7 @@ export default function FactsBulkUploadModal({
       }
     }
     return { matchingCount: matching, newCount: newItems };
-  }, [parsedRows, existingMatchesMap, isAstronomy]);
+  }, [parsedRows, existingMatchesMap, isAstronomy, isTerminology]);
 
   // Reset when opened
   React.useEffect(() => {
@@ -278,16 +292,16 @@ export default function FactsBulkUploadModal({
 
           if (/^(date|astronomy_?date|milestone_?date|calendar_?date|day)/i.test(cleanKey)) {
             dateVal = value;
-          } else if (/^(content|text|fact_?body|fact_?content|description|story|body|paragraph|detail|details)/i.test(cleanKey)) {
+          } else if (/^(content|text|fact_?body|fact_?content|description|story|body|paragraph|detail|details|definition|meaning|explanation)/i.test(cleanKey)) {
             contentVal = strVal;
-          } else if (/^(title|topic|topics|category|categories|theme|themes|heading|headline|subject|subjects|name|type|fact_?title|fact_?topic|topic_?name|category_?name|tag|tags)/i.test(cleanKey)) {
+          } else if (/^(title|topic|topics|category|categories|theme|themes|heading|headline|subject|subjects|name|type|fact_?title|fact_?topic|topic_?name|category_?name|tag|tags|term|terms|word|words|terminology|terminologies)/i.test(cleanKey)) {
             titleVal = strVal;
-          } else if (/^(subtitle|event_?heading|sub_?title|event_?title|event)/i.test(cleanKey)) {
+          } else if (/^(subtitle|event_?heading|sub_?title|event_?title|event|subtopic|sub_?topic)/i.test(cleanKey)) {
             subtitleVal = strVal;
           }
         }
 
-        // Smart column fallback for Space Facts (2-column files):
+        // Smart column fallback for Space Facts and Terminologies (2-column files):
         // Automatically maps the 2 columns if headers differ from standard names
         if (!isAstronomy) {
           const nonDateCols = rowEntries.filter(([k, v]) => !/^(date|day)/i.test(k.trim()) && String(v ?? '').trim() !== '');
@@ -295,7 +309,7 @@ export default function FactsBulkUploadModal({
             if (nonDateCols.length === 2) {
               const val0 = String(nonDateCols[0][1] ?? '').trim();
               const val1 = String(nonDateCols[1][1] ?? '').trim();
-              // Whichever column has longer text is content; the other is title/topic
+              // Whichever column has longer text is content/definition; the other is title/term
               if (val0.length > val1.length) {
                 if (!contentVal) contentVal = val0;
                 if (!titleVal) titleVal = val1;
@@ -327,7 +341,7 @@ export default function FactsBulkUploadModal({
 
         // Content
         if (!contentVal) {
-          errors.push('Missing fact content');
+          errors.push(isTerminology ? 'Missing definition/explanation' : 'Missing fact content');
         }
 
         // Title & Subtitle Mapping
@@ -344,6 +358,10 @@ export default function FactsBulkUploadModal({
           } else if (subtitleVal) {
             finalSubtitle = subtitleVal;
           }
+        } else if (isTerminology) {
+          // For Space Terminology: Use the Term as title, Category as subtitle (empty if none provided)
+          finalTitle = titleVal || subtitleVal || 'New Term';
+          finalSubtitle = subtitleVal ? subtitleVal : '';
         } else {
           // For Space Fact: Use the exact title/topic from this individual row!
           finalTitle = titleVal || subtitleVal || 'Space Fact';
@@ -435,6 +453,29 @@ export default function FactsBulkUploadModal({
           Content: 'Cosmonaut Valery Polyakov completed a historic mission demonstrating long-duration human spaceflight resilience.'
         }
       ];
+    } else if (isTerminology) {
+      sampleData = [
+        {
+          Term: 'Gravitational Lensing',
+          Category: 'Astrophysics & Relativity',
+          Definition: 'Gravitational lensing occurs when a massive celestial object — such as a galaxy cluster or supermassive black hole — warps the fabric of spacetime, bending and magnifying the light of distant background galaxies like a cosmic telescope.'
+        },
+        {
+          Term: 'Event Horizon',
+          Category: 'Black Holes',
+          Definition: 'The boundary defining the region of space around a black hole beyond which nothing, not even light, can escape the gravitational pull.'
+        },
+        {
+          Term: 'Cosmic Microwave Background',
+          Category: 'Cosmology',
+          Definition: 'The faint cosmic background radiation leftover from the Big Bang that uniformly permeates all observable space, providing a snapshot of the universe 380,000 years after its birth.'
+        },
+        {
+          Term: 'Spaghettification',
+          Category: 'Black Holes & Singularities',
+          Definition: 'The vertical stretching and horizontal compression of an object into long thin shapes in a very strong non-homogeneous gravitational field.'
+        }
+      ];
     } else {
       sampleData = [
         {
@@ -469,16 +510,28 @@ export default function FactsBulkUploadModal({
         { wch: 34 }, // Title
         { wch: 80 }  // Content
       ]
+      : isTerminology
+      ? [
+        { wch: 28 }, // Term
+        { wch: 28 }, // Category
+        { wch: 90 }  // Definition
+      ]
       : [
         { wch: 30 }, // Title (Topic)
         { wch: 85 }  // Content
       ];
 
-    const sheetName = isAstronomy ? 'Astronomy_Milestones' : 'Space_Facts';
+    const sheetName = isAstronomy
+      ? 'Astronomy_Milestones'
+      : isTerminology
+      ? 'Space_Terminologies'
+      : 'Space_Facts';
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
 
     const filename = isAstronomy
       ? 'Zwosmos_This_Day_in_Astronomy_Template.xlsx'
+      : isTerminology
+      ? 'Zwosmos_Space_Terminologies_Template.xlsx'
       : 'Zwosmos_Space_Fact_of_the_Day_Template.xlsx';
 
     XLSX.writeFile(wb, filename);

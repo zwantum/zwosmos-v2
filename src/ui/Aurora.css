@@ -1,13 +1,1 @@
-.aurora-container {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  position: relative;
-}
-
-.aurora-container canvas {
-  display: block;
-  width: 100% !important;
-  height: 100% !important;
-  pointer-events: none;
-}
+@import '../components/common/Aurora.css';

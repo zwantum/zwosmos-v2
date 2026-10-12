@@ -237,6 +237,18 @@ export const PostList: React.FC<PostListProps> = ({
     }
   };
 
+  const handlePreviewPost = (p: Post) => {
+    const targetSlug = p.slug || p.id;
+    try {
+      localStorage.setItem(`zw_preview_${targetSlug}`, JSON.stringify(p));
+      localStorage.setItem(`zw_preview_${p.id}`, JSON.stringify(p));
+      localStorage.setItem('zw_preview_latest', JSON.stringify(p));
+      sessionStorage.setItem(`zw_post_${targetSlug}`, JSON.stringify(p));
+      sessionStorage.setItem(`zw_post_${p.id}`, JSON.stringify(p));
+    } catch {}
+    window.open(`/blog/${targetSlug}?preview=true`, '_blank');
+  };
+
   const handleResetFilters = () => {
     setSearchQuery('');
     setSelectedCategory('');
@@ -1198,6 +1210,33 @@ export const PostList: React.FC<PostListProps> = ({
                             </>
                           ) : (
                             <>
+                              {/* Preview Button */}
+                              <button
+                                type="button"
+                                onClick={() => handlePreviewPost(post)}
+                                title="Preview article appearance"
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '5px',
+                                  padding: '5px 10px',
+                                  borderRadius: '6px',
+                                  background: '#ffffff',
+                                  border: '1px solid #e2e8f0',
+                                  color: '#334155',
+                                  fontSize: '11.5px',
+                                  fontWeight: 500,
+                                  cursor: 'pointer',
+                                  transition: 'all 0.1s ease',
+                                }}
+                              >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M2 12s3-7 10-7 7 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                  <circle cx="12" cy="12" r="3" />
+                                </svg>
+                                <span>Preview</span>
+                              </button>
+
                               {/* Edit Button */}
                               {onNavigateToEditPost && (
                                 <button

@@ -9,9 +9,15 @@ import {
   Settings as SettingsIcon,
   LogOut,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ChevronDown,
+  FolderTree,
+  Users,
+  Image as ImageIcon,
+  SlidersHorizontal,
 } from 'lucide-react';
 import BlogsManager from './BlogsManager';
+import { BlogAdminView } from './blog-admin/index';
 import FactsManager from './FactsManager';
 import BooksManager from './BooksManager';
 import SettingsManager from './SettingsManager';
@@ -20,6 +26,26 @@ import './Admin.css';
 
 type AdminTab = 'blogs' | 'facts' | 'books' | 'settings';
 const VALID_TABS: AdminTab[] = ['blogs', 'facts', 'books', 'settings'];
+
+type BlogSubView = 'overview' | 'posts' | 'categories' | 'authors' | 'media' | 'settings';
+const VALID_BLOG_VIEWS: BlogSubView[] = ['overview', 'posts', 'categories', 'authors', 'media', 'settings'];
+
+import type { LucideIcon } from 'lucide-react';
+
+interface BlogSubItemConfig {
+  key: BlogSubView;
+  label: string;
+  icon: LucideIcon;
+}
+
+const blogSubItems: BlogSubItemConfig[] = [
+  { key: 'overview', label: 'Overview', icon: LayoutDashboard },
+  { key: 'posts', label: 'Posts', icon: FileText },
+  { key: 'categories', label: 'Categories', icon: FolderTree },
+  { key: 'authors', label: 'Authors', icon: Users },
+  { key: 'media', label: 'Media', icon: ImageIcon },
+  { key: 'settings', label: 'Settings', icon: SlidersHorizontal },
+];
 
 export default function AdminDashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -60,7 +86,40 @@ export default function AdminDashboard() {
     return 'blogs';
   };
 
+  const getInitialBlogView = (): BlogSubView => {
+    const urlView = searchParams.get('view') as BlogSubView;
+    if (urlView && VALID_BLOG_VIEWS.includes(urlView)) {
+      return urlView;
+    }
+    try {
+      const stored = localStorage.getItem('zwosmos_admin_blog_view') as BlogSubView;
+      if (stored && VALID_BLOG_VIEWS.includes(stored)) {
+        return stored;
+      }
+    } catch {}
+    return 'posts';
+  };
+
   const [activeTab, setActiveTabState] = useState<AdminTab>(getInitialTab);
+  const [activeBlogView, setActiveBlogViewState] = useState<BlogSubView>(getInitialBlogView);
+  const [isBlogsExpanded, setIsBlogsExpanded] = useState<boolean>(() => {
+    try {
+      const stored = localStorage.getItem('zwosmos_admin_blogs_expanded');
+      return stored !== null ? stored === 'true' : true;
+    } catch {
+      return true;
+    }
+  });
+
+  const toggleBlogsExpanded = () => {
+    setIsBlogsExpanded((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('zwosmos_admin_blogs_expanded', String(next));
+      } catch {}
+      return next;
+    });
+  };
 
   const handleTabChange = (tab: AdminTab) => {
     setActiveTabState(tab);
@@ -71,15 +130,60 @@ export default function AdminDashboard() {
       (prev) => {
         const next = new URLSearchParams(prev);
         next.set('tab', tab);
+        if (tab === 'blogs') {
+          next.set('view', activeBlogView);
+        } else {
+          next.delete('view');
+        }
         return next;
       },
       { replace: true }
     );
   };
 
+  const handleBlogSubViewClick = (view: BlogSubView) => {
+    setActiveTabState('blogs');
+    setActiveBlogViewState(view);
+    setIsBlogsExpanded(true);
+    try {
+      localStorage.setItem('zwosmos_admin_tab', 'blogs');
+      localStorage.setItem('zwosmos_admin_blog_view', view);
+      localStorage.setItem('zwosmos_admin_blogs_expanded', 'true');
+    } catch {}
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set('tab', 'blogs');
+        next.set('view', view);
+        return next;
+      },
+      { replace: true }
+    );
+  };
+
+  const handleBlogViewFromInside = (v: BlogAdminView) => {
+    if (VALID_BLOG_VIEWS.includes(v as BlogSubView)) {
+      setActiveBlogViewState(v as BlogSubView);
+      try {
+        localStorage.setItem('zwosmos_admin_blog_view', v);
+      } catch {}
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set('tab', 'blogs');
+          next.set('view', v);
+          return next;
+        },
+        { replace: true }
+      );
+    }
+  };
+
   // Keep URL search params and tab state synchronized
   useEffect(() => {
     const urlTab = searchParams.get('tab') as AdminTab;
+    const urlView = searchParams.get('view') as BlogAdminView;
+
     if (urlTab && VALID_TABS.includes(urlTab)) {
       if (urlTab !== activeTab) {
         setActiveTabState(urlTab);
@@ -87,15 +191,15 @@ export default function AdminDashboard() {
           localStorage.setItem('zwosmos_admin_tab', urlTab);
         } catch {}
       }
-    } else {
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev);
-          next.set('tab', activeTab);
-          return next;
-        },
-        { replace: true }
-      );
+    }
+
+    if (urlTab === 'blogs' && urlView && VALID_BLOG_VIEWS.includes(urlView as BlogSubView)) {
+      if (urlView !== activeBlogView) {
+        setActiveBlogViewState(urlView as BlogSubView);
+        try {
+          localStorage.setItem('zwosmos_admin_blog_view', urlView);
+        } catch {}
+      }
     }
   }, [searchParams]);
 
@@ -104,13 +208,6 @@ export default function AdminDashboard() {
       await supabase.auth.signOut();
     }
   };
-
-  const navItems = [
-    { key: 'blogs' as AdminTab, label: 'Blogs', icon: FileText },
-    { key: 'facts' as AdminTab, label: 'Facts', icon: Database },
-    { key: 'books' as AdminTab, label: 'Books', icon: BookOpen },
-    { key: 'settings' as AdminTab, label: 'Settings', icon: SettingsIcon },
-  ];
 
   return (
     <div
@@ -261,54 +358,283 @@ export default function AdminDashboard() {
         )}
 
         {/* Navigation Items */}
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1, alignItems: isCollapsed ? 'center' : 'stretch' }}>
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.key;
-            return (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() => handleTabChange(item.key)}
-                title={item.label}
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: '5px', flex: 1, alignItems: isCollapsed ? 'center' : 'stretch' }}>
+          {/* 1. BLOGS with nested accordion */}
+          <div style={{ width: isCollapsed ? 'auto' : '100%' }}>
+            <button
+              type="button"
+              onClick={() => {
+                if (isCollapsed) {
+                  toggleSidebar();
+                  handleTabChange('blogs');
+                  setIsBlogsExpanded(true);
+                } else {
+                  if (activeTab !== 'blogs') {
+                    handleTabChange('blogs');
+                    setIsBlogsExpanded(true);
+                  } else {
+                    toggleBlogsExpanded();
+                  }
+                }
+              }}
+              title="Blogs"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: isCollapsed ? 'center' : 'space-between',
+                gap: isCollapsed ? '0px' : '12px',
+                padding: isCollapsed ? '10px 0' : '10px 14px',
+                width: isCollapsed ? '46px' : '100%',
+                height: isCollapsed ? '46px' : 'auto',
+                background:
+                  activeTab === 'blogs' && (!isBlogsExpanded || isCollapsed)
+                    ? '#ffcc00'
+                    : activeTab === 'blogs'
+                    ? '#f1f5f9'
+                    : 'transparent',
+                color: activeTab === 'blogs' ? '#0f172a' : '#64748b',
+                border: 'none',
+                borderRadius: '10px',
+                cursor: 'pointer',
+                textAlign: 'left',
+                fontSize: '14px',
+                fontWeight: activeTab === 'blogs' ? 600 : 500,
+                boxShadow:
+                  activeTab === 'blogs' && (!isBlogsExpanded || isCollapsed)
+                    ? '0 2px 8px rgba(255, 204, 0, 0.35)'
+                    : 'none',
+                transition: 'all 0.15s ease',
+                boxSizing: 'border-box',
+              }}
+              onMouseEnter={(e) => {
+                if (activeTab !== 'blogs' || (isBlogsExpanded && !isCollapsed)) {
+                  e.currentTarget.style.background = '#f8fafc';
+                  e.currentTarget.style.color = '#0f172a';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeTab !== 'blogs') {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.color = '#64748b';
+                } else if (isBlogsExpanded && !isCollapsed) {
+                  e.currentTarget.style.background = '#f1f5f9';
+                  e.currentTarget.style.color = '#0f172a';
+                }
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: isCollapsed ? '0px' : '12px' }}>
+                <FileText size={20} strokeWidth={2} />
+                {!isCollapsed && <span>Blogs</span>}
+              </div>
+
+              {!isCollapsed && (
+                <span
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    color: activeTab === 'blogs' ? '#0f172a' : '#94a3b8',
+                  }}
+                >
+                  {isBlogsExpanded ? <ChevronDown size={16} strokeWidth={2.2} /> : <ChevronRight size={16} strokeWidth={2.2} />}
+                </span>
+              )}
+            </button>
+
+            {/* Sub-items under Blogs */}
+            {!isCollapsed && isBlogsExpanded && (
+              <div
                 style={{
                   display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: isCollapsed ? 'center' : 'flex-start',
-                  gap: isCollapsed ? '0px' : '12px',
-                  padding: isCollapsed ? '10px 0' : '10px 14px',
-                  width: isCollapsed ? '46px' : '100%',
-                  height: isCollapsed ? '46px' : 'auto',
-                  background: isActive ? '#ffcc00' : 'transparent',
-                  color: isActive ? '#0f172a' : '#64748b',
-                  border: 'none',
-                  borderRadius: '10px',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  fontSize: '14px',
-                  fontWeight: isActive ? 600 : 500,
-                  boxShadow: isActive ? '0 2px 8px rgba(255, 204, 0, 0.35)' : 'none',
-                  transition: 'all 0.15s ease',
-                  boxSizing: 'border-box'
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.background = '#f8fafc';
-                    e.currentTarget.style.color = '#0f172a';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.color = '#64748b';
-                  }
+                  flexDirection: 'column',
+                  gap: '3px',
+                  paddingLeft: '12px',
+                  marginLeft: '14px',
+                  marginTop: '4px',
+                  marginBottom: '6px',
+                  borderLeft: '2px solid #e2e8f0',
                 }}
               >
-                <Icon size={20} />
-                {!isCollapsed && <span>{item.label}</span>}
-              </button>
-            );
-          })}
+                {blogSubItems.map((sub) => {
+                  const SubIcon = sub.icon;
+                  const isSubActive =
+                    activeTab === 'blogs' &&
+                    (activeBlogView === sub.key ||
+                      (sub.key === 'posts' &&
+                        (activeBlogView === 'posts' ||
+                          (activeBlogView as string) === 'new-post' ||
+                          (activeBlogView as string) === 'edit-post')));
+
+                  return (
+                    <button
+                      key={sub.key}
+                      type="button"
+                      onClick={() => handleBlogSubViewClick(sub.key)}
+                      title={sub.label}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '8px 12px',
+                        width: '100%',
+                        background: isSubActive ? '#ffcc00' : 'transparent',
+                        color: isSubActive ? '#0f172a' : '#64748b',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        fontSize: '13px',
+                        fontWeight: isSubActive ? 600 : 500,
+                        boxShadow: isSubActive ? '0 2px 6px rgba(255, 204, 0, 0.3)' : 'none',
+                        transition: 'all 0.15s ease',
+                        boxSizing: 'border-box',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isSubActive) {
+                          e.currentTarget.style.background = '#f8fafc';
+                          e.currentTarget.style.color = '#0f172a';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isSubActive) {
+                          e.currentTarget.style.background = 'transparent';
+                          e.currentTarget.style.color = '#64748b';
+                        }
+                      }}
+                    >
+                      <SubIcon size={16} strokeWidth={isSubActive ? 2.2 : 1.9} />
+                      <span>{sub.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* 2. FACTS */}
+          <button
+            type="button"
+            onClick={() => handleTabChange('facts')}
+            title="Facts"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: isCollapsed ? 'center' : 'flex-start',
+              gap: isCollapsed ? '0px' : '12px',
+              padding: isCollapsed ? '10px 0' : '10px 14px',
+              width: isCollapsed ? '46px' : '100%',
+              height: isCollapsed ? '46px' : 'auto',
+              background: activeTab === 'facts' ? '#ffcc00' : 'transparent',
+              color: activeTab === 'facts' ? '#0f172a' : '#64748b',
+              border: 'none',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              textAlign: 'left',
+              fontSize: '14px',
+              fontWeight: activeTab === 'facts' ? 600 : 500,
+              boxShadow: activeTab === 'facts' ? '0 2px 8px rgba(255, 204, 0, 0.35)' : 'none',
+              transition: 'all 0.15s ease',
+              boxSizing: 'border-box',
+            }}
+            onMouseEnter={(e) => {
+              if (activeTab !== 'facts') {
+                e.currentTarget.style.background = '#f8fafc';
+                e.currentTarget.style.color = '#0f172a';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (activeTab !== 'facts') {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = '#64748b';
+              }
+            }}
+          >
+            <Database size={20} strokeWidth={2} />
+            {!isCollapsed && <span>Facts</span>}
+          </button>
+
+          {/* 3. BOOKS */}
+          <button
+            type="button"
+            onClick={() => handleTabChange('books')}
+            title="Books"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: isCollapsed ? 'center' : 'flex-start',
+              gap: isCollapsed ? '0px' : '12px',
+              padding: isCollapsed ? '10px 0' : '10px 14px',
+              width: isCollapsed ? '46px' : '100%',
+              height: isCollapsed ? '46px' : 'auto',
+              background: activeTab === 'books' ? '#ffcc00' : 'transparent',
+              color: activeTab === 'books' ? '#0f172a' : '#64748b',
+              border: 'none',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              textAlign: 'left',
+              fontSize: '14px',
+              fontWeight: activeTab === 'books' ? 600 : 500,
+              boxShadow: activeTab === 'books' ? '0 2px 8px rgba(255, 204, 0, 0.35)' : 'none',
+              transition: 'all 0.15s ease',
+              boxSizing: 'border-box',
+            }}
+            onMouseEnter={(e) => {
+              if (activeTab !== 'books') {
+                e.currentTarget.style.background = '#f8fafc';
+                e.currentTarget.style.color = '#0f172a';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (activeTab !== 'books') {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = '#64748b';
+              }
+            }}
+          >
+            <BookOpen size={20} strokeWidth={2} />
+            {!isCollapsed && <span>Books</span>}
+          </button>
+
+          {/* 4. SETTINGS */}
+          <button
+            type="button"
+            onClick={() => handleTabChange('settings')}
+            title="Settings"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: isCollapsed ? 'center' : 'flex-start',
+              gap: isCollapsed ? '0px' : '12px',
+              padding: isCollapsed ? '10px 0' : '10px 14px',
+              width: isCollapsed ? '46px' : '100%',
+              height: isCollapsed ? '46px' : 'auto',
+              background: activeTab === 'settings' ? '#ffcc00' : 'transparent',
+              color: activeTab === 'settings' ? '#0f172a' : '#64748b',
+              border: 'none',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              textAlign: 'left',
+              fontSize: '14px',
+              fontWeight: activeTab === 'settings' ? 600 : 500,
+              boxShadow: activeTab === 'settings' ? '0 2px 8px rgba(255, 204, 0, 0.35)' : 'none',
+              transition: 'all 0.15s ease',
+              boxSizing: 'border-box',
+            }}
+            onMouseEnter={(e) => {
+              if (activeTab !== 'settings') {
+                e.currentTarget.style.background = '#f8fafc';
+                e.currentTarget.style.color = '#0f172a';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (activeTab !== 'settings') {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = '#64748b';
+              }
+            }}
+          >
+            <SettingsIcon size={20} strokeWidth={2} />
+            {!isCollapsed && <span>Settings</span>}
+          </button>
         </nav>
 
         {/* Logout Button */}
@@ -374,7 +700,12 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {activeTab === 'blogs' && <BlogsManager />}
+        {activeTab === 'blogs' && (
+          <BlogsManager
+            view={activeBlogView}
+            onViewChange={handleBlogViewFromInside}
+          />
+        )}
         {activeTab === 'books' && <BooksManager />}
         {activeTab === 'settings' && <SettingsManager />}
       </main>

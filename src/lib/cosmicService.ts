@@ -8,11 +8,15 @@ export interface DailyCosmicData {
   astronomyContent: string;
   factTitle: string;
   factSubtitle?: string;
+  factDate?: string;
   factContent: string;
+  terminologyTitle?: string;
+  terminologySubtitle?: string;
+  terminologyContent?: string;
   updatedAt?: string;
 }
 
-export type CosmicEntryType = 'astronomy' | 'fact';
+export type CosmicEntryType = 'astronomy' | 'fact' | 'terminology';
 export type CosmicEntryStatus = 'live' | 'draft' | 'archived';
 
 export interface CosmicEntry {
@@ -22,7 +26,7 @@ export interface CosmicEntry {
   subtitle?: string;
   /** Milestone date (e.g. "September 6, 2014").
    *  For 'astronomy' type, used for calendar date matching at midnight IST.
-   *  NOT required or used for 'fact' type.
+   *  NOT required or used for 'fact' or 'terminology' type.
    */
   astronomyDate?: string;
   content: string;
@@ -46,6 +50,19 @@ export const FACT_TOPIC_PRESETS: string[] = [
   'Cosmic Physics & The Quantum Void'
 ];
 
+export const TERMINOLOGY_TOPIC_PRESETS: string[] = [
+  'Astrophysics & Relativity',
+  'Cosmology & The Big Bang',
+  'Black Holes & Singularities',
+  'Stellar Evolution',
+  'Planetary Science',
+  'Deep Space & Galaxies',
+  'Space Exploration & Technology',
+  'Telescopes & Observatories',
+  'Orbital Mechanics',
+  'Quantum Astronomy'
+];
+
 export const DEFAULT_COSMIC_DATA: DailyCosmicData = {
   id: 'current',
   astronomyTitle: 'This Day in Astronomy',
@@ -54,7 +71,10 @@ export const DEFAULT_COSMIC_DATA: DailyCosmicData = {
   astronomyContent: "<p>On 1 January 1801, Giuseppe Piazzi noticed a faint object while mapping stars at Palermo Observatory in Sicily. Its changing position revealed that it belonged to our Solar System. The object was Ceres, the first body discovered in the region now called the asteroid belt. Initially regarded as a planet, it was later classified as an asteroid and, in 2006, a dwarf planet. More than two centuries after Piazzi's observation, NASA's Dawn spacecraft entered orbit around Ceres, turning a wandering point of light into a richly detailed world of craters, mountains and bright deposits.</p>",
   factTitle: '',
   factSubtitle: '',
-  factContent: ''
+  factContent: '',
+  terminologyTitle: 'Space Terminologies',
+  terminologySubtitle: 'Gravitational Lensing',
+  terminologyContent: '<p>Gravitational lensing occurs when a massive celestial object — such as a galaxy cluster or supermassive black hole — warps the fabric of spacetime, bending and magnifying the light of distant background galaxies like a cosmic telescope.</p>'
 };
 
 const LOCAL_STORAGE_KEY = 'zwosmos_daily_cosmic';
@@ -98,6 +118,17 @@ const DEFAULT_ENTRIES: CosmicEntry[] = [
     subtitle: DEFAULT_COSMIC_DATA.astronomySubtitle,
     astronomyDate: DEFAULT_COSMIC_DATA.astronomyDate,
     content: DEFAULT_COSMIC_DATA.astronomyContent,
+    scheduledAt: null,
+    status: 'live',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'default-terminology-1',
+    type: 'terminology',
+    title: 'Gravitational Lensing',
+    subtitle: 'Astrophysics & Relativity',
+    content: '<p>Gravitational lensing occurs when a massive celestial object — such as a galaxy cluster or supermassive black hole — warps the fabric of spacetime, bending and magnifying the light of distant background galaxies like a cosmic telescope.</p>',
     scheduledAt: null,
     status: 'live',
     createdAt: new Date().toISOString(),
@@ -320,6 +351,58 @@ export function getFactSequenceForCycle(
   return result;
 }
 
+const LOCAL_STORAGE_PAST_FACTS_KEY = 'zwosmos_past_fact_ids';
+const LOCAL_STORAGE_PAST_TERMS_KEY = 'zwosmos_past_terminology_ids';
+
+/**
+ * Returns set of entry IDs that have actually appeared in the past on the frontend
+ * in the current rotation cycle.
+ */
+export function getPastCosmicEntryIds(type: 'fact' | 'terminology', entries?: CosmicEntry[]): Set<string> {
+  const set = new Set<string>();
+  if (typeof window !== 'undefined') {
+    try {
+      const key = type === 'terminology' ? LOCAL_STORAGE_PAST_TERMS_KEY : LOCAL_STORAGE_PAST_FACTS_KEY;
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) {
+          arr.forEach((id: string) => set.add(id));
+        }
+      }
+    } catch {}
+  }
+  if (entries) {
+    entries.forEach(e => {
+      if (e.type === type && e.status === 'archived') {
+        set.add(e.id);
+      }
+    });
+  }
+  return set;
+}
+
+export function recordPastCosmicEntryId(type: 'fact' | 'terminology', id: string): void {
+  if (!id || typeof window === 'undefined') return;
+  try {
+    const key = type === 'terminology' ? LOCAL_STORAGE_PAST_TERMS_KEY : LOCAL_STORAGE_PAST_FACTS_KEY;
+    const raw = localStorage.getItem(key);
+    const arr: string[] = raw ? JSON.parse(raw) : [];
+    if (!arr.includes(id)) {
+      arr.push(id);
+      localStorage.setItem(key, JSON.stringify(arr));
+    }
+  } catch {}
+}
+
+export function resetPastCosmicEntryIds(type: 'fact' | 'terminology'): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const key = type === 'terminology' ? LOCAL_STORAGE_PAST_TERMS_KEY : LOCAL_STORAGE_PAST_FACTS_KEY;
+    localStorage.removeItem(key);
+  } catch {}
+}
+
 /**
  * Returns today's scheduled fact entry based on midnight IST rollover
  * and the non-repeating, non-consecutive shuffle sequence.
@@ -336,19 +419,70 @@ export function getScheduledFactForToday(entries: CosmicEntry[]): {
     return { entry: null, dayIndex: 0, cycleNumber: 0, totalFacts: 0, sequence: [] };
   }
 
-  const daysSinceEpoch = getDaysSinceEpochIST('2026-01-01');
-  const totalFacts = factEntries.length;
-  const cycleNumber = Math.floor(daysSinceEpoch / totalFacts);
-  const dayInCycle = daysSinceEpoch % totalFacts;
+  const pastIds = getPastCosmicEntryIds('fact', factEntries);
+  // If all fact entries have already been shown, reset cycle for next shuffle!
+  if (pastIds.size >= factEntries.length && factEntries.length > 0) {
+    resetPastCosmicEntryIds('fact');
+    pastIds.clear();
+  }
 
-  const sequence = getFactSequenceForCycle(factEntries, cycleNumber);
-  const todayEntry = sequence[dayInCycle] || factEntries[0];
+  const sequence = getFactSequenceForCycle(factEntries, 0);
+  const liveEntry = factEntries.find(e => e.status === 'live');
+
+  // If there's an active live entry, that is today's entry
+  let todayEntry: CosmicEntry | null = liveEntry || null;
+  if (!todayEntry) {
+    // Pick first entry from sequence that has not been shown in past
+    todayEntry = sequence.find(e => !pastIds.has(e.id)) || sequence[0];
+  }
 
   return {
     entry: todayEntry,
-    dayIndex: dayInCycle,
-    cycleNumber,
-    totalFacts,
+    dayIndex: pastIds.size,
+    cycleNumber: 0,
+    totalFacts: factEntries.length,
+    sequence
+  };
+}
+
+/**
+ * Returns today's scheduled terminology entry based on midnight IST rollover
+ * and the non-repeating shuffle sequence.
+ */
+export function getScheduledTerminologyForToday(entries: CosmicEntry[]): {
+  entry: CosmicEntry | null;
+  dayIndex: number;
+  cycleNumber: number;
+  totalItems: number;
+  sequence: CosmicEntry[];
+} {
+  const termEntries = entries.filter(e => e.type === 'terminology');
+  if (termEntries.length === 0) {
+    return { entry: null, dayIndex: 0, cycleNumber: 0, totalItems: 0, sequence: [] };
+  }
+
+  const pastIds = getPastCosmicEntryIds('terminology', termEntries);
+  // If all terminology entries have already been shown, reset cycle for next shuffle!
+  if (pastIds.size >= termEntries.length && termEntries.length > 0) {
+    resetPastCosmicEntryIds('terminology');
+    pastIds.clear();
+  }
+
+  const sequence = getFactSequenceForCycle(termEntries, 0);
+  const liveEntry = termEntries.find(e => e.status === 'live');
+
+  // If there's an active live entry, that is today's entry
+  let todayEntry: CosmicEntry | null = liveEntry || null;
+  if (!todayEntry) {
+    // Pick first entry from sequence that has not been shown in past
+    todayEntry = sequence.find(e => !pastIds.has(e.id)) || sequence[0];
+  }
+
+  return {
+    entry: todayEntry,
+    dayIndex: pastIds.size,
+    cycleNumber: 0,
+    totalItems: termEntries.length,
     sequence
   };
 }
@@ -363,6 +497,9 @@ function mapRowToCosmic(row: any): DailyCosmicData {
     factTitle: row.fact_title ?? row.factTitle ?? '',
     factSubtitle: row.fact_subtitle ?? row.factSubtitle ?? row.subtitle ?? '',
     factContent: row.fact_content ?? row.factContent ?? '',
+    terminologyTitle: row.terminology_title ?? row.terminologyTitle ?? DEFAULT_COSMIC_DATA.terminologyTitle,
+    terminologySubtitle: row.terminology_subtitle ?? row.terminologySubtitle ?? DEFAULT_COSMIC_DATA.terminologySubtitle,
+    terminologyContent: row.terminology_content ?? row.terminologyContent ?? DEFAULT_COSMIC_DATA.terminologyContent,
     updatedAt: row.updated_at ?? row.updatedAt
   };
 }
@@ -442,9 +579,9 @@ export async function getCosmicEntries(type?: CosmicEntryType): Promise<CosmicEn
     }
   }
 
-  // 3. Ensure strictly ONLY ONE entry is 'live' per type (astronomy and fact)
+  // 3. Ensure strictly ONLY ONE entry is 'live' per type (astronomy, fact, terminology)
   // If multiple entries have status === 'live', the newest one remains 'live' and older ones become 'archived'
-  for (const t of ['astronomy', 'fact'] as CosmicEntryType[]) {
+  for (const t of ['astronomy', 'fact', 'terminology'] as CosmicEntryType[]) {
     const liveEntries = entries.filter(e => e.type === t && e.status === 'live');
     if (liveEntries.length > 1) {
       liveEntries.sort(
@@ -493,9 +630,15 @@ export async function getCosmicEntries(type?: CosmicEntryType): Promise<CosmicEn
             }
           } catch {}
         }
-      } else {
+      } else if (t === 'fact') {
         // Space Fact: use scheduled rotation entry for today
         const scheduled = getScheduledFactForToday(entries);
+        if (scheduled.entry) {
+          liveTarget = scheduled.entry;
+        }
+      } else {
+        // Space Terminology: use scheduled rotation entry for today
+        const scheduled = getScheduledTerminologyForToday(entries);
         if (scheduled.entry) {
           liveTarget = scheduled.entry;
         }
@@ -520,6 +663,14 @@ export async function getCosmicEntries(type?: CosmicEntryType): Promise<CosmicEn
       }
     }
   }
+
+  // Strip default 'General' subtitle on terminologies
+  entries = entries.map(e => {
+    if (e.type === 'terminology' && e.subtitle && e.subtitle.trim().toLowerCase() === 'general') {
+      return { ...e, subtitle: '' };
+    }
+    return e;
+  });
 
   // Save the cleaned & deduplicated list to LocalStorage
   try {
@@ -630,11 +781,17 @@ export async function saveCosmicEntry(
           astronomyDate: entry.astronomyDate || '',
           astronomyContent: entry.content
         });
-      } else {
+      } else if (entry.type === 'fact') {
         await updateCosmicData({
           factTitle: entry.title,
           factSubtitle: entry.subtitle || entry.title,
           factContent: entry.content
+        });
+      } else if (entry.type === 'terminology') {
+        await updateCosmicData({
+          terminologyTitle: 'Space Terminologies',
+          terminologySubtitle: entry.title,
+          terminologyContent: entry.content
         });
       }
     }
@@ -979,7 +1136,13 @@ export async function getActiveCosmicData(): Promise<DailyCosmicData> {
     const liveFact = factEntries.find(e => e.status === 'live');
 
     if (isNewDay) {
-      // New IST day: rotate to today's scheduled fact
+      // New IST day: record yesterday's fact into past history before switching
+      if (liveFact) {
+        recordPastCosmicEntryId('fact', liveFact.id);
+        if (supabase) {
+          supabase.from('cosmic_entries').update({ status: 'archived', updated_at: new Date().toISOString() }).eq('id', liveFact.id).then(() => {}, () => {});
+        }
+      }
       const { entry: scheduledFact } = getScheduledFactForToday(factEntries);
       if (scheduledFact) {
         try {
@@ -1023,7 +1186,72 @@ export async function getActiveCosmicData(): Promise<DailyCosmicData> {
     }
   }
 
-  return await getCosmicData();
+  // 3. Space Terminologies (Non-repeating sequence rollover at midnight IST)
+  const termEntries = entries.filter(e => e.type === 'terminology');
+  let activeTerminologyEntry: CosmicEntry | null = null;
+
+  if (termEntries.length > 0) {
+    const todayRolloverKey = `IST_${today.year}_${today.month}_${today.day}`;
+    let lastRolloverKey = '';
+    try {
+      lastRolloverKey = localStorage.getItem('zwosmos_term_rollover_key') || '';
+    } catch {}
+
+    const isNewDay = lastRolloverKey !== todayRolloverKey;
+    const liveTerm = termEntries.find(e => e.status === 'live');
+
+    if (isNewDay) {
+      // New IST day: record yesterday's terminology into past history before switching
+      if (liveTerm) {
+        recordPastCosmicEntryId('terminology', liveTerm.id);
+        if (supabase) {
+          supabase.from('cosmic_entries').update({ status: 'archived', updated_at: new Date().toISOString() }).eq('id', liveTerm.id).then(() => {}, () => {});
+        }
+      }
+      const { entry: scheduledTerm } = getScheduledTerminologyForToday(termEntries);
+      if (scheduledTerm) {
+        activeTerminologyEntry = scheduledTerm;
+        try {
+          localStorage.setItem('zwosmos_term_rollover_key', todayRolloverKey);
+        } catch {}
+        if (!liveTerm || liveTerm.id !== scheduledTerm.id) {
+          await setEntryLive(scheduledTerm.id);
+        }
+        await updateCosmicData({
+          terminologyTitle: 'Space Terminologies',
+          terminologySubtitle: scheduledTerm.title,
+          terminologyContent: scheduledTerm.content
+        });
+      }
+    } else {
+      activeTerminologyEntry = liveTerm || getScheduledTerminologyForToday(termEntries).entry;
+      if (activeTerminologyEntry) {
+        const currentData = getCachedCosmicData();
+        const isDifferent =
+          currentData.terminologySubtitle !== activeTerminologyEntry.title ||
+          currentData.terminologyContent !== activeTerminologyEntry.content;
+
+        if (isDifferent) {
+          await updateCosmicData({
+            terminologyTitle: 'Space Terminologies',
+            terminologySubtitle: activeTerminologyEntry.title,
+            terminologyContent: activeTerminologyEntry.content
+          });
+        }
+      }
+    }
+  }
+
+  const result = await getCosmicData();
+
+  // GUARANTEE: If active terminology exists in library, ensure it is returned
+  if (activeTerminologyEntry) {
+    result.terminologyTitle = 'Space Terminologies';
+    result.terminologySubtitle = activeTerminologyEntry.title;
+    result.terminologyContent = activeTerminologyEntry.content;
+  }
+
+  return result;
 }
 
 /* =========================================================================
@@ -1070,6 +1298,20 @@ async function fetchFromSupabase(): Promise<DailyCosmicData | null> {
     if (data) {
       const mapped = mapRowToCosmic(data);
       try {
+        const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (cached) {
+          const localParsed = JSON.parse(cached);
+          // Preserve local terminology if Supabase has default or missing columns
+          if (
+            (!data.terminology_subtitle || data.terminology_subtitle === 'Gravitational Lensing') &&
+            localParsed.terminologySubtitle &&
+            localParsed.terminologySubtitle !== 'Gravitational Lensing'
+          ) {
+            mapped.terminologyTitle = localParsed.terminologyTitle || mapped.terminologyTitle;
+            mapped.terminologySubtitle = localParsed.terminologySubtitle;
+            mapped.terminologyContent = localParsed.terminologyContent || mapped.terminologyContent;
+          }
+        }
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(mapped));
       } catch {}
       return mapped;
@@ -1108,14 +1350,18 @@ export async function updateCosmicData(
 
     // Persist to Supabase if connected
     if (supabase) {
-      const payload = {
+      const payload: any = {
         id: 'current',
         astronomy_title: merged.astronomyTitle,
         astronomy_subtitle: merged.astronomySubtitle || null,
         astronomy_date: merged.astronomyDate,
         astronomy_content: merged.astronomyContent,
         fact_title: merged.factTitle,
+        fact_subtitle: merged.factSubtitle || null,
         fact_content: merged.factContent,
+        terminology_title: merged.terminologyTitle || 'Space Terminologies',
+        terminology_subtitle: merged.terminologySubtitle || null,
+        terminology_content: merged.terminologyContent || null,
         updated_at: merged.updatedAt
       };
 
@@ -1125,6 +1371,13 @@ export async function updateCosmicData(
 
       if (error) {
         console.warn('Supabase upsert warning for daily_cosmic:', error.message);
+        // Fallback: If remote table does not yet have terminology columns, upsert without them
+        if (error.message && (error.message.includes('terminology') || (error as any).code === '42703')) {
+          delete payload.terminology_title;
+          delete payload.terminology_subtitle;
+          delete payload.terminology_content;
+          await supabase.from('daily_cosmic').upsert(payload, { onConflict: 'id' });
+        }
       }
     }
 

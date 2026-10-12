@@ -1,8 +1,8 @@
 {
-  "name": "galaxy-portfolio",
+  "name": "zwosmos",
   "private": true,
-  "version": "0.1.0",
-  "description": "Interactive 3D portfolio with zoom-based navigation through space scenes",
+  "version": "1.0.0",
+  "description": "Zwosmos - Astronomy, Space News, Skywatching & Cosmic Discovery Platform",
   "author": "Vladyslav Shtatskyi",
   "url": "https://techinz.dev",
   "license": "MIT",
@@ -14,7 +14,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "sitemap": "node scripts/generate-sitemap.mjs",
+    "build": "node scripts/generate-sitemap.mjs && tsc -b && vite build",
     "lint": "eslint .",
     "postinstall": "node scripts/patch-blog-editor.mjs"
   },

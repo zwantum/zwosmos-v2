@@ -5,31 +5,22 @@ import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { BlogProvider } from '@zwantum/blog/react';
 import { blogClient } from './lib/blogClient';
 import { useSEO } from './lib/seoService';
-import HeroSection from './ui/HeroSection';
-import DailyCosmicSection from './ui/DailyCosmicSection';
-import ContentSections from './ui/ContentSections';
-import BlogIndexPage from './ui/BlogIndexPage';
-import BlogPostPage from './ui/BlogPostPage';
-import BooksPage from './ui/BooksPage';
-import CategoryPage from './ui/CategoryPage';
-import AuthorPage from './ui/AuthorPage';
-import TagPage from './ui/TagPage';
-import RssPage from './ui/RssPage';
-import SitemapPage from './ui/SitemapPage';
-import NotFoundPage from './ui/NotFoundPage';
-import ScrollToTopButton from './ui/ScrollToTopButton';
+import HeroSection from './components/sections/HeroSection';
+import DailyCosmicSection from './components/sections/DailyCosmicSection';
+import SkywatchingSection from './components/sections/SkywatchingSection';
+import SimulationCardsSection from './components/sections/SimulationCardsSection';
+import ContentSections from './components/sections/ContentSections';
+import BlogIndexPage from './pages/BlogIndexPage';
+import BlogPostPage from './pages/BlogPostPage';
+import BooksPage from './pages/BooksPage';
+import CategoryPage from './pages/CategoryPage';
+import AuthorPage from './pages/AuthorPage';
+import TagPage from './pages/TagPage';
+import RssPage from './pages/RssPage';
+import NotFoundPage from './pages/NotFoundPage';
+import ScrollToTopButton from './components/common/ScrollToTopButton';
 import { Analytics } from "@vercel/analytics/react";
-import ErrorBoundary from './ui/ErrorBoundary';
-
-// Preserved imports for original 3D canvas hero (currently commented out below):
-// import { Canvas } from '@react-three/fiber';
-// import { Preload } from '@react-three/drei';
-// import { Suspense } from 'react';
-// import { AssetManager } from './core/AssetManager';
-// import { GLOBAL } from './config/config';
-// import HeroContent from './ui/HeroContent';
-// import { NoToneMapping } from 'three';
-// import GalaxyScene from './scenes/Galaxy/GalaxyScene';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 function AppContent() {
   const { isLight, isSepia, isDark } = useTheme();
@@ -50,57 +41,6 @@ function AppContent() {
         transition: 'background-color 0.3s ease, color 0.3s ease'
       }}
     >
-      {/* ========================================================================= */}
-      {/* HERO SECTION (Hidden / Commented out for new layout/UI)                  */}
-      {/* ========================================================================= */}
-      {/*
-      <div
-        className="hero-section"
-        style={{
-          background: 'radial-gradient(ellipse at top center, rgba(147, 51, 234, 0.22) 0%, var(--bg-main) 60%)',
-          backgroundColor: 'var(--bg-main)'
-        }}
-      >
-        <Canvas
-          dpr={window.devicePixelRatio}
-          camera={{ position: isMobile ? GLOBAL.INITIAL_CAMERA_MOBILE_POS : GLOBAL.INITIAL_CAMERA_DESKTOP_POS, fov: isMobile ? GLOBAL.INITIAL_CAMERA_MOBILE_FOV : GLOBAL.INITIAL_CAMERA_DESKTOP_FOV }}
-          style={{
-            background: 'radial-gradient(ellipse at top center, rgba(147, 51, 234, 0.22) 0%, var(--bg-main) 60%)',
-            backgroundColor: 'var(--bg-main)'
-          }}
-          gl={{
-            antialias: true,
-            alpha: true,
-            toneMapping: NoToneMapping,
-            toneMappingExposure: GLOBAL.TONE_MAPPING_EXPOSURE,
-            powerPreference: 'high-performance'
-          }}
-        >
-          <AssetManager />
-
-          <Suspense fallback={null}>
-            <GalaxyScene />
-          </Suspense>
-
-          <Preload all />
-        </Canvas>
-
-        <HeroContent />
-
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            width: '100%',
-            height: isMobile ? '160px' : '240px',
-            background: 'linear-gradient(to bottom, transparent 0%, rgba(30, 30, 30, 0.3) 50%, var(--bg-main) 100%)',
-            pointerEvents: 'none'
-          }}
-        />
-      </div>
-      */}
-
       {/* Editorial Hero Section (Header + Featured Blog Showcase) - Glowing background restricted to hero only */}
       <div
         style={{
@@ -121,8 +61,14 @@ function AppContent() {
         <HeroSection />
       </div>
 
-      {/* Daily Cosmic Modules: This Day in Astronomy & Space Fact */}
+      {/* Daily Cosmic Modules: This Day in Astronomy & Space Fact of the Day */}
       <DailyCosmicSection />
+
+      {/* Zwosmos · Skywatching: Standalone Moon Phase Strip & Lunar Calendar */}
+      <SkywatchingSection />
+
+      {/* Zwosmos · Interactive & Discovery Simulation Cards (Purple, Yellow, Charcoal) */}
+      <SimulationCardsSection />
 
       {/* Content Sections seamlessly merged under the same background */}
       <ContentSections />
@@ -270,10 +216,17 @@ function ScrollToTop() {
   return null;
 }
 
-// Hard-navigates to /admin to ensure AdminApp is mounted via index.tsx
+// Hard-navigates to /missioncontrol to ensure AdminApp is mounted via index.tsx
 function AdminRedirect() {
   useEffect(() => {
-    window.location.href = '/admin';
+    window.location.href = '/missioncontrol';
+  }, []);
+  return null;
+}
+
+function RedirectToSitemapXml() {
+  useEffect(() => {
+    window.location.replace('/sitemap.xml');
   }, []);
   return null;
 }
@@ -296,10 +249,9 @@ function App() {
                 <Route path="/rss.xml" element={<RssPage />} />
                 <Route path="/rss" element={<RssPage />} />
 
-                {/* Sitemap Routes */}
-                <Route path="/sitemap" element={<SitemapPage />} />
-                <Route path="/sitemap.xml" element={<SitemapPage />} />
-                <Route path="/sitemap.html" element={<SitemapPage />} />
+                {/* Sitemap Routes: redirect SPA navigation to static XML file */}
+                <Route path="/sitemap" element={<RedirectToSitemapXml />} />
+                <Route path="/sitemap.html" element={<RedirectToSitemapXml />} />
 
                 {/* Direct Top-Level Category Routes: domain/{category-name} */}
                 <Route path="/space-news" element={<CategoryPage slug="space-news" />} />
@@ -325,9 +277,9 @@ function App() {
                 <Route path="/tag/:tagSlug" element={<TagPage />} />
                 <Route path="/tags" element={<TagPage />} />
 
-                {/* Admin direct routing fallback if navigated inside SPA */}
-                <Route path="/admin" element={<AdminRedirect />} />
-                <Route path="/admin/*" element={<AdminRedirect />} />
+                {/* Mission Control direct routing fallback if navigated inside SPA */}
+                <Route path="/missioncontrol" element={<AdminRedirect />} />
+                <Route path="/missioncontrol/*" element={<AdminRedirect />} />
 
                 {/* 404 Catch-all route */}
                 <Route path="*" element={<NotFoundPage />} />

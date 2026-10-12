@@ -260,9 +260,29 @@ class EnhancedSupabaseDatabaseAdapter extends SupabaseDatabaseAdapter {
     }
   }
 
+  private async ensureSingleFeaturedPost(excludeId?: string) {
+    const rawClient: any = (this as any).client;
+    try {
+      let query = rawClient
+        .from('blog_posts')
+        .update({ is_featured: false })
+        .eq('is_featured', true);
+
+      if (excludeId && this.isUuid(excludeId)) {
+        query = query.neq('id', excludeId);
+      }
+      await query;
+    } catch (err) {
+      console.warn('Could not reset previous featured posts:', err);
+    }
+  }
+
   async createPost(input: any) {
     try {
       const sanitized = await this.sanitizePostInput(input);
+      if (sanitized.is_featured) {
+        await this.ensureSingleFeaturedPost();
+      }
       const post = await super.createPost(sanitized);
       return this.enrichPost(post);
     } catch (err: any) {
@@ -274,6 +294,9 @@ class EnhancedSupabaseDatabaseAdapter extends SupabaseDatabaseAdapter {
   async updatePost(id: string, input: any) {
     try {
       const sanitized = await this.sanitizePostInput(input);
+      if (sanitized.is_featured) {
+        await this.ensureSingleFeaturedPost(id);
+      }
       const post = await super.updatePost(id, sanitized);
       return this.enrichPost(post);
     } catch (err: any) {
