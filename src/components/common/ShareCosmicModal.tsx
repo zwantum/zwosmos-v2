@@ -55,7 +55,7 @@ export const ShareCosmicModal: React.FC<ShareCosmicModalProps> = ({ cosmic, onCl
   const dynamicDate = isTerminology
     ? 'NEW TERMINOLOGY, EVERYDAY'
     : isFact
-      ? 'ONE FACT, EVERYDAY'
+      ? (cosmic.factDate || cosmic.astronomyDate || '')
       : (cosmic.astronomyDate || '');
 
   useEffect(() => {

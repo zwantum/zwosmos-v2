@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
-import { getActiveCosmicData, DailyCosmicData, getCachedCosmicData } from '../../lib/cosmicService';
+import { getActiveCosmicData, DailyCosmicData, getCachedCosmicData, getFormattedTodayIST } from '../../lib/cosmicService';
 import { ShareCosmicModal } from '../common/ShareCosmicModal';
 
 export const DailyCosmicSection: React.FC = () => {
@@ -477,7 +477,7 @@ export const DailyCosmicSection: React.FC = () => {
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    One Fact, Everyday
+                    {cosmic.factDate || cosmic.astronomyDate || getFormattedTodayIST()}
                   </div>
 
                   {/* Share Icon Button */}

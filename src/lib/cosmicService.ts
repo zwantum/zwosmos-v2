@@ -66,15 +66,16 @@ export const TERMINOLOGY_TOPIC_PRESETS: string[] = [
 export const DEFAULT_COSMIC_DATA: DailyCosmicData = {
   id: 'current',
   astronomyTitle: 'This Day in Astronomy',
-  astronomySubtitle: 'A World Between Planets',
-  astronomyDate: 'January 1, 2026',
-  astronomyContent: "<p>On 1 January 1801, Giuseppe Piazzi noticed a faint object while mapping stars at Palermo Observatory in Sicily. Its changing position revealed that it belonged to our Solar System. The object was Ceres, the first body discovered in the region now called the asteroid belt. Initially regarded as a planet, it was later classified as an asteroid and, in 2006, a dwarf planet. More than two centuries after Piazzi's observation, NASA's Dawn spacecraft entered orbit around Ceres, turning a wandering point of light into a richly detailed world of craters, mountains and bright deposits.</p>",
-  factTitle: '',
-  factSubtitle: '',
-  factContent: '',
+  astronomySubtitle: 'Messier Spots Cosmic Whirlpool',
+  astronomyDate: 'October 13, 2026',
+  astronomyContent: "<p>On 13 October 1773, Charles Messier recorded the object now known as M51 while searching for comets. To him it appeared as a faint, fuzzy patch; its spectacular spiral pattern would be recognized only with later telescopes. Today the Whirlpool Galaxy is a striking example of a spiral galaxy interacting with a smaller companion. Their gravitational encounter helps shape gas and star formation across the pair. Messier originally catalogued such objects so observers would not mistake them for comets. His practical list became a lasting guide to some of the night sky's most scientifically valuable sights.</p>",
+  factTitle: 'Space Fact of the Day',
+  factSubtitle: 'The Telescope Revolution',
+  factDate: 'October 13, 2026',
+  factContent: '<p>Modern telescopes fight that trembling by firing lasers upward to create artificial guide stars, then flexing their mirrors hundreds of times per second - actively un-twinkling the sky in real time.</p>',
   terminologyTitle: 'Space Terminologies',
-  terminologySubtitle: 'Gravitational Lensing',
-  terminologyContent: '<p>Gravitational lensing occurs when a massive celestial object — such as a galaxy cluster or supermassive black hole — warps the fabric of spacetime, bending and magnifying the light of distant background galaxies like a cosmic telescope.</p>'
+  terminologySubtitle: 'Radiolysis',
+  terminologyContent: '<p>The breaking apart of molecules by ionising radiation, which can create reactive products and chemical-energy opportunities. In icy environments, radiation can modify water and surface compounds. Whether those products support a habitable subsurface environment depends on transport and reaction pathways, since radiation can both supply useful chemistry and damage living systems.</p>'
 };
 
 const LOCAL_STORAGE_KEY = 'zwosmos_daily_cosmic';
@@ -89,20 +90,43 @@ export function getCachedCosmicData(): DailyCosmicData {
       const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (cached) {
         const parsed = JSON.parse(cached);
-        // Purge old legacy fallback facts from local storage
-        if (
-          parsed.factTitle === 'SPACE FACT OF THE DAY' ||
-          (parsed.factTitle === 'Space Fact of the Day' && !parsed.factSubtitle) ||
-          parsed.factContent?.includes('cold welding') ||
-          parsed.factContent?.includes('roughly 40,000 photons') ||
-          parsed.factContent?.includes('twinkle')
-        ) {
-          parsed.factTitle = '';
-          parsed.factSubtitle = '';
-          parsed.factContent = '';
-        }
-        if (parsed.astronomyDate !== 'September 18, 1977') {
-          return mapRowToCosmic(parsed);
+        if (parsed.astronomyContent && parsed.factContent) {
+          const cosmic = mapRowToCosmic(parsed);
+          const today = getTodayIST();
+          const parsedMilestone = parseMilestoneDateForRollover(cosmic.astronomyDate || '');
+          // If cached daily_cosmic matches today's date in IST, use it directly!
+          if (parsedMilestone && parsedMilestone.month === today.month && parsedMilestone.day === today.day) {
+            return cosmic;
+          }
+          // If cached daily_cosmic was from yesterday or older, check local entries for today's milestone
+          const rawEntries = localStorage.getItem(LOCAL_STORAGE_ENTRIES_KEY);
+          if (rawEntries) {
+            const entries: CosmicEntry[] = JSON.parse(rawEntries);
+            const todayAstro = entries.find(e => {
+              if (e.type !== 'astronomy') return false;
+              const p = parseMilestoneDateForRollover(e.astronomyDate || '');
+              return p && p.month === today.month && p.day === today.day;
+            });
+            const liveFact = entries.find(e => e.type === 'fact' && e.status === 'live');
+            const liveTerm = entries.find(e => e.type === 'terminology' && e.status === 'live');
+            if (todayAstro) {
+              const todayFormatted = getFormattedTodayIST();
+              return {
+                ...cosmic,
+                astronomyTitle: 'This Day in Astronomy',
+                astronomySubtitle: todayAstro.subtitle || todayAstro.title,
+                astronomyDate: todayAstro.astronomyDate || todayFormatted,
+                astronomyContent: todayAstro.content,
+                factTitle: 'Space Fact of the Day',
+                factSubtitle: liveFact?.subtitle || liveFact?.title || cosmic.factSubtitle,
+                factDate: todayFormatted,
+                factContent: liveFact?.content || cosmic.factContent,
+                terminologyTitle: 'Space Terminologies',
+                terminologySubtitle: liveTerm?.title || cosmic.terminologySubtitle,
+                terminologyContent: liveTerm?.content || cosmic.terminologyContent
+              };
+            }
+          }
         }
       }
     } catch {}
@@ -124,11 +148,22 @@ const DEFAULT_ENTRIES: CosmicEntry[] = [
     updatedAt: new Date().toISOString()
   },
   {
+    id: 'default-fact-1',
+    type: 'fact',
+    title: DEFAULT_COSMIC_DATA.factTitle,
+    subtitle: DEFAULT_COSMIC_DATA.factSubtitle,
+    content: DEFAULT_COSMIC_DATA.factContent,
+    scheduledAt: null,
+    status: 'live',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
     id: 'default-terminology-1',
     type: 'terminology',
-    title: 'Gravitational Lensing',
-    subtitle: 'Astrophysics & Relativity',
-    content: '<p>Gravitational lensing occurs when a massive celestial object — such as a galaxy cluster or supermassive black hole — warps the fabric of spacetime, bending and magnifying the light of distant background galaxies like a cosmic telescope.</p>',
+    title: 'Radiolysis',
+    subtitle: 'General',
+    content: '<p>The breaking apart of molecules by ionising radiation, which can create reactive products and chemical-energy opportunities. In icy environments, radiation can modify water and surface compounds. Whether those products support a habitable subsurface environment depends on transport and reaction pathways, since radiation can both supply useful chemistry and damage living systems.</p>',
     scheduledAt: null,
     status: 'live',
     createdAt: new Date().toISOString(),
@@ -215,6 +250,12 @@ export function getTodayIST(): { month: number; day: number; year: number } {
   const now = new Date();
   const istDate = new Date(now.getTime() + (330 + now.getTimezoneOffset()) * 60 * 1000);
   return { month: istDate.getMonth() + 1, day: istDate.getDate(), year: istDate.getFullYear() };
+}
+
+export function getFormattedTodayIST(): string {
+  const today = getTodayIST();
+  const monthName = MONTHS_LIST[today.month - 1] || 'October';
+  return `${monthName} ${today.day}, ${today.year}`;
 }
 
 /**
@@ -494,9 +535,10 @@ function mapRowToCosmic(row: any): DailyCosmicData {
     astronomySubtitle: row.astronomy_subtitle ?? row.astronomySubtitle ?? row.subtitle ?? DEFAULT_COSMIC_DATA.astronomySubtitle,
     astronomyDate: row.astronomy_date ?? row.astronomyDate ?? DEFAULT_COSMIC_DATA.astronomyDate,
     astronomyContent: row.astronomy_content ?? row.astronomyContent ?? DEFAULT_COSMIC_DATA.astronomyContent,
-    factTitle: row.fact_title ?? row.factTitle ?? '',
-    factSubtitle: row.fact_subtitle ?? row.factSubtitle ?? row.subtitle ?? '',
-    factContent: row.fact_content ?? row.factContent ?? '',
+    factTitle: row.fact_title ?? row.factTitle ?? DEFAULT_COSMIC_DATA.factTitle,
+    factSubtitle: row.fact_subtitle ?? row.factSubtitle ?? row.fact_title ?? row.subtitle ?? DEFAULT_COSMIC_DATA.factSubtitle,
+    factDate: row.fact_date ?? row.factDate ?? row.astronomy_date ?? DEFAULT_COSMIC_DATA.factDate,
+    factContent: row.fact_content ?? row.factContent ?? DEFAULT_COSMIC_DATA.factContent,
     terminologyTitle: row.terminology_title ?? row.terminologyTitle ?? DEFAULT_COSMIC_DATA.terminologyTitle,
     terminologySubtitle: row.terminology_subtitle ?? row.terminologySubtitle ?? DEFAULT_COSMIC_DATA.terminologySubtitle,
     terminologyContent: row.terminology_content ?? row.terminologyContent ?? DEFAULT_COSMIC_DATA.terminologyContent,
@@ -540,13 +582,6 @@ export async function getCosmicEntries(type?: CosmicEntryType): Promise<CosmicEn
     entries = [...DEFAULT_ENTRIES];
   }
 
-  // Purge any legacy dummy fallback facts from storage
-  entries = entries.filter(e => {
-    if (e.id.startsWith('default-fact') || e.id === 'default-fact-1') return false;
-    if (e.type === 'fact' && (e.title === 'SPACE FACT OF THE DAY' || e.content?.includes('cold welding') || e.content?.includes('roughly 40,000 photons') || e.content?.includes('twinkle') || e.id === '8bc48dcc-d63d-4ac8-8c36-091b73f0d617')) return false;
-    return true;
-  });
-
   // 2. Try fetching from Supabase if connected
   if (supabase) {
     try {
@@ -558,13 +593,16 @@ export async function getCosmicEntries(type?: CosmicEntryType): Promise<CosmicEn
       if (!error && data && data.length > 0) {
         const remoteEntries = data.map(mapRowToEntry);
 
-        // Purge dummy local fallback entries (default-*) when remote entries exist
+        // Purge dummy local fallback entries (default-*) only when remote entries of that type exist
         const hasRemoteAstronomy = remoteEntries.some(r => r.type === 'astronomy');
+        const hasRemoteFacts = remoteEntries.some(r => r.type === 'fact');
+        const hasRemoteTerminology = remoteEntries.some(r => r.type === 'terminology');
 
         const filteredLocal = entries.filter(e => {
           if (e.id.startsWith('default-astronomy') && hasRemoteAstronomy) return false;
-          if (e.id.startsWith('default-fact') || e.id === 'default-fact-1') return false;
-          if (e.type === 'fact' && (e.title === 'SPACE FACT OF THE DAY' || e.content?.includes('cold welding') || e.content?.includes('roughly 40,000 photons') || e.content?.includes('twinkle') || e.id === '8bc48dcc-d63d-4ac8-8c36-091b73f0d617')) return false;
+          if (e.id.startsWith('default-fact') && hasRemoteFacts) return false;
+          if (e.id.startsWith('default-terminology') && hasRemoteTerminology) return false;
+          if (e.type === 'fact' && e.title === 'SPACE FACT OF THE DAY') return false;
           return true;
         });
 
@@ -1125,6 +1163,8 @@ export async function getActiveCosmicData(): Promise<DailyCosmicData> {
   //    Rollover only triggers when IST day changes. Between rollovers, admin manual
   //    selections (Set Live Today) are respected and synced to daily_cosmic.
   const factEntries = entries.filter(e => e.type === 'fact');
+  let activeFactEntry: CosmicEntry | null = null;
+
   if (factEntries.length > 0) {
     const todayRolloverKey = `IST_${today.year}_${today.month}_${today.day}`;
     let lastRolloverKey = '';
@@ -1145,44 +1185,16 @@ export async function getActiveCosmicData(): Promise<DailyCosmicData> {
       }
       const { entry: scheduledFact } = getScheduledFactForToday(factEntries);
       if (scheduledFact) {
+        activeFactEntry = scheduledFact;
         try {
           localStorage.setItem('zwosmos_fact_rollover_key', todayRolloverKey);
         } catch {}
         if (!liveFact || liveFact.id !== scheduledFact.id) {
           await setEntryLive(scheduledFact.id);
         }
-        await updateCosmicData({
-          factTitle: scheduledFact.title,
-          factSubtitle: scheduledFact.subtitle || scheduledFact.title,
-          factContent: scheduledFact.content
-        });
       }
-    } else if (liveFact) {
-      // Same day: sync daily_cosmic to whatever is currently live in cosmic_entries
-      // (respects manual "Set Live Today" from admin without overriding it)
-      const currentData = getCachedCosmicData();
-      const isDifferent =
-        currentData.factTitle !== liveFact.title ||
-        currentData.factContent !== liveFact.content ||
-        (currentData.factSubtitle || '') !== (liveFact.subtitle || liveFact.title);
-
-      if (isDifferent) {
-        await updateCosmicData({
-          factTitle: liveFact.title,
-          factSubtitle: liveFact.subtitle || liveFact.title,
-          factContent: liveFact.content
-        });
-      }
-    }
-  } else {
-    // No facts in database — clear any stale fact from daily_cosmic
-    const currentData = getCachedCosmicData();
-    if (currentData.factContent || currentData.factTitle || currentData.factSubtitle) {
-      await updateCosmicData({
-        factTitle: '',
-        factSubtitle: '',
-        factContent: ''
-      });
+    } else {
+      activeFactEntry = liveFact || getScheduledFactForToday(factEntries).entry;
     }
   }
 
@@ -1217,39 +1229,42 @@ export async function getActiveCosmicData(): Promise<DailyCosmicData> {
         if (!liveTerm || liveTerm.id !== scheduledTerm.id) {
           await setEntryLive(scheduledTerm.id);
         }
-        await updateCosmicData({
-          terminologyTitle: 'Space Terminologies',
-          terminologySubtitle: scheduledTerm.title,
-          terminologyContent: scheduledTerm.content
-        });
       }
     } else {
       activeTerminologyEntry = liveTerm || getScheduledTerminologyForToday(termEntries).entry;
-      if (activeTerminologyEntry) {
-        const currentData = getCachedCosmicData();
-        const isDifferent =
-          currentData.terminologySubtitle !== activeTerminologyEntry.title ||
-          currentData.terminologyContent !== activeTerminologyEntry.content;
-
-        if (isDifferent) {
-          await updateCosmicData({
-            terminologyTitle: 'Space Terminologies',
-            terminologySubtitle: activeTerminologyEntry.title,
-            terminologyContent: activeTerminologyEntry.content
-          });
-        }
-      }
     }
   }
 
   const result = await getCosmicData();
+  const todayFormatted = getFormattedTodayIST();
 
-  // GUARANTEE: If active terminology exists in library, ensure it is returned
+  if (activeAstronomyEntry) {
+    result.astronomyTitle = 'This Day in Astronomy';
+    result.astronomySubtitle = activeAstronomyEntry.subtitle || activeAstronomyEntry.title;
+    result.astronomyDate = activeAstronomyEntry.astronomyDate || todayFormatted;
+    result.astronomyContent = activeAstronomyEntry.content;
+  }
+
+  if (activeFactEntry) {
+    result.factTitle = 'Space Fact of the Day';
+    result.factSubtitle = activeFactEntry.subtitle || activeFactEntry.title;
+    result.factDate = todayFormatted;
+    result.factContent = activeFactEntry.content;
+  }
+
   if (activeTerminologyEntry) {
     result.terminologyTitle = 'Space Terminologies';
     result.terminologySubtitle = activeTerminologyEntry.title;
     result.terminologyContent = activeTerminologyEntry.content;
   }
+
+  // Persist guaranteed data to cache immediately
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(result));
+  } catch {}
+
+  // Save to daily_cosmic in background if there are updates
+  updateCosmicData(result).catch(() => {});
 
   return result;
 }
@@ -1356,8 +1371,7 @@ export async function updateCosmicData(
         astronomy_subtitle: merged.astronomySubtitle || null,
         astronomy_date: merged.astronomyDate,
         astronomy_content: merged.astronomyContent,
-        fact_title: merged.factTitle,
-        fact_subtitle: merged.factSubtitle || null,
+        fact_title: merged.factSubtitle || merged.factTitle || 'Space Fact of the Day',
         fact_content: merged.factContent,
         terminology_title: merged.terminologyTitle || 'Space Terminologies',
         terminology_subtitle: merged.terminologySubtitle || null,

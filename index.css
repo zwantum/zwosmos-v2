@@ -662,21 +662,6 @@ html[data-theme="sepia"] .section-title {
   gap: 30px;
 }
 
-/* Tektur */
-@font-face {
-  font-family: 'Tektur-Regular';
-  src: url('/assets/fonts/Tektur/Tektur-Regular.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'Tektur-Medium';
-  src: url('/assets/fonts/Tektur/Tektur-Medium.ttf') format('truetype');
-  font-weight: 600;
-  font-style: normal;
-}
-
 /* initial loader */
 #initial-loader {
   position: fixed;

@@ -84,9 +84,10 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
   }, [livePosts, cachedPosts]);
 
   // Helper to map a post to BlogCard data structure
-  const mapPostToCard = (post: any) => {
+  const mapPostToCard = (post: any, categoryOverride?: string) => {
     if (!post) return null;
-    const primaryCat = post.categories?.[0]?.name || 'COSMOS';
+    const postCats: string[] = (post.categories || []).map((c: any) => c.name || c.title || '').filter(Boolean);
+    const primaryCat = categoryOverride || postCats[0] || 'EXPLAINERS';
     const rawExcerpt = post.excerpt || post.description || '';
     const cleanExcerpt = rawExcerpt.replace(/<[^>]*>?/gm, '').trim();
     const authorName = post.author?.name || 'Zwosmos Editorial';
@@ -104,7 +105,7 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
   };
 
   // Dynamically assign real published posts to each homepage category section
-  const { deepSpacePosts, techPosts, solarPosts } = useMemo(() => {
+  const { spaceNewsPosts, explainerPosts, techPosts } = useMemo(() => {
     const usedSlugs = new Set<string>();
 
     const findAndClaim = (predicate: (p: any) => boolean) => {
@@ -130,42 +131,51 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
       return slugs.some(s => pSlugs.includes(s.toLowerCase()));
     };
 
-    // Section 1: Deep Space Chronicles (Universe, Space News, Space Exploration)
-    const ds1 = findAndClaim(p => hasCat(p, ['universe']));
-    const ds2 = findAndClaim(p => hasCat(p, ['space-news']));
-    const ds3 = findAndClaim(p => hasCat(p, ['space-exploration']));
-    const dsList = [ds1, ds2, ds3].map(p => p || claimAnyRemaining()).filter(Boolean);
+    // Section 1: Space News (Latest space news and discoveries) - strictly for space-news category posts
+    const sn1 = findAndClaim(p => hasCat(p, ['space-news']));
+    const sn2 = findAndClaim(p => hasCat(p, ['space-news']));
+    const sn3 = findAndClaim(p => hasCat(p, ['space-news']));
+    const snList = [sn1, sn2, sn3].filter(Boolean);
 
-    // Section 2: Technology & Observatories (Telescopes & Tech, Explainers/Learn, People & History)
+    // Section 2: Explainers (Astronomy guides & science primers) - strictly for explainer category posts
+    const exp1 = findAndClaim(p => hasCat(p, ['explainers', 'learn']));
+    const exp2 = findAndClaim(p => hasCat(p, ['explainers', 'learn']));
+    const exp3 = findAndClaim(p => hasCat(p, ['explainers', 'learn']));
+    const expList = [exp1, exp2, exp3].filter(Boolean);
+
+    // Section 3: Technology & Observatories (Telescopes & Tech, Space Exploration, Universe, etc.)
     const tech1 = findAndClaim(p => hasCat(p, ['telescopes-technology']));
-    const tech2 = findAndClaim(p => hasCat(p, ['explainers', 'learn']));
-    const tech3 = findAndClaim(p => hasCat(p, ['people-history']));
+    const tech2 = findAndClaim(p => hasCat(p, ['space-exploration', 'universe']));
+    const tech3 = findAndClaim(p => hasCat(p, ['people-history', 'solar-system', 'skywatching', 'space-culture']));
     const tList = [tech1, tech2, tech3].map(p => p || claimAnyRemaining()).filter(Boolean);
 
-    // Section 3: Solar System & Planetary Frontiers (Solar System, Skywatching, Space Culture, General)
-    const sol1 = findAndClaim(p => hasCat(p, ['solar-system']));
-    const sol2 = findAndClaim(p => hasCat(p, ['skywatching']));
-    const sol3 = findAndClaim(p => hasCat(p, ['space-culture']));
-    const sList = [sol1, sol2, sol3].map(p => p || claimAnyRemaining()).filter(Boolean);
-
     return {
-      deepSpacePosts: dsList.map(mapPostToCard).filter(Boolean) as NonNullable<ReturnType<typeof mapPostToCard>>[],
-      techPosts: tList.map(mapPostToCard).filter(Boolean) as NonNullable<ReturnType<typeof mapPostToCard>>[],
-      solarPosts: sList.map(mapPostToCard).filter(Boolean) as NonNullable<ReturnType<typeof mapPostToCard>>[]
+      spaceNewsPosts: snList.map(p => mapPostToCard(p, 'SPACE NEWS')).filter(Boolean) as NonNullable<ReturnType<typeof mapPostToCard>>[],
+      explainerPosts: expList.map(p => {
+        // Show other category (e.g. 'Universe', 'Telescopes & Technology') on the pill, fallback to 'EXPLAINERS'
+        const cats = p?.categories || [];
+        const otherCat = cats.find((c: any) => {
+          const s = (c.slug || c.name || '').toLowerCase();
+          return s !== 'explainers' && s !== 'learn';
+        });
+        const pillCat = otherCat?.name || otherCat?.title || 'EXPLAINERS';
+        return mapPostToCard(p, pillCat);
+      }).filter(Boolean) as NonNullable<ReturnType<typeof mapPostToCard>>[],
+      techPosts: tList.map(p => mapPostToCard(p)).filter(Boolean) as NonNullable<ReturnType<typeof mapPostToCard>>[]
     };
   }, [activeLivePosts]);
 
-  const deepSpace1 = deepSpacePosts[0];
-  const deepSpace2 = deepSpacePosts[1];
-  const deepSpace3 = deepSpacePosts[2];
+  const spaceNewsCard1 = spaceNewsPosts[0];
+  const spaceNewsCard2 = spaceNewsPosts[1];
+  const spaceNewsCard3 = spaceNewsPosts[2];
+
+  const explainer1 = explainerPosts[0];
+  const explainer2 = explainerPosts[1];
+  const explainer3 = explainerPosts[2];
 
   const techFeatured = techPosts[0];
   const techStacked1 = techPosts[1];
   const techStacked2 = techPosts[2];
-
-  const solarCard1 = solarPosts[0];
-  const solarCard2 = solarPosts[1];
-  const solarCard3 = solarPosts[2];
 
   return (
     <div
@@ -180,7 +190,7 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
       }}
     >
       {/* ========================================================================= */}
-      {/* 1. CATEGORY SECTION: DEEP SPACE (3-Card Grid Layout)                      */}
+      {/* 1. CATEGORY SECTION: SPACE NEWS (3 Horizontal Rows: Image Left, Content Right) */}
       {/* ========================================================================= */}
       <section className="content-section">
         <div className="section-container">
@@ -190,17 +200,74 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
             <div>
               <div style={{ color: '#bd75ff', fontFamily: '"Noto Sans", sans-serif', fontSize: '0.78rem', fontWeight: 400, letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <ZwosmosIcon size={12} color="#bd75ff" />
-                <span>Stellar Expeditions</span>
+                <span>Space News</span>
               </div>
-              <h2 className="section-title" style={{ margin: 0, color: isLight ? '#111827' : '#ffffff' }}>Deep Space Chronicles</h2>
+              <h2 className="section-title" style={{ margin: 0, color: isLight ? '#111827' : '#ffffff' }}>Latest Space News and Discoveries</h2>
             </div>
-            <Link to="/universe" style={{ color: '#bd75ff', fontFamily: '"Noto Sans", sans-serif', textDecoration: 'none', fontWeight: 400, letterSpacing: '3px', fontSize: '0.84rem' }}>
-              VIEW ALL IN DEEP SPACE &rarr;
+            <Link to="/space-news" style={{ color: '#bd75ff', fontFamily: '"Noto Sans", sans-serif', textDecoration: 'none', fontWeight: 400, letterSpacing: '3px', fontSize: '0.84rem' }}>
+              VIEW ALL IN SPACE NEWS &rarr;
+            </Link>
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: (isSmallPhone || isSmallTab) ? '1fr' : (winWidth < 860 ? 'repeat(auto-fit, minmax(280px, 1fr))' : 'repeat(3, 1fr)'),
+              gap: isSmallPhone ? '30px' : isSmallTab ? '20px' : '18px',
+              alignItems: isSmallPhone ? 'start' : 'stretch'
+            }}
+          >
+            {[spaceNewsCard1, spaceNewsCard2, spaceNewsCard3].map((card, idx) => (
+              card ? (
+                <BlogCard
+                  key={card.id}
+                  id={card.id}
+                  category={card.category}
+                  title={card.title}
+                  desc={card.desc}
+                  authorName={card.authorName}
+                  date={card.date}
+                  img={card.img}
+                  variant="horizontal"
+                />
+              ) : (
+                <div
+                  key={idx}
+                  style={{
+                    height: '170px',
+                    borderRadius: '8px',
+                    background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.02)',
+                    border: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.05)'
+                  }}
+                />
+              )
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 2. CATEGORY SECTION: EXPLAINERS (3-Card Grid Layout)                      */}
+      {/* ========================================================================= */}
+      <section className="content-section">
+        <div className="section-container">
+          {/* Section Yellow Accent Divider */}
+          <div className="section-divider" />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: isSmallTab ? '20px' : '35px', flexWrap: 'wrap', gap: '15px' }}>
+            <div>
+              <div style={{ color: '#bd75ff', fontFamily: '"Noto Sans", sans-serif', fontSize: '0.78rem', fontWeight: 400, letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <ZwosmosIcon size={12} color="#bd75ff" />
+                <span>Explainers</span>
+              </div>
+              <h2 className="section-title" style={{ margin: 0, color: isLight ? '#111827' : '#ffffff' }}>Astronomy Guides & Science Primers</h2>
+            </div>
+            <Link to="/explainers" style={{ color: '#bd75ff', fontFamily: '"Noto Sans", sans-serif', textDecoration: 'none', fontWeight: 400, letterSpacing: '3px', fontSize: '0.84rem' }}>
+              VIEW ALL IN EXPLAINERS &rarr;
             </Link>
           </div>
 
           <div className="grid-3">
-            {[deepSpace1, deepSpace2, deepSpace3].map((story, idx) => (
+            {[explainer1, explainer2, explainer3].map((story, idx) => (
               story ? (
                 <BlogCard
                   key={story.id}
@@ -230,7 +297,7 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
       </section>
 
       {/* ========================================================================= */}
-      {/* 2. CATEGORY SECTION: TECHNOLOGY (Split Editorial Hero + Stacked Cards)     */}
+      {/* 3. CATEGORY SECTION: TECHNOLOGY (Split Editorial Hero + Stacked Cards)     */}
       {/* ========================================================================= */}
       <section className="content-section">
         <div className="section-container">
@@ -329,63 +396,6 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
                 />
               )}
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* 3. CATEGORY SECTION: SOLAR SYSTEM (3 Horizontal Rows: Image Left, Content Right) */}
-      {/* ========================================================================= */}
-      <section className="content-section">
-        <div className="section-container">
-          {/* Section Yellow Accent Divider */}
-          <div className="section-divider" />
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: isSmallTab ? '20px' : '35px', flexWrap: 'wrap', gap: '15px' }}>
-            <div>
-              <div style={{ color: '#bd75ff', fontFamily: '"Noto Sans", sans-serif', fontSize: '0.78rem', fontWeight: 400, letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <ZwosmosIcon size={12} color="#bd75ff" />
-                <span>Planetary Explorations</span>
-              </div>
-              <h2 className="section-title" style={{ margin: 0, color: isLight ? '#111827' : '#ffffff' }}>Solar System & Planetary Frontiers</h2>
-            </div>
-            <Link to="/solar-system" style={{ color: '#bd75ff', fontFamily: '"Noto Sans", sans-serif', textDecoration: 'none', fontWeight: 400, letterSpacing: '3px', fontSize: '0.84rem' }}>
-              VIEW ALL IN SOLAR SYSTEM &rarr;
-            </Link>
-          </div>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: (isSmallPhone || isSmallTab) ? '1fr' : (winWidth < 860 ? 'repeat(auto-fit, minmax(280px, 1fr))' : 'repeat(3, 1fr)'),
-              gap: isSmallPhone ? '30px' : isSmallTab ? '20px' : '18px',
-              alignItems: isSmallPhone ? 'start' : 'stretch'
-            }}
-          >
-            {[solarCard1, solarCard2, solarCard3].map((card, idx) => (
-              card ? (
-                <BlogCard
-                  key={card.id}
-                  id={card.id}
-                  category={card.category}
-                  title={card.title}
-                  desc={card.desc}
-                  authorName={card.authorName}
-                  date={card.date}
-                  img={card.img}
-                  variant="horizontal"
-                />
-              ) : (
-                <div
-                  key={idx}
-                  style={{
-                    height: '170px',
-                    borderRadius: '8px',
-                    background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.02)',
-                    border: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.05)'
-                  }}
-                />
-              )
-            ))}
           </div>
         </div>
       </section>
