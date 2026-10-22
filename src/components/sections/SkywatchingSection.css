@@ -322,28 +322,31 @@
 .zw-sky-dialog-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(2, 8, 19, 0.8);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  z-index: 9999;
+  background: rgba(2, 8, 19, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 100000;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
+  overflow-y: auto;
 }
 
 .zw-sky-dialog {
+  position: relative;
   border: 1px solid #52617b;
   background: #0f1b2e;
   color: #f2f2ec;
-  border-radius: 18px;
-  width: min(950px, calc(100% - 20px));
-  max-height: 90vh;
+  border-radius: 20px;
+  width: min(980px, calc(100% - 32px));
+  max-height: 96vh;
   padding: 0;
   box-shadow: 0 35px 100px rgba(0, 0, 0, 0.75);
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  z-index: 100001;
 }
 
 .zw-sky-cal-head {
@@ -352,12 +355,12 @@
   align-items: center;
   gap: 12px;
   border-bottom: 1px solid #344058;
-  padding: 20px clamp(18px, 3vw, 32px);
+  padding: 16px clamp(18px, 2.8vw, 28px);
 }
 
 .zw-sky-cal-head h2 {
   margin: 0;
-  font-size: clamp(1.4rem, 2.5vw, 2.1rem);
+  font-size: clamp(1.45rem, 2.6vw, 1.95rem);
   font-weight: 400;
   font-family: "Playfair Display", Georgia, serif;
   color: #f2f2ec;
@@ -366,7 +369,7 @@
 .zw-sky-cal-controls {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .zw-sky-cal-controls button {
@@ -379,7 +382,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  font-size: 1.05rem;
   transition: background 0.15s;
 }
 
@@ -388,14 +391,15 @@
 }
 
 .zw-sky-cal-controls .zw-sky-close {
-  margin-left: 9px;
-  font-size: 1.25rem;
+  margin-left: 4px;
+  font-size: 1.35rem;
 }
 
 .zw-sky-calendar-body {
-  padding: 18px clamp(10px, 2vw, 30px) 30px;
-  overflow: auto;
-  max-height: calc(90vh - 90px);
+  padding: 12px clamp(12px, 2.2vw, 26px) 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .zw-sky-weekdays,
@@ -407,17 +411,28 @@
 .zw-sky-weekdays div {
   color: #aebbd0;
   text-align: center;
-  font: 700 0.65rem/1 system-ui, -apple-system, sans-serif;
-  letter-spacing: 0.13em;
+  font: 700 0.74rem/1 system-ui, -apple-system, sans-serif;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  padding: 6px 0 12px;
+  padding: 4px 0 10px;
+}
+
+.zw-sky-month-grid {
+  border: 1px solid #334159;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .zw-sky-cal-cell {
-  min-height: 109px;
-  border: 1px solid #334159;
-  padding: 9px 6px;
+  height: clamp(74px, 11vh, 94px);
+  border: 1px solid #233147;
+  padding: 6px 5px 5px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
 }
 
 .zw-sky-cal-cell.empty {
@@ -431,21 +446,26 @@
 
 .zw-sky-cal-cell .cal-date {
   color: #e0e9f4;
-  font: 0.72rem/1.1 system-ui, -apple-system, sans-serif;
+  font: 600 0.74rem/1 system-ui, -apple-system, sans-serif;
   text-align: left;
-  padding-left: 6px;
+  width: 100%;
+  padding-left: 4px;
 }
 
 .zw-sky-cal-cell .cal-moon {
-  width: 43px;
-  height: 43px;
+  width: clamp(33px, 4.8vh, 42px);
+  height: clamp(33px, 4.8vh, 42px);
   margin: 2px auto;
   display: block;
 }
 
 .zw-sky-cal-cell .cal-label {
   color: #c6d2e1;
-  font: 0.6rem/1.15 system-ui, -apple-system, sans-serif;
+  font: 0.65rem/1.2 system-ui, -apple-system, sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 /* Responsive Queries from Final File */
@@ -602,17 +622,18 @@
   }
 
   .zw-sky-cal-cell {
-    min-height: 80px;
-    padding: 6px 0;
+    height: clamp(44px, 7vh, 56px);
+    min-height: unset;
+    padding: 3px 1px 2px;
   }
 
   .zw-sky-cal-cell .cal-moon {
-    width: 30px;
-    height: 30px;
+    width: 20px;
+    height: 20px;
   }
 
   .zw-sky-cal-cell .cal-label {
-    font-size: 0.48rem;
+    font-size: 0.44rem;
   }
 }
 

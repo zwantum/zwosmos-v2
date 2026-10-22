@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import './SkywatchingSection.css';
 
 const rad = Math.PI / 180;
@@ -183,6 +184,25 @@ export const SkywatchingSection: React.FC = () => {
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
   }, []);
+
+  // Prevent background scroll and allow Escape key to close calendar modal
+  useEffect(() => {
+    if (!isCalendarOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsCalendarOpen(false);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isCalendarOpen]);
 
   const handleHemisphere = (h: 'north' | 'south') => {
     setHemisphere(h);
@@ -389,7 +409,7 @@ export const SkywatchingSection: React.FC = () => {
       </div>
 
       {/* Monthly Lunar Calendar Modal */}
-      {isCalendarOpen && (
+      {isCalendarOpen && typeof document !== 'undefined' && createPortal(
         <div className="zw-sky-dialog-backdrop" onClick={() => setIsCalendarOpen(false)}>
           <div
             className="zw-sky-dialog"
@@ -468,7 +488,8 @@ export const SkywatchingSection: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </section>
   );
