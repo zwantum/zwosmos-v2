@@ -5,25 +5,25 @@
   <!-- Core Gateways & Portals -->
   <url>
     <loc>https://zwosmos.com/</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.00</priority>
   </url>
   <url>
     <loc>https://zwosmos.com/blog</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
   </url>
   <url>
     <loc>https://zwosmos.com/books</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.80</priority>
   </url>
   <url>
     <loc>https://zwosmos.com/interactive</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.80</priority>
   </url>
@@ -31,63 +31,75 @@
   <!-- Astronomical Categories -->
   <url>
     <loc>https://zwosmos.com/space-news</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://zwosmos.com/solar-system</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://zwosmos.com/telescopes-technology</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://zwosmos.com/universe</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://zwosmos.com/space-exploration</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://zwosmos.com/skywatching</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://zwosmos.com/space-culture</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://zwosmos.com/explainers</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://zwosmos.com/people-history</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
 
   <!-- Published Dispatches & Articles (Real Slugs) -->
   <url>
+    <loc>https://zwosmos.com/blog/cecilia-payne-stellar-composition-bhjk-nm</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://zwosmos.com/blog/isro</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://zwosmos.com/blog/how-icecube-neutrino-telescope-works</loc>
-    <lastmod>2026-10-16</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -104,14 +116,8 @@
     <priority>0.75</priority>
   </url>
   <url>
-    <loc>https://zwosmos.com/blog/cecilia-payne-stellar-composition</loc>
-    <lastmod>2026-10-14</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
     <loc>https://zwosmos.com/blog/cosmic-ladders-measuring-the-universe</loc>
-    <lastmod>2026-10-16</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -161,73 +167,97 @@
   <!-- Topic & Discovery Tags -->
   <url>
     <loc>https://zwosmos.com/tag/astronauts</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.60</priority>
   </url>
   <url>
     <loc>https://zwosmos.com/tag/astronomy</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.60</priority>
   </url>
   <url>
     <loc>https://zwosmos.com/tag/galaxies</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.60</priority>
+  </url>
+  <url>
+    <loc>https://zwosmos.com/tag/gslv</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.60</priority>
+  </url>
+  <url>
+    <loc>https://zwosmos.com/tag/gslv-f18</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.60</priority>
+  </url>
+  <url>
+    <loc>https://zwosmos.com/tag/isro</loc>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.60</priority>
   </url>
   <url>
     <loc>https://zwosmos.com/tag/mars</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.60</priority>
   </url>
   <url>
     <loc>https://zwosmos.com/tag/moon</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.60</priority>
   </url>
   <url>
     <loc>https://zwosmos.com/tag/nasa</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.60</priority>
+  </url>
+  <url>
+    <loc>https://zwosmos.com/tag/navic</loc>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.60</priority>
   </url>
   <url>
     <loc>https://zwosmos.com/tag/planets</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.60</priority>
   </url>
   <url>
     <loc>https://zwosmos.com/tag/rocket-science</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.60</priority>
   </url>
   <url>
     <loc>https://zwosmos.com/tag/solar-system</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.60</priority>
   </url>
   <url>
     <loc>https://zwosmos.com/tag/space-exploration</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.60</priority>
   </url>
   <url>
     <loc>https://zwosmos.com/tag/space-missions</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.60</priority>
   </url>
   <url>
     <loc>https://zwosmos.com/tag/spacecraft</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.60</priority>
   </url>
@@ -235,7 +265,7 @@
   <!-- Syndication Feeds -->
   <url>
     <loc>https://zwosmos.com/rss.xml</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.50</priority>
   </url>

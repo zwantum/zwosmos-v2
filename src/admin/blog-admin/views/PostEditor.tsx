@@ -164,8 +164,17 @@ export const PostEditor: React.FC<PostEditorProps> = ({
     stripHtml(text)
       .toLowerCase()
       .trim()
-      .replace(/[\s\W-]+/g, '-')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/[\s]+/g, '-')
+      .replace(/-{2,}/g, '-')
       .replace(/^-+|-+$/g, '');
+
+  // Permissive sanitizer for manual slug editing — keeps trailing hyphen while user types
+  const sanitizeSlugInput = (raw: string) =>
+    raw
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '-')
+      .replace(/-{2,}/g, '-');
 
   const extractContentText = (json: Record<string, unknown> | undefined): string => {
     if (!json) return '';
@@ -713,9 +722,10 @@ export const PostEditor: React.FC<PostEditorProps> = ({
                   type="text"
                   value={slug}
                   onChange={(e) => {
-                    setSlug(generateSlug(e.target.value));
+                    setSlug(sanitizeSlugInput(e.target.value));
                     setSlugCustomized(true);
                   }}
+                  onBlur={() => setSlug((s) => s.replace(/^-+|-+$/g, ''))}
                   placeholder="article-slug"
                   style={{
                     border: '1px solid #cbd5e1',
