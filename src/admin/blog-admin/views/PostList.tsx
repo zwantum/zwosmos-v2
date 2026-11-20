@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Post, PostStatus, Category, Author } from '@zwantum/blog-types';
 import { BlogClient } from '@zwantum/blog-core';
+import { getDefaultFeaturedImage } from '../../../lib/blogClient';
+import { ArticleBulkUploadModal } from './ArticleBulkUploadModal';
 
 export interface PostListProps {
   client: BlogClient;
@@ -29,6 +31,7 @@ export const PostList: React.FC<PostListProps> = ({
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
 
   // Real Database Tab Counts
   const [tabCounts, setTabCounts] = useState({
@@ -400,35 +403,65 @@ export const PostList: React.FC<PostListProps> = ({
           <p style={{ margin: 0, fontSize: '13px', color: '#64748b', fontWeight: 400 }}>
             Create, manage and publish your blog content.
           </p>
-        </div>
+</div>
 
-        {onNavigateToNewPost && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <button
             type="button"
-            onClick={onNavigateToNewPost}
+            onClick={() => setIsBulkImportOpen(true)}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: '8px',
-              padding: '9px 18px',
+              padding: '9px 16px',
               borderRadius: '8px',
-              background: '#ffcc00',
+              background: '#ffffff',
               color: '#0f172a',
-              border: 'none',
+              border: '1px solid #e2e8f0',
               fontWeight: 600,
               fontSize: '13.5px',
               cursor: 'pointer',
-              boxShadow: '0 2px 8px rgba(255, 204, 0, 0.35)',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
               transition: 'all 0.15s ease',
             }}
+            title="Import articles from Excel (.xlsx) or CSV"
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
-            <span>Add New Post</span>
+            <span>Bulk Import</span>
           </button>
-        )}
+
+          {onNavigateToNewPost && (
+            <button
+              type="button"
+              onClick={onNavigateToNewPost}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '9px 18px',
+                borderRadius: '8px',
+                background: '#ffcc00',
+                color: '#0f172a',
+                border: 'none',
+                fontWeight: 600,
+                fontSize: '13.5px',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(255, 204, 0, 0.35)',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              <span>Add New Post</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* 2. Status Filter Tabs (Shows Real Live Counts) */}
@@ -511,7 +544,7 @@ export const PostList: React.FC<PostListProps> = ({
               boxSizing: 'border-box',
             }}
           />
-        </div>
+</div>
 
         {/* Category Dropdown (Clean SVG Chevron Icon) */}
         <div style={{ position: 'relative' }}>
@@ -553,7 +586,7 @@ export const PostList: React.FC<PostListProps> = ({
           >
             <polyline points="6 9 12 15 18 9" />
           </svg>
-        </div>
+</div>
 
         {/* Author Dropdown (Clean SVG Chevron Icon) */}
         <div style={{ position: 'relative' }}>
@@ -595,7 +628,7 @@ export const PostList: React.FC<PostListProps> = ({
           >
             <polyline points="6 9 12 15 18 9" />
           </svg>
-        </div>
+</div>
 
         {/* Status Dropdown (Clean SVG Chevron Icon) */}
         <div style={{ position: 'relative' }}>
@@ -637,7 +670,7 @@ export const PostList: React.FC<PostListProps> = ({
           >
             <polyline points="6 9 12 15 18 9" />
           </svg>
-        </div>
+</div>
 
         {/* Date Range Button */}
         <button
@@ -760,7 +793,7 @@ export const PostList: React.FC<PostListProps> = ({
             <span style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>
               {selectedPosts.size === 1 ? 'post selected' : 'posts selected'}
             </span>
-          </div>
+  </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             {currentTab !== 'trash' ? (
@@ -964,8 +997,8 @@ export const PostList: React.FC<PostListProps> = ({
             >
               <span>Deselect All</span>
             </button>
-          </div>
-        </div>
+  </div>
+</div>
       )}
 
       {/* 4. Posts Data Table Card */}
@@ -979,10 +1012,10 @@ export const PostList: React.FC<PostListProps> = ({
         }}
       >
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+          <table style={{ width: '100%', minWidth: '1060px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid #f1f5f9', color: '#475569', fontSize: '12px', background: '#fafafa' }}>
-                <th style={{ padding: '14px 16px', width: '36px' }}>
+                <th style={{ padding: '12px 14px', width: '40px' }}>
                   <input
                     type="checkbox"
                     onChange={handleSelectAll}
@@ -999,12 +1032,12 @@ export const PostList: React.FC<PostListProps> = ({
                     }}
                   />
                 </th>
-                <th style={{ padding: '14px 16px', fontWeight: 600 }}>Post</th>
-                <th style={{ padding: '14px 16px', fontWeight: 600 }}>Category</th>
-                <th style={{ padding: '14px 16px', fontWeight: 600 }}>Author</th>
-                <th style={{ padding: '14px 16px', fontWeight: 600 }}>Status</th>
-                <th style={{ padding: '14px 16px', fontWeight: 600 }}>Date ↓</th>
-                <th style={{ padding: '14px 16px', fontWeight: 600, textAlign: 'right' }}>Actions</th>
+                <th style={{ padding: '12px 14px', fontWeight: 600, minWidth: '350px' }}>Post</th>
+                <th style={{ padding: '12px 12px', fontWeight: 600, width: '130px' }}>Category</th>
+                <th style={{ padding: '12px 12px', fontWeight: 600, width: '120px' }}>Author</th>
+                <th style={{ padding: '12px 12px', fontWeight: 600, width: '90px' }}>Status</th>
+                <th style={{ padding: '12px 12px', fontWeight: 600, width: '120px' }}>Date ↓</th>
+                <th style={{ padding: '12px 16px', fontWeight: 600, width: '270px', textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -1032,7 +1065,7 @@ export const PostList: React.FC<PostListProps> = ({
                   const thumb =
                     post.image ||
                     post.featured_image?.url ||
-                    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=120&auto=format&fit=crop&q=80';
+                    getDefaultFeaturedImage();
 
                   return (
                     <tr
@@ -1044,7 +1077,7 @@ export const PostList: React.FC<PostListProps> = ({
                       }}
                     >
                       {/* Checkbox */}
-                      <td style={{ padding: '14px 16px' }}>
+                      <td style={{ padding: '12px 14px', width: '40px' }}>
                         <input
                           type="checkbox"
                           checked={isChecked}
@@ -1063,8 +1096,8 @@ export const PostList: React.FC<PostListProps> = ({
                       </td>
 
                       {/* Post Title & Slug */}
-                      <td style={{ padding: '14px 16px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <td style={{ padding: '12px 14px', minWidth: '350px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           <img
                             src={thumb}
                             alt=""
@@ -1077,7 +1110,7 @@ export const PostList: React.FC<PostListProps> = ({
                               border: '1px solid #e2e8f0',
                             }}
                           />
-                          <div>
+                          <div style={{ minWidth: 0, flex: 1 }}>
                             <div
                               onClick={() => onNavigateToEditPost && onNavigateToEditPost(post.id)}
                               style={{
@@ -1085,7 +1118,7 @@ export const PostList: React.FC<PostListProps> = ({
                                 color: '#0f172a',
                                 fontSize: '13.5px',
                                 cursor: 'pointer',
-                                lineHeight: 1.35,
+                                lineHeight: 1.4,
                               }}
                             >
                               {post.title ? post.title.replace(/<[^>]*>/g, '').trim() : 'Untitled Article'}
@@ -1098,7 +1131,7 @@ export const PostList: React.FC<PostListProps> = ({
                       </td>
 
                       {/* Category */}
-                      <td style={{ padding: '14px 16px' }}>
+                      <td style={{ padding: '12px 12px', width: '130px' }}>
                         <span
                           style={{
                             display: 'inline-block',
@@ -1116,7 +1149,7 @@ export const PostList: React.FC<PostListProps> = ({
                       </td>
 
                       {/* Author */}
-                      <td style={{ padding: '14px 16px' }}>
+                      <td style={{ padding: '12px 12px', width: '120px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
                           <div
                             style={{
@@ -1140,7 +1173,7 @@ export const PostList: React.FC<PostListProps> = ({
                       </td>
 
                       {/* Status */}
-                      <td style={{ padding: '14px 16px' }}>
+                      <td style={{ padding: '12px 12px', width: '90px' }}>
                         <span
                           style={{
                             display: 'inline-block',
@@ -1159,14 +1192,14 @@ export const PostList: React.FC<PostListProps> = ({
                       </td>
 
                       {/* Date */}
-                      <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
+                      <td style={{ padding: '12px 12px', width: '120px', whiteSpace: 'nowrap' }}>
                         <div style={{ fontSize: '12px', color: '#0f172a', fontWeight: 500 }}>{dateInfo.line1}</div>
                         <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>{dateInfo.line2}</div>
                       </td>
 
                       {/* Actions: Edit, Duplicate, Trash */}
-                      <td style={{ padding: '14px 16px', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                        <div style={{ display: 'inline-flex', gap: '8px', justifyContent: 'flex-end' }}>
+                      <td style={{ padding: '12px 16px', width: '270px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                        <div style={{ display: 'inline-flex', gap: '6px', justifyContent: 'flex-end' }}>
                           {currentTab === 'trash' || post.status === 'trashed' ? (
                             <>
                               <button
@@ -1218,19 +1251,19 @@ export const PostList: React.FC<PostListProps> = ({
                                 style={{
                                   display: 'inline-flex',
                                   alignItems: 'center',
-                                  gap: '5px',
-                                  padding: '5px 10px',
+                                  gap: '4px',
+                                  padding: '4px 8px',
                                   borderRadius: '6px',
                                   background: '#ffffff',
                                   border: '1px solid #e2e8f0',
                                   color: '#334155',
-                                  fontSize: '11.5px',
+                                  fontSize: '11px',
                                   fontWeight: 500,
                                   cursor: 'pointer',
                                   transition: 'all 0.1s ease',
                                 }}
                               >
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                   <path d="M2 12s3-7 10-7 7 7 10 7-3 7-10 7-10-7-10-7Z" />
                                   <circle cx="12" cy="12" r="3" />
                                 </svg>
@@ -1245,19 +1278,19 @@ export const PostList: React.FC<PostListProps> = ({
                                   style={{
                                     display: 'inline-flex',
                                     alignItems: 'center',
-                                    gap: '5px',
-                                    padding: '5px 10px',
+                                    gap: '4px',
+                                    padding: '4px 8px',
                                     borderRadius: '6px',
                                     background: '#fffdf0',
                                     border: '1px solid #fef08a',
                                     color: '#ca8a04',
-                                    fontSize: '11.5px',
+                                    fontSize: '11px',
                                     fontWeight: 500,
                                     cursor: 'pointer',
                                     transition: 'all 0.1s ease',
                                   }}
                                 >
-                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
                                   </svg>
                                   <span>Edit</span>
@@ -1272,26 +1305,26 @@ export const PostList: React.FC<PostListProps> = ({
                                 style={{
                                   display: 'inline-flex',
                                   alignItems: 'center',
-                                  gap: '5px',
-                                  padding: '5px 10px',
+                                  gap: '4px',
+                                  padding: '4px 8px',
                                   borderRadius: '6px',
                                   background: '#ffffff',
                                   border: '1px solid #e2e8f0',
                                   color: '#475569',
-                                  fontSize: '11.5px',
+                                  fontSize: '11px',
                                   fontWeight: 500,
                                   cursor: 'pointer',
                                   transition: 'all 0.1s ease',
                                 }}
                               >
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                   <rect width="13" height="13" x="9" y="9" rx="2" ry="2" />
                                   <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                                 </svg>
                                 <span>Duplicate</span>
                               </button>
 
-                              {/* Trash Button: Triggers custom popup modal, no browser alert */}
+                              {/* Trash Button */}
                               <button
                                 type="button"
                                 onClick={() => handleOpenTrashModal(post.id, post.title)}
@@ -1299,19 +1332,19 @@ export const PostList: React.FC<PostListProps> = ({
                                 style={{
                                   display: 'inline-flex',
                                   alignItems: 'center',
-                                  gap: '5px',
-                                  padding: '5px 10px',
+                                  gap: '4px',
+                                  padding: '4px 8px',
                                   borderRadius: '6px',
                                   background: '#fff1f2',
                                   border: '1px solid #ffe4e6',
                                   color: '#e11d48',
-                                  fontSize: '11.5px',
+                                  fontSize: '11px',
                                   fontWeight: 500,
                                   cursor: 'pointer',
                                   transition: 'all 0.1s ease',
                                 }}
                               >
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                   <path d="M3 6h18" />
                                   <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
                                   <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
@@ -1320,7 +1353,7 @@ export const PostList: React.FC<PostListProps> = ({
                               </button>
                             </>
                           )}
-                        </div>
+                </div>
                       </td>
                     </tr>
                   );
@@ -1328,7 +1361,7 @@ export const PostList: React.FC<PostListProps> = ({
               )}
             </tbody>
           </table>
-        </div>
+</div>
 
         {/* 5. Pagination & Footer (Real dynamic pages right after Show Per Page) */}
         <div
@@ -1346,7 +1379,7 @@ export const PostList: React.FC<PostListProps> = ({
           {/* Left Count */}
           <div style={{ color: '#64748b' }}>
             Showing {totalCount > 0 ? (page - 1) * itemsPerPage + 1 : 0} to {Math.min(page * itemsPerPage, totalCount)} of {totalCount} posts
-          </div>
+  </div>
 
           {/* Right Section: Show Per Page Selector, followed by Pagination Buttons */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
@@ -1390,9 +1423,9 @@ export const PostList: React.FC<PostListProps> = ({
                 >
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
-              </div>
+      </div>
               <span>per page</span>
-            </div>
+    </div>
 
             {/* Dynamic Page Buttons: only real pages */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -1530,7 +1563,7 @@ export const PostList: React.FC<PostListProps> = ({
                 <line x1="10" y1="11" x2="10" y2="17" />
                 <line x1="14" y1="11" x2="14" y2="17" />
               </svg>
-            </div>
+    </div>
 
             <h3 style={{ margin: '0 0 8px 0', fontSize: '1.15rem', fontWeight: 600, color: '#0f172a' }}>
               {confirmModal.isPermanent ? 'Permanently Delete Post?' : 'Move to Trash?'}
@@ -1587,6 +1620,20 @@ export const PostList: React.FC<PostListProps> = ({
           </div>
         </div>
       )}
+      {/* Bulk Import Modal */}
+      <ArticleBulkUploadModal
+        isOpen={isBulkImportOpen}
+        onClose={() => setIsBulkImportOpen(false)}
+        client={client}
+        existingPosts={posts}
+        categories={categories}
+        authors={authors}
+        onSuccess={(count) => {
+          fetchPosts();
+          fetchTabCounts();
+          alert(`Successfully imported ${count} article${count === 1 ? '' : 's'}!`);
+        }}
+      />
     </div>
   );
 };

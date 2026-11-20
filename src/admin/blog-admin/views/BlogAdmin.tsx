@@ -208,6 +208,7 @@ export const BlogAdmin: React.FC<BlogAdminProps> = ({
     { key: 'overview', label: 'Overview', icon: Icons.Overview, badge: undefined },
     { key: 'posts', label: 'Posts', icon: Icons.Posts, badge: undefined },
     { key: 'categories', label: 'Categories', icon: Icons.Categories, badge: undefined },
+    { key: 'tags', label: 'Tags', icon: Icons.Tags, badge: undefined },
     { key: 'authors', label: 'Authors', icon: Icons.Authors, badge: undefined },
     ...(isMediaEnabled
       ? [{ key: 'media', label: 'Media', icon: Icons.Media, badge: undefined }]
@@ -643,6 +644,10 @@ export const BlogAdmin: React.FC<BlogAdminProps> = ({
             <BlogSettingsView
               client={client}
               onSettingsUpdated={(newSettings) => setSettings(newSettings)}
+              onOpenMediaLibrary={(onSelect) => {
+                setMediaPickerSelectCallback(() => onSelect);
+                setShowMediaPickerModal(true);
+              }}
             />
           )}
         </main>

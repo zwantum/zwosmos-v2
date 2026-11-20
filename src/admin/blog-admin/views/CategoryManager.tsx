@@ -15,6 +15,12 @@ const slugify = (str: string) =>
     .replace(/[\s_-]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
+const sanitizeSlugInput = (raw: string) =>
+  raw
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '-')
+    .replace(/-{2,}/g, '-');
+
 export const CategoryManager: React.FC<CategoryManagerProps> = ({ client, className = '' }) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,10 +41,12 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ client, classN
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // SEO Fields (like tags)
-  const [rankEnabled, setRankEnabled] = useState(false);
+  const [rankEnabled, setRankEnabled] = useState(true); // Default: Indexable for search ranking
   const [seoTitle, setSeoTitle] = useState('');
   const [seoDescription, setSeoDescription] = useState('');
   const [canonicalUrl, setCanonicalUrl] = useState('');
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
 
   const fetchCategories = useCallback(async () => {
     setLoading(true);
@@ -65,7 +73,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ client, classN
     setParentId('');
     setDisplayOrder(categories.length);
     setImageUrl('');
-    setRankEnabled(false); // Default hidden until clicked
+    setRankEnabled(true);
     setSeoTitle('');
     setSeoDescription('');
     setCanonicalUrl('');
@@ -104,7 +112,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ client, classN
 
   const handleSlugChange = (val: string) => {
     setIsSlugCustomized(true);
-    setSlug(slugify(val));
+    setSlug(sanitizeSlugInput(val));
   };
 
   // Device file upload
@@ -174,6 +182,47 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ client, classN
       alert(`Error deleting category: ${err}`);
     }
   };
+
+  const handleToggleRanking = async (cat: Category) => {
+    const isCurrentlyRanked = !cat.no_index && !(cat.robots?.includes('noindex') ?? false);
+    const newRanked = !isCurrentlyRanked;
+    setUpdatingId(cat.id);
+    try {
+      await client.categories.update(cat.id, {
+        robots: newRanked ? 'index,follow' : 'noindex,follow',
+        no_index: !newRanked,
+      });
+      await fetchCategories();
+    } catch (err) {
+      alert(`Error updating category ranking: ${err}`);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleMakeAllIndexable = async () => {
+    const noIndexCats = categories.filter((c) => c.no_index || (c.robots?.includes('noindex') ?? false));
+    if (noIndexCats.length === 0) return;
+
+    setIsBulkUpdating(true);
+    try {
+      await Promise.all(
+        noIndexCats.map((c) =>
+          client.categories.update(c.id, {
+            robots: 'index,follow',
+            no_index: false,
+          })
+        )
+      );
+      await fetchCategories();
+    } catch (err) {
+      alert(`Error updating categories: ${err}`);
+    } finally {
+      setIsBulkUpdating(false);
+    }
+  };
+
+  const noIndexCount = categories.filter((c) => c.no_index || (c.robots?.includes('noindex') ?? false)).length;
 
   // Filtered categories
   const filteredCategories = categories.filter((cat) => {
@@ -250,36 +299,65 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ client, classN
           <div style={{ fontSize: '13.5px', fontWeight: 600, color: '#0f172a' }}>
             All Categories ({categories.length})
           </div>
-          <div style={{ position: 'relative', width: '240px' }}>
-            <input
-              type="text"
-              placeholder="Search categories..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '7px 12px 7px 32px',
-                borderRadius: '6px',
-                border: '1px solid #e2e8f0',
-                fontSize: '12.5px',
-                outline: 'none',
-                boxSizing: 'border-box',
-              }}
-            />
-            <svg
-              width="13"
-              height="13"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#94a3b8"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{ position: 'absolute', left: '11px', top: '50%', transform: 'translateY(-50%)' }}
-            >
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {noIndexCount > 0 && (
+              <button
+                type="button"
+                onClick={handleMakeAllIndexable}
+                disabled={isBulkUpdating}
+                title="Update all categories currently marked Noindex to Indexable"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '5px 12px',
+                  borderRadius: '6px',
+                  background: '#ecfdf5',
+                  border: '1px solid #a7f3d0',
+                  color: '#047857',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: isBulkUpdating ? 'wait' : 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span>{isBulkUpdating ? 'Updating all...' : `Make All Indexable (${noIndexCount})`}</span>
+              </button>
+            )}
+            <div style={{ position: 'relative', width: '240px' }}>
+              <input
+                type="text"
+                placeholder="Search categories..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '7px 12px 7px 32px',
+                  borderRadius: '6px',
+                  border: '1px solid #e2e8f0',
+                  fontSize: '12.5px',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#94a3b8"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ position: 'absolute', left: '11px', top: '50%', transform: 'translateY(-50%)' }}
+              >
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </div>
           </div>
         </div>
 
@@ -380,41 +458,28 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ client, classN
                         {parent ? parent.name : '—'}
                       </td>
                       <td style={{ padding: '14px 18px' }}>
-                        {isRanked ? (
-                          <span
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              padding: '3px 8px',
-                              borderRadius: '12px',
-                              background: '#dcfce7',
-                              color: '#15803d',
-                              fontSize: '11px',
-                              fontWeight: 600,
-                            }}
-                          >
-                            <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#16a34a' }} />
-                            Indexable
-                          </span>
-                        ) : (
-                          <span
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              padding: '3px 8px',
-                              borderRadius: '12px',
-                              background: '#fef3c7',
-                              color: '#b45309',
-                              fontSize: '11px',
-                              fontWeight: 600,
-                            }}
-                          >
-                            <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#d97706' }} />
-                            Noindex
-                          </span>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleToggleRanking(cat)}
+                          disabled={updatingId === cat.id}
+                          title={`Click to switch to ${isRanked ? 'Noindex' : 'Indexable'}`}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '3px 8px',
+                            borderRadius: '12px',
+                            background: isRanked ? '#dcfce7' : '#fef3c7',
+                            color: isRanked ? '#15803d' : '#b45309',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            border: isRanked ? '1px solid #bbf7d0' : '1px solid #fde68a',
+                            cursor: updatingId === cat.id ? 'wait' : 'pointer',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          {updatingId === cat.id ? 'Updating...' : (isRanked ? 'Indexable' : 'Noindex')}
+                        </button>
                       </td>
                       <td style={{ padding: '14px 18px' }}>
                         <span
@@ -594,6 +659,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ client, classN
                       type="text"
                       value={slug}
                       onChange={(e) => handleSlugChange(e.target.value)}
+                      onBlur={() => setSlug((s) => slugify(s))}
                       placeholder="architectural-vastu"
                       style={{
                         width: '100%',

@@ -6,6 +6,7 @@ import { ALL_BLOG_POSTS } from '../../data/blogData';
 import { useBlogPosts } from '@zwantum/blog/react';
 import ZwosmosIcon from '../common/ZwosmosIcon';
 import CelestialReadingToggle from '../common/CelestialReadingToggle';
+import { getDefaultFeaturedImage } from '../../lib/blogClient';
 
 export interface HeaderProps {
   isLight?: boolean;
@@ -118,7 +119,7 @@ export const Header: React.FC<HeaderProps> = ({ isLight: propIsLight, theme: pro
         categorySlug: post.categories?.[0]?.slug || 'space-news',
         title: post.title,
         desc: post.excerpt || '',
-        img: post.featured_image?.url || 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1600&auto=format&fit=crop',
+        img: post.featured_image?.url || getDefaultFeaturedImage(),
         authorName: post.author?.name || 'Editorial Team',
         authorImg: post.author?.profile_image_url || undefined,
         date: post.published_at

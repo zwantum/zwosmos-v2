@@ -1,21 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BlogSettings } from '@zwantum/blog-types';
 import { BlogClient } from '@zwantum/blog-core';
 
 export interface ExtendedBlogSettings extends BlogSettings {
   enableDropCap?: boolean;
+  defaultFeaturedImageUrl?: string;
 }
 
 export interface BlogSettingsViewProps {
   client: BlogClient;
   className?: string;
   onSettingsUpdated?: (settings: ExtendedBlogSettings) => void;
+  onOpenMediaLibrary?: (onSelect: (media: any) => void) => void;
 }
 
 export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
   client,
   className = '',
   onSettingsUpdated,
+  onOpenMediaLibrary,
 }) => {
   const [settings, setSettings] = useState<ExtendedBlogSettings>({
     blogTitle: 'Blog',
@@ -28,8 +31,23 @@ export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
     enableRevisions: true,
     enableRedirects: true,
     enableDropCap: true,
+    defaultFeaturedImageUrl: '',
     timezone: 'UTC',
   });
+
+  const defaultImageInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleDefaultImageFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setSettings((prev) => ({ ...prev, defaultFeaturedImageUrl: reader.result as string }));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const [activeTab, setActiveTab] = useState<'general' | 'seo' | 'modules'>('general');
   const [saving, setSaving] = useState(false);
@@ -45,20 +63,25 @@ export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
   useEffect(() => {
     client.settings.get().then((data: any) => {
       let dropCapVal = data.enableDropCap !== undefined ? data.enableDropCap : true;
+      let defaultImgVal = data.defaultFeaturedImageUrl || '';
       try {
         const zwSettings = localStorage.getItem('zwosmos_site_settings');
         if (zwSettings) {
           const parsed = JSON.parse(zwSettings);
           if (parsed.enableDropCap !== undefined) dropCapVal = parsed.enableDropCap;
+          if (parsed.defaultFeaturedImageUrl) defaultImgVal = parsed.defaultFeaturedImageUrl;
         }
         const bDrop = localStorage.getItem('zw_blog_drop_cap');
         if (bDrop !== null) dropCapVal = bDrop === 'true';
+        const bImg = localStorage.getItem('zw_default_featured_image');
+        if (bImg) defaultImgVal = bImg;
       } catch {}
       setSettings((prev) => ({
         ...prev,
         ...data,
         enableMedia: data.enableMedia !== false,
         enableDropCap: dropCapVal,
+        defaultFeaturedImageUrl: defaultImgVal,
       }));
     });
   }, [client]);
@@ -91,17 +114,28 @@ export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
       const updated = (await client.settings.update(settings as any)) as ExtendedBlogSettings;
       try {
         localStorage.setItem('zw_blog_drop_cap', String(settings.enableDropCap !== false));
+        if (settings.defaultFeaturedImageUrl !== undefined) {
+          localStorage.setItem('zw_default_featured_image', settings.defaultFeaturedImageUrl);
+        }
         const zwSettings = localStorage.getItem('zwosmos_site_settings');
         if (zwSettings) {
           const parsed = JSON.parse(zwSettings);
           parsed.enableDropCap = settings.enableDropCap !== false;
+          parsed.defaultFeaturedImageUrl = settings.defaultFeaturedImageUrl || '';
           localStorage.setItem('zwosmos_site_settings', JSON.stringify(parsed));
         }
         window.dispatchEvent(new CustomEvent('zwosmos_settings_updated', {
-          detail: { enableDropCap: settings.enableDropCap !== false }
+          detail: {
+            enableDropCap: settings.enableDropCap !== false,
+            defaultFeaturedImageUrl: settings.defaultFeaturedImageUrl || ''
+          }
         }));
       } catch {}
-      setSettings({ ...updated, enableDropCap: settings.enableDropCap });
+      setSettings({
+        ...updated,
+        enableDropCap: settings.enableDropCap,
+        defaultFeaturedImageUrl: settings.defaultFeaturedImageUrl
+      });
       setToastMessage({ text: 'Blog configuration saved successfully.', type: 'success' });
       onSettingsUpdated?.(updated);
       setTimeout(() => setToastMessage(null), 3000);
@@ -240,6 +274,157 @@ export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
                 placeholder="e.g. UTC, America/New_York, Asia/Kolkata"
                 value={settings.timezone}
                 onChange={(e) => setSettings({ ...settings, timezone: e.target.value })}
+              />
+            </div>
+
+            {/* Default Featured Image Option */}
+            <div
+              style={{
+                padding: '16px 18px',
+                borderRadius: '12px',
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                marginTop: '16px',
+                marginBottom: '12px',
+              }}
+            >
+              <div style={{ marginBottom: '12px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontWeight: 600,
+                    fontSize: '13.5px',
+                    color: '#0f172a',
+                    marginBottom: '4px',
+                  }}
+                >
+                  🖼️ Default Featured Image
+                </label>
+                <div style={{ fontSize: '12px', color: '#64748b', lineHeight: 1.4 }}>
+                  Fallback image automatically shown on any article, card, and social share when no specific featured image is uploaded.
+                </div>
+              </div>
+
+              {settings.defaultFeaturedImageUrl ? (
+                <div style={{ marginBottom: '14px' }}>
+                  <div
+                    style={{
+                      position: 'relative',
+                      width: '100%',
+                      maxWidth: '420px',
+                      height: '180px',
+                      borderRadius: '10px',
+                      overflow: 'hidden',
+                      border: '1px solid #cbd5e1',
+                      background: '#0f172a',
+                      marginBottom: '10px',
+                    }}
+                  >
+                    <img
+                      src={settings.defaultFeaturedImageUrl}
+                      alt="Default Featured Image Preview"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000&auto=format&fit=crop';
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      className="zw-admin-btn zw-admin-btn-secondary zw-admin-btn-sm"
+                      onClick={() => {
+                        if (onOpenMediaLibrary) {
+                          onOpenMediaLibrary((media: any) => {
+                            if (media?.url) {
+                              setSettings({ ...settings, defaultFeaturedImageUrl: media.url });
+                            }
+                          });
+                        } else {
+                          defaultImageInputRef.current?.click();
+                        }
+                      }}
+                    >
+                      Change Image
+                    </button>
+                    <button
+                      type="button"
+                      className="zw-admin-btn zw-admin-btn-sm"
+                      style={{
+                        background: '#fff1f2',
+                        border: '1px solid #fecdd3',
+                        color: '#e11d48',
+                        fontWeight: 600,
+                      }}
+                      onClick={() => setSettings({ ...settings, defaultFeaturedImageUrl: '' })}
+                    >
+                      Remove Default Image
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  style={{
+                    border: '2px dashed #cbd5e1',
+                    borderRadius: '10px',
+                    padding: '20px 16px',
+                    textAlign: 'center',
+                    background: '#ffffff',
+                    marginBottom: '12px',
+                  }}
+                >
+                  <p style={{ margin: '0 0 10px 0', fontSize: '12.5px', color: '#64748b' }}>
+                    No custom default image set. (Using default cosmic placeholder)
+                  </p>
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                    {onOpenMediaLibrary && (
+                      <button
+                        type="button"
+                        className="zw-admin-btn zw-admin-btn-primary zw-admin-btn-sm"
+                        onClick={() => {
+                          onOpenMediaLibrary((media: any) => {
+                            if (media?.url) {
+                              setSettings({ ...settings, defaultFeaturedImageUrl: media.url });
+                            }
+                          });
+                        }}
+                      >
+                        🖼️ Select from Media Library
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="zw-admin-btn zw-admin-btn-secondary zw-admin-btn-sm"
+                      onClick={() => defaultImageInputRef.current?.click()}
+                    >
+                      📁 Upload from Device
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Direct URL input fallback */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                  Or paste direct Image URL:
+                </label>
+                <input
+                  type="url"
+                  className="zw-admin-input"
+                  placeholder="https://images.unsplash.com/..."
+                  value={settings.defaultFeaturedImageUrl || ''}
+                  onChange={(e) => setSettings({ ...settings, defaultFeaturedImageUrl: e.target.value })}
+                  style={{ fontSize: '12.5px' }}
+                />
+              </div>
+
+              <input
+                ref={defaultImageInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleDefaultImageFileSelect}
+                style={{ display: 'none' }}
               />
             </div>
 

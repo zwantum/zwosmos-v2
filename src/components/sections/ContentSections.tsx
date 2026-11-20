@@ -7,6 +7,7 @@ import ZwosmosIcon from '../common/ZwosmosIcon';
 import { useBlogPosts } from '@zwantum/blog/react';
 import { BookItem, booksService, INITIAL_BOOKS, getDailyOrbitBooks } from '../../lib/booksService';
 import { getPostDisplayDate } from '../../lib/dateUtils';
+import { getDefaultFeaturedImage } from '../../lib/blogClient';
 
 export interface ContentSectionsProps {
   hasHero?: boolean;
@@ -100,7 +101,7 @@ const ContentSections: React.FC<ContentSectionsProps> = () => {
       desc: cleanExcerpt,
       authorName,
       date: dateStr,
-      img: post.featured_image?.url || post.cover_image || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000&auto=format&fit=crop'
+      img: post.featured_image?.url || post.cover_image || getDefaultFeaturedImage()
     };
   };
 

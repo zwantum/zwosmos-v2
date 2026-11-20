@@ -343,11 +343,26 @@ export const PostEditor: React.FC<PostEditorProps> = ({
         const found = latestTags.find((t) => t.name.toLowerCase() === trimmed.toLowerCase());
         if (found) {
           if (!finalTagIds.includes(found.id)) finalTagIds.push(found.id);
+          // If this tag had legacy noindex from the past, automatically upgrade it to indexable
+          if (found.no_index || (found.robots?.includes('noindex') ?? false)) {
+            try {
+              await client.tags.update(found.id, {
+                robots: 'index,follow',
+                no_index: false,
+              });
+              found.robots = 'index,follow';
+              found.no_index = false;
+            } catch (err) {
+              console.warn('Could not upgrade tag to indexable:', found.name, err);
+            }
+          }
         } else {
           try {
             const createdTag = await client.tags.create({
               name: trimmed,
               slug: generateSlug(trimmed) || trimmed.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+              robots: 'index,follow',
+              no_index: false,
             });
             if (createdTag?.id && !finalTagIds.includes(createdTag.id)) {
               finalTagIds.push(createdTag.id);
@@ -1319,7 +1334,7 @@ export const PostEditor: React.FC<PostEditorProps> = ({
                 </div>
               ) : (
                 <div style={{ textAlign: 'center', padding: '18px 12px', border: '2px dashed #cbd5e1', borderRadius: '8px' }}>
-                  <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 10px 0' }}>No featured image set</p>
+                  <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 10px 0' }}>No featured image set (default image will be used)</p>
                   <div style={{ display: 'flex', justifyContent: 'center' }}>
                     <button
                       type="button"

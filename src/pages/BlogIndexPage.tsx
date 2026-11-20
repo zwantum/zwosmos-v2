@@ -9,6 +9,7 @@ import ZwosmosIcon from '../components/common/ZwosmosIcon';
 import { useBlogPosts } from '@zwantum/blog/react';
 import { useSEO } from '../lib/seoService';
 import { getPostDisplayDate } from '../lib/dateUtils';
+import { getDefaultFeaturedImage } from '../lib/blogClient';
 
 // The exact 9 categories from MegaMenu + All Stories
 const BLOG_CATEGORIES = [
@@ -80,7 +81,7 @@ const BlogIndexPage: React.FC = () => {
         categorySlug: post.categories?.[0]?.slug || 'space-news',
         title: post.title,
         desc: post.excerpt || '',
-        img: (typeof post.featured_image?.url === 'string' ? post.featured_image.url : '') || (typeof post.custom_fields?.featured_image_url === 'string' ? post.custom_fields.featured_image_url : '') || 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1600&auto=format&fit=crop',
+        img: (typeof post.featured_image?.url === 'string' ? post.featured_image.url : '') || (typeof post.custom_fields?.featured_image_url === 'string' ? post.custom_fields.featured_image_url : '') || getDefaultFeaturedImage(),
         authorName: post.author?.name || 'Editorial Team',
         authorImg: post.author?.profile_image_url || undefined,
         date: getPostDisplayDate(post.published_at, post.updated_at, { format: 'short', prefix: 'Updated ' }).displayDate || 'Recent',

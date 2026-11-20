@@ -12,6 +12,7 @@ import {
   ChevronRight,
   ChevronDown,
   FolderTree,
+  Tag,
   Users,
   Image as ImageIcon,
   SlidersHorizontal,
@@ -27,8 +28,8 @@ import './Admin.css';
 type AdminTab = 'blogs' | 'facts' | 'books' | 'settings';
 const VALID_TABS: AdminTab[] = ['blogs', 'facts', 'books', 'settings'];
 
-type BlogSubView = 'overview' | 'posts' | 'categories' | 'authors' | 'media' | 'settings';
-const VALID_BLOG_VIEWS: BlogSubView[] = ['overview', 'posts', 'categories', 'authors', 'media', 'settings'];
+type BlogSubView = 'overview' | 'posts' | 'categories' | 'tags' | 'authors' | 'media' | 'settings';
+const VALID_BLOG_VIEWS: BlogSubView[] = ['overview', 'posts', 'categories', 'tags', 'authors', 'media', 'settings'];
 
 import type { LucideIcon } from 'lucide-react';
 
@@ -42,6 +43,7 @@ const blogSubItems: BlogSubItemConfig[] = [
   { key: 'overview', label: 'Overview', icon: LayoutDashboard },
   { key: 'posts', label: 'Posts', icon: FileText },
   { key: 'categories', label: 'Categories', icon: FolderTree },
+  { key: 'tags', label: 'Tags', icon: Tag },
   { key: 'authors', label: 'Authors', icon: Users },
   { key: 'media', label: 'Media', icon: ImageIcon },
   { key: 'settings', label: 'Settings', icon: SlidersHorizontal },

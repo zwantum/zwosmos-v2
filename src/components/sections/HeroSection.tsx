@@ -7,6 +7,7 @@ import SoftAurora from '../common/SoftAurora';
 import Aurora from '../common/Aurora';
 import { useBlogPosts } from '@zwantum/blog/react';
 import ZwosmosIcon from '../common/ZwosmosIcon';
+import { getDefaultFeaturedImage } from '../../lib/blogClient';
 
 class SafeAuroraBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
   constructor(props: { children: React.ReactNode }) {
@@ -65,7 +66,7 @@ export const HeroSection: React.FC = () => {
 
   const featuredPost = liveFeatured || cachedFeatured;
 
-  const featuredImg = featuredPost?.featured_image?.url || '';
+  const featuredImg = featuredPost?.featured_image?.url || getDefaultFeaturedImage();
   const featuredLink = featuredPost ? `/blog/${featuredPost.slug || featuredPost.id}` : '#';
   const featuredTitle = featuredPost?.title || '';
   const featuredExcerpt = featuredPost?.excerpt || '';

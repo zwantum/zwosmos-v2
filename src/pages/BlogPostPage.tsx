@@ -11,7 +11,7 @@ import { BlogContent } from '../components/common/BlogContent';
 import '@zwantum/blog-editor/content.css';
 import { useSEO } from '../lib/seoService';
 import { settingsService } from '../lib/settingsService';
-import { blogClient } from '../lib/blogClient';
+import { blogClient, getDefaultFeaturedImage } from '../lib/blogClient';
 import { getPostDisplayDate } from '../lib/dateUtils';
 
 const BlogPostPage: React.FC = () => {
@@ -198,7 +198,7 @@ const BlogPostPage: React.FC = () => {
     activePost?.featured_image?.url ||
     activePost?.custom_fields?.featured_image_url ||
     activePost?.seo?.og_image_url ||
-    '';
+    getDefaultFeaturedImage();
   const articleAuthor = activePost?.author?.name || 'Zwosmos';
   const articlePublishedAt = activePost?.published_at;
   const articleCategory = activePost?.categories?.[0]?.name || 'Space News';
@@ -294,7 +294,7 @@ const BlogPostPage: React.FC = () => {
   const postData = {
     title: activePost?.title || '',
     excerpt: activePost?.excerpt || '',
-    featuredImage: activePost?.featured_image?.url || activePost?.custom_fields?.featured_image_url || '',
+    featuredImage: activePost?.featured_image?.url || activePost?.custom_fields?.featured_image_url || getDefaultFeaturedImage(),
     imageCaption: (() => {
       const cf = activePost?.custom_fields;
       const customCap = cf?.featured_image_caption ?? cf?.image_caption ?? cf?.caption;

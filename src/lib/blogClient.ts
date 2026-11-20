@@ -7,7 +7,26 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-a
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+export function getDefaultFeaturedImage(): string {
+  try {
+    if (typeof window !== 'undefined') {
+      const custom = localStorage.getItem('zw_default_featured_image');
+      if (custom && custom.trim()) return custom.trim();
+      const zw = localStorage.getItem('zwosmos_site_settings');
+      if (zw) {
+        const parsed = JSON.parse(zw);
+        if (parsed.defaultFeaturedImageUrl && parsed.defaultFeaturedImageUrl.trim()) {
+          return parsed.defaultFeaturedImageUrl.trim();
+        }
+      }
+    }
+  } catch {}
+  return 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000&auto=format&fit=crop';
+}
+
 class EnhancedSupabaseDatabaseAdapter extends SupabaseDatabaseAdapter {
+  private cachedDefaultFeaturedImageUrl?: string;
+
   private isUuid(val: unknown): val is string {
     return (
       typeof val === 'string' &&
@@ -215,6 +234,23 @@ class EnhancedSupabaseDatabaseAdapter extends SupabaseDatabaseAdapter {
         created_at: post.created_at || new Date().toISOString(),
         updated_at: post.updated_at || new Date().toISOString(),
       };
+    } else if (!post.featured_image) {
+      const fallbackUrl = this.cachedDefaultFeaturedImageUrl || getDefaultFeaturedImage();
+      if (fallbackUrl) {
+        post.featured_image = {
+          id: `default-${post.id}`,
+          url: fallbackUrl,
+          filename: 'default-featured-image.jpg',
+          original_name: 'default-featured-image.jpg',
+          mime_type: 'image/jpeg',
+          file_size: 0,
+          alt_text: post.title || 'Featured Image',
+          storage_provider: 'external',
+          storage_path: fallbackUrl,
+          created_at: post.created_at || new Date().toISOString(),
+          updated_at: post.updated_at || new Date().toISOString(),
+        };
+      }
     }
     return post;
   }
@@ -240,8 +276,87 @@ class EnhancedSupabaseDatabaseAdapter extends SupabaseDatabaseAdapter {
     }
   }
 
+  async getAllCategories(): Promise<any[]> {
+    const rawClient: any = (this as any).client;
+    try {
+      const { data: categories, error } = await rawClient
+        .from('blog_categories')
+        .select('*')
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+      if (!categories || categories.length === 0) return [];
+
+      try {
+        const { data: relations } = await rawClient
+          .from('blog_post_categories')
+          .select('category_id');
+
+        if (relations && relations.length > 0) {
+          const counts: Record<string, number> = {};
+          for (const rel of relations) {
+            if (rel.category_id) {
+              counts[rel.category_id] = (counts[rel.category_id] || 0) + 1;
+            }
+          }
+          return categories.map((c: any) => ({
+            ...c,
+            post_count: counts[c.id] || 0,
+          }));
+        }
+      } catch (countErr) {
+        console.warn('Could not load category counts from blog_post_categories:', countErr);
+      }
+
+      return categories.map((c: any) => ({ ...c, post_count: c.post_count || 0 }));
+    } catch {
+      return await super.getAllCategories();
+    }
+  }
+
+  async getAllTags(): Promise<any[]> {
+    const rawClient: any = (this as any).client;
+    try {
+      const { data: tags, error } = await rawClient
+        .from('blog_tags')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      if (!tags || tags.length === 0) return [];
+
+      try {
+        const { data: relations } = await rawClient
+          .from('blog_post_tags')
+          .select('tag_id');
+
+        if (relations && relations.length > 0) {
+          const counts: Record<string, number> = {};
+          for (const rel of relations) {
+            if (rel.tag_id) {
+              counts[rel.tag_id] = (counts[rel.tag_id] || 0) + 1;
+            }
+          }
+          return tags.map((t: any) => ({
+            ...t,
+            post_count: counts[t.id] || 0,
+          }));
+        }
+      } catch (countErr) {
+        console.warn('Could not load tag counts from blog_post_tags:', countErr);
+      }
+
+      return tags.map((t: any) => ({ ...t, post_count: t.post_count || 0 }));
+    } catch {
+      return await super.getAllTags();
+    }
+  }
+
   async createTag(input: any) {
     const { no_index, ...cleanInput } = input;
+    if (!cleanInput.robots) {
+      cleanInput.robots = 'index,follow';
+    }
     try {
       return await super.createTag(cleanInput);
     } catch (err: any) {
@@ -311,6 +426,21 @@ class EnhancedSupabaseDatabaseAdapter extends SupabaseDatabaseAdapter {
       result.data = result.data.map((p: any) => this.enrichPost(p));
     }
     return result;
+  }
+
+  async updateSettings(settings: any, key = 'general') {
+    if (settings && typeof settings === 'object' && settings.defaultFeaturedImageUrl !== undefined) {
+      this.cachedDefaultFeaturedImageUrl = settings.defaultFeaturedImageUrl;
+    }
+    return await super.updateSettings(settings, key);
+  }
+
+  async getSettings(key = 'general') {
+    const data: any = await super.getSettings(key);
+    if (data?.defaultFeaturedImageUrl) {
+      this.cachedDefaultFeaturedImageUrl = data.defaultFeaturedImageUrl;
+    }
+    return data;
   }
 
   async getPostById(id: string) {

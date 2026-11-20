@@ -7,6 +7,7 @@ import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 import ZwosmosIcon from '../components/common/ZwosmosIcon';
 import { useBlogPosts } from '@zwantum/blog/react';
+import { getDefaultFeaturedImage } from '../lib/blogClient';
 
 const POSTS_PER_PAGE = 12;
 
@@ -59,7 +60,7 @@ const AuthorPage: React.FC = () => {
       categorySlug: p.categories?.[0]?.slug || 'space-news',
       title: p.title,
       desc: p.excerpt || '',
-      img: p.featured_image?.url || 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1000&auto=format&fit=crop',
+      img: p.featured_image?.url || getDefaultFeaturedImage(),
       authorName: p.author?.name || 'Editorial Team',
       authorImg: p.author?.profile_image_url || undefined,
       date: p.published_at
