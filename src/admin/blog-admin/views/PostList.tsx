@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Post, PostStatus, Category, Author } from '@zwantum/blog-types';
 import { BlogClient } from '@zwantum/blog-core';
-import { getDefaultFeaturedImage } from '../../../lib/blogClient';
+import { getDefaultFeaturedImage } from '../utils/defaultImage';
 import { ArticleBulkUploadModal } from './ArticleBulkUploadModal';
 
 export interface PostListProps {

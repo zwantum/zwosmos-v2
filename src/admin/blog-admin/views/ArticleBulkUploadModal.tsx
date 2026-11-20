@@ -12,7 +12,7 @@ import {
 import * as XLSX from 'xlsx';
 import { BlogClient } from '@zwantum/blog-core';
 import { Post, PostCreateInput, Category, Author } from '@zwantum/blog-types';
-import { getDefaultFeaturedImage } from '../../../lib/blogClient';
+import { getDefaultFeaturedImage } from '../utils/defaultImage';
 
 interface ParsedArticleRow {
   rowNumber: number;
