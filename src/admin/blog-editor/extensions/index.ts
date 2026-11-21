@@ -11,6 +11,7 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Placeholder from '@tiptap/extension-placeholder';
 import Youtube from '@tiptap/extension-youtube';
+import TextAlign from '@tiptap/extension-text-align';
 
 import { BlogCallout } from './callout';
 import { BlogCTA } from './cta';
@@ -135,6 +136,11 @@ export function getBlogEditorExtensions(config?: BlogEditorConfig) {
     BlogCallout,
     BlogCTA,
     BlogFAQ,
+    TextAlign.configure({
+      types: ['heading', 'paragraph'],
+      alignments: ['left', 'center', 'right', 'justify'],
+      defaultAlignment: 'left',
+    }),
   ];
 
   return extensions;

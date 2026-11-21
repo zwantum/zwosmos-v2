@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Editor } from '@tiptap/react';
+import {
+  Bookmark,
+  HelpCircle,
+  Target,
+  Link2,
+  Video as VideoIcon,
+  Image as ImageIcon,
+} from 'lucide-react';
 
 export type ActiveDialogType = 'link' | 'video' | 'cta' | 'faq' | 'image' | 'citation' | null;
 
@@ -304,8 +312,9 @@ export const EditorModal: React.FC<EditorModalProps> = ({ type, editor, onClose 
         {type === 'citation' && (
           <form onSubmit={handleCitationSubmit}>
             <div className="zw-blog-modal-header">
-              <h3 className="zw-blog-modal-title">
-                <span>🔖</span> {isCitationActive ? 'Edit Reference Citation' : 'Insert Reference Citation'}
+              <h3 className="zw-blog-modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Bookmark size={18} strokeWidth={2} style={{ color: '#e11d48' }} />
+                <span>{isCitationActive ? 'Edit Reference Citation' : 'Insert Reference Citation'}</span>
               </h3>
               <button type="button" className="zw-blog-modal-close" onClick={onClose} title="Close (Esc)">
                 ✕
@@ -416,8 +425,9 @@ export const EditorModal: React.FC<EditorModalProps> = ({ type, editor, onClose 
         {type === 'faq' && (
           <form onSubmit={handleFaqSubmit}>
             <div className="zw-blog-modal-header">
-              <h3 className="zw-blog-modal-title">
-                <span>❓</span> Insert FAQ Accordion
+              <h3 className="zw-blog-modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <HelpCircle size={18} strokeWidth={2} style={{ color: '#7c3aed' }} />
+                <span>Insert FAQ Accordion</span>
               </h3>
               <button type="button" className="zw-blog-modal-close" onClick={onClose} title="Close (Esc)">
                 ✕
@@ -468,8 +478,9 @@ export const EditorModal: React.FC<EditorModalProps> = ({ type, editor, onClose 
         {type === 'cta' && (
           <form onSubmit={handleCtaSubmit}>
             <div className="zw-blog-modal-header">
-              <h3 className="zw-blog-modal-title">
-                <span>🎯</span> Insert Call-to-Action (CTA) Banner
+              <h3 className="zw-blog-modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Target size={18} strokeWidth={2} style={{ color: '#e11d48' }} />
+                <span>Insert Call-to-Action (CTA) Banner</span>
               </h3>
               <button type="button" className="zw-blog-modal-close" onClick={onClose} title="Close (Esc)">
                 ✕
@@ -538,8 +549,9 @@ export const EditorModal: React.FC<EditorModalProps> = ({ type, editor, onClose 
         {type === 'link' && (
           <form onSubmit={handleLinkSubmit}>
             <div className="zw-blog-modal-header">
-              <h3 className="zw-blog-modal-title">
-                <span>🔗</span> {isLinkActive ? 'Edit Link' : 'Insert Link'}
+              <h3 className="zw-blog-modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Link2 size={18} strokeWidth={2} style={{ color: '#2563eb' }} />
+                <span>{isLinkActive ? 'Edit Link' : 'Insert Link'}</span>
               </h3>
               <button type="button" className="zw-blog-modal-close" onClick={onClose} title="Close (Esc)">
                 ✕
@@ -606,8 +618,9 @@ export const EditorModal: React.FC<EditorModalProps> = ({ type, editor, onClose 
         {type === 'video' && (
           <form onSubmit={handleVideoSubmit}>
             <div className="zw-blog-modal-header">
-              <h3 className="zw-blog-modal-title">
-                <span>▶️</span> Embed YouTube Video
+              <h3 className="zw-blog-modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <VideoIcon size={18} strokeWidth={2} style={{ color: '#dc2626' }} />
+                <span>Embed YouTube Video</span>
               </h3>
               <button type="button" className="zw-blog-modal-close" onClick={onClose} title="Close (Esc)">
                 ✕
@@ -647,8 +660,9 @@ export const EditorModal: React.FC<EditorModalProps> = ({ type, editor, onClose 
         {type === 'image' && (
           <form onSubmit={handleImageSubmit}>
             <div className="zw-blog-modal-header">
-              <h3 className="zw-blog-modal-title">
-                <span>🖼️</span> Insert Image by URL
+              <h3 className="zw-blog-modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ImageIcon size={18} strokeWidth={2} style={{ color: '#059669' }} />
+                <span>Insert Image by URL</span>
               </h3>
               <button type="button" className="zw-blog-modal-close" onClick={onClose} title="Close (Esc)">
                 ✕

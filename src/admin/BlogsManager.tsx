@@ -93,10 +93,11 @@ class BlogAdminErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundary
 
 export interface BlogsManagerProps {
   view?: BlogAdminView;
+  viewNonce?: number;
   onViewChange?: (view: BlogAdminView) => void;
 }
 
-export default function BlogsManager({ view, onViewChange }: BlogsManagerProps) {
+export default function BlogsManager({ view, viewNonce, onViewChange }: BlogsManagerProps) {
   useEffect(() => {
     // Prevent toolbar buttons and bubble menu buttons from stealing focus / collapsing selection on mousedown
     const handleMouseDown = (e: MouseEvent) => {
@@ -124,6 +125,7 @@ export default function BlogsManager({ view, onViewChange }: BlogsManagerProps) 
           className="zw-blog-admin-boxed"
           hideSidebar={true}
           view={view}
+          viewNonce={viewNonce}
           onViewChange={onViewChange}
         />
       </BlogAdminErrorBoundary>

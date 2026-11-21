@@ -33,6 +33,7 @@ export interface BlogAdminProps {
   subtitle?: string;
   hideSidebar?: boolean;
   view?: BlogAdminView;
+  viewNonce?: number;
   onViewChange?: (view: BlogAdminView) => void;
 }
 
@@ -132,6 +133,7 @@ export const BlogAdmin: React.FC<BlogAdminProps> = ({
   subtitle = 'Create • Share • Inspire',
   hideSidebar = false,
   view: controlledView,
+  viewNonce,
   onViewChange,
 }) => {
   const [activeView, setActiveView] = useState<BlogAdminView>(controlledView || initialView);
@@ -140,15 +142,15 @@ export const BlogAdmin: React.FC<BlogAdminProps> = ({
   const [settings, setSettings] = useState<BlogSettings | null>(null);
   const [isBlogsOpen, setIsBlogsOpen] = useState<boolean>(true);
 
-  // Sync with external controlled view if provided
+  // Sync with external controlled view if provided or when viewNonce triggers navigation
   useEffect(() => {
-    if (controlledView && controlledView !== activeView) {
-      if (controlledView === 'posts') {
+    if (controlledView) {
+      if (controlledView !== 'edit-post') {
         setEditingPostId(undefined);
       }
       setActiveView(controlledView);
     }
-  }, [controlledView]);
+  }, [controlledView, viewNonce]);
 
   const changeView = (newView: BlogAdminView, postId?: string) => {
     if (postId !== undefined) {

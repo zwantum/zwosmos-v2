@@ -1,5 +1,27 @@
 import React, { useState } from 'react';
 import { Editor } from '@tiptap/react';
+import {
+  RotateCcw,
+  RotateCw,
+  Highlighter,
+  List,
+  ListOrdered,
+  Quote,
+  Code2,
+  Minus,
+  Link2,
+  Image as ImageIcon,
+  Video as VideoIcon,
+  Lightbulb,
+  Target,
+  HelpCircle,
+  Bookmark,
+  Table as TableIcon,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
+} from 'lucide-react';
 import { EditorModal, ActiveDialogType } from './EditorModal';
 
 export interface EditorToolbarProps {
@@ -192,7 +214,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor, onOpenMedi
           disabled={!editor.can().undo()}
           title="Undo (Ctrl+Z)"
         >
-          ↺
+          <RotateCcw size={14} strokeWidth={2} style={{ color: '#64748b' }} />
         </button>
         <button
           type="button"
@@ -201,7 +223,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor, onOpenMedi
           disabled={!editor.can().redo()}
           title="Redo (Ctrl+Y)"
         >
-          ↻
+          <RotateCw size={14} strokeWidth={2} style={{ color: '#64748b' }} />
         </button>
       </div>
 
@@ -285,7 +307,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor, onOpenMedi
           onClick={() => editor.chain().focus().toggleCode().run()}
           title="Inline Code"
         >
-          &lt;/&gt;
+          <Code2 size={13} strokeWidth={2} style={{ color: '#0284c7' }} />
         </button>
         <button
           type="button"
@@ -293,7 +315,46 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor, onOpenMedi
           onClick={() => (editor.chain().focus() as any).toggleHighlight().run()}
           title="Highlight Text"
         >
-          ✨ Highlight
+          <Highlighter size={13} strokeWidth={2} style={{ color: '#d97706' }} />
+          <span>Highlight</span>
+        </button>
+      </div>
+
+      <div className="zw-blog-toolbar-divider" />
+
+      {/* Text Alignment */}
+      <div className="zw-blog-toolbar-group" title="Text Alignment">
+        <button
+          type="button"
+          className={`zw-blog-toolbar-btn ${editor.isActive({ textAlign: 'left' }) ? 'is-active' : ''}`}
+          onClick={() => editor.chain().focus().setTextAlign('left').run()}
+          title="Align Left"
+        >
+          <AlignLeft size={14} strokeWidth={2} style={{ color: '#0284c7' }} />
+        </button>
+        <button
+          type="button"
+          className={`zw-blog-toolbar-btn ${editor.isActive({ textAlign: 'center' }) ? 'is-active' : ''}`}
+          onClick={() => editor.chain().focus().setTextAlign('center').run()}
+          title="Align Center"
+        >
+          <AlignCenter size={14} strokeWidth={2} style={{ color: '#7c3aed' }} />
+        </button>
+        <button
+          type="button"
+          className={`zw-blog-toolbar-btn ${editor.isActive({ textAlign: 'right' }) ? 'is-active' : ''}`}
+          onClick={() => editor.chain().focus().setTextAlign('right').run()}
+          title="Align Right"
+        >
+          <AlignRight size={14} strokeWidth={2} style={{ color: '#059669' }} />
+        </button>
+        <button
+          type="button"
+          className={`zw-blog-toolbar-btn ${editor.isActive({ textAlign: 'justify' }) ? 'is-active' : ''}`}
+          onClick={() => editor.chain().focus().setTextAlign('justify').run()}
+          title="Justify Text"
+        >
+          <AlignJustify size={14} strokeWidth={2} style={{ color: '#d97706' }} />
         </button>
       </div>
 
@@ -307,7 +368,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor, onOpenMedi
           onClick={() => handleToggleList('bulletList')}
           title="Bullet List"
         >
-          •≡
+          <List size={14} strokeWidth={2} style={{ color: '#2563eb' }} />
         </button>
         <button
           type="button"
@@ -315,7 +376,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor, onOpenMedi
           onClick={() => handleToggleList('orderedList')}
           title="Numbered List"
         >
-          1≡
+          <ListOrdered size={14} strokeWidth={2} style={{ color: '#2563eb' }} />
         </button>
         <button
           type="button"
@@ -323,7 +384,8 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor, onOpenMedi
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
           title="Blockquote"
         >
-          “ Quote
+          <Quote size={13} strokeWidth={2} style={{ color: '#7c3aed' }} />
+          <span>Quote</span>
         </button>
         <button
           type="button"
@@ -331,7 +393,8 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor, onOpenMedi
           onClick={() => editor.chain().focus().toggleCodeBlock().run()}
           title="Code Block"
         >
-          {'{}'} Code
+          <Code2 size={13} strokeWidth={2} style={{ color: '#0284c7' }} />
+          <span>Code</span>
         </button>
         <button
           type="button"
@@ -339,7 +402,8 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor, onOpenMedi
           onClick={() => editor.chain().focus().setHorizontalRule().run()}
           title="Horizontal Divider"
         >
-          ― Divider
+          <Minus size={14} strokeWidth={2} style={{ color: '#64748b' }} />
+          <span>Divider</span>
         </button>
       </div>
 
@@ -353,13 +417,16 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor, onOpenMedi
           onClick={setLink}
           title="Insert / Edit Link"
         >
-          🔗 Link
+          <Link2 size={13} strokeWidth={2} style={{ color: '#2563eb' }} />
+          <span>Link</span>
         </button>
         <button type="button" className="zw-blog-toolbar-btn" onClick={addImage} title="Insert Image from Library or URL">
-          🖼️ Image
+          <ImageIcon size={13} strokeWidth={2} style={{ color: '#059669' }} />
+          <span>Image</span>
         </button>
         <button type="button" className="zw-blog-toolbar-btn" onClick={addYoutube} title="Embed YouTube Video">
-          ▶️ Video
+          <VideoIcon size={13} strokeWidth={2} style={{ color: '#dc2626' }} />
+          <span>Video</span>
         </button>
       </div>
 
@@ -373,13 +440,16 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor, onOpenMedi
           onClick={() => addCallout('info')}
           title="Insert Callout Alert"
         >
-          💡 Callout
+          <Lightbulb size={13} strokeWidth={2} style={{ color: '#d97706' }} />
+          <span>Callout</span>
         </button>
         <button type="button" className="zw-blog-toolbar-btn" onClick={addCTA} title="Insert Conversion CTA Banner">
-          🎯 CTA
+          <Target size={13} strokeWidth={2} style={{ color: '#e11d48' }} />
+          <span>CTA</span>
         </button>
         <button type="button" className="zw-blog-toolbar-btn" onClick={addFAQ} title="Insert FAQ Accordion Block">
-          ❓ FAQ
+          <HelpCircle size={13} strokeWidth={2} style={{ color: '#7c3aed' }} />
+          <span>FAQ</span>
         </button>
         <button
           type="button"
@@ -387,7 +457,8 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor, onOpenMedi
           onClick={addCitation}
           title="Insert / Edit Reference Citation Badge"
         >
-          🔖 Citation
+          <Bookmark size={13} strokeWidth={2} style={{ color: '#e11d48' }} />
+          <span>Citation</span>
         </button>
         <button
           type="button"
@@ -395,7 +466,8 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor, onOpenMedi
           onClick={() => (editor.chain().focus() as any).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
           title="Insert Data Table (3x3)"
         >
-          ▦ Table
+          <TableIcon size={13} strokeWidth={2} style={{ color: '#0d9488' }} />
+          <span>Table</span>
         </button>
 
         {/* Dynamic Context Table Controls if active in table */}

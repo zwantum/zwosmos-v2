@@ -88,14 +88,14 @@ export default function AdminDashboard() {
     return 'blogs';
   };
 
-  const getInitialBlogView = (): BlogSubView => {
-    const urlView = searchParams.get('view') as BlogSubView;
-    if (urlView && VALID_BLOG_VIEWS.includes(urlView)) {
+  const getInitialBlogView = (): BlogAdminView => {
+    const urlView = searchParams.get('view') as BlogAdminView;
+    if (urlView && VALID_BLOG_VIEWS.includes(urlView as BlogSubView)) {
       return urlView;
     }
     try {
-      const stored = localStorage.getItem('zwosmos_admin_blog_view') as BlogSubView;
-      if (stored && VALID_BLOG_VIEWS.includes(stored)) {
+      const stored = localStorage.getItem('zwosmos_admin_blog_view') as BlogAdminView;
+      if (stored && VALID_BLOG_VIEWS.includes(stored as BlogSubView)) {
         return stored;
       }
     } catch {}
@@ -103,7 +103,8 @@ export default function AdminDashboard() {
   };
 
   const [activeTab, setActiveTabState] = useState<AdminTab>(getInitialTab);
-  const [activeBlogView, setActiveBlogViewState] = useState<BlogSubView>(getInitialBlogView);
+  const [activeBlogView, setActiveBlogViewState] = useState<BlogAdminView>(getInitialBlogView);
+  const [blogViewNonce, setBlogViewNonce] = useState<number>(0);
   const [isBlogsExpanded, setIsBlogsExpanded] = useState<boolean>(() => {
     try {
       const stored = localStorage.getItem('zwosmos_admin_blogs_expanded');
@@ -133,7 +134,10 @@ export default function AdminDashboard() {
         const next = new URLSearchParams(prev);
         next.set('tab', tab);
         if (tab === 'blogs') {
-          next.set('view', activeBlogView);
+          const effectiveView = VALID_BLOG_VIEWS.includes(activeBlogView as BlogSubView)
+            ? activeBlogView
+            : 'posts';
+          next.set('view', effectiveView);
         } else {
           next.delete('view');
         }
@@ -146,6 +150,7 @@ export default function AdminDashboard() {
   const handleBlogSubViewClick = (view: BlogSubView) => {
     setActiveTabState('blogs');
     setActiveBlogViewState(view);
+    setBlogViewNonce((prev) => prev + 1);
     setIsBlogsExpanded(true);
     try {
       localStorage.setItem('zwosmos_admin_tab', 'blogs');
@@ -164,8 +169,8 @@ export default function AdminDashboard() {
   };
 
   const handleBlogViewFromInside = (v: BlogAdminView) => {
+    setActiveBlogViewState(v);
     if (VALID_BLOG_VIEWS.includes(v as BlogSubView)) {
-      setActiveBlogViewState(v as BlogSubView);
       try {
         localStorage.setItem('zwosmos_admin_blog_view', v);
       } catch {}
@@ -196,7 +201,7 @@ export default function AdminDashboard() {
     }
 
     if (urlTab === 'blogs' && urlView && VALID_BLOG_VIEWS.includes(urlView as BlogSubView)) {
-      if (urlView !== activeBlogView) {
+      if (urlView !== activeBlogView && activeBlogView !== 'edit-post' && activeBlogView !== 'new-post') {
         setActiveBlogViewState(urlView as BlogSubView);
         try {
           localStorage.setItem('zwosmos_admin_blog_view', urlView);
@@ -705,6 +710,7 @@ export default function AdminDashboard() {
         {activeTab === 'blogs' && (
           <BlogsManager
             view={activeBlogView}
+            viewNonce={blogViewNonce}
             onViewChange={handleBlogViewFromInside}
           />
         )}

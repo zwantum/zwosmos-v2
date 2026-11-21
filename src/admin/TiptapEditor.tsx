@@ -520,11 +520,7 @@ export default function TiptapEditor({ value, onChange, minHeight = '180px', onR
               <span>{isCopied ? 'Copied!' : 'Copy Code'}</span>
             </button>
           </div>
-        ) : (
-          <span style={{ fontSize: '11px', color: '#64748b' }}>
-            Visual mode • Switch to <strong>HTML Code</strong> to view &amp; edit raw code directly
-          </span>
-        )}
+        ) : null}
       </div>
 
       {/* Code Mode Quick Tag Bar */}

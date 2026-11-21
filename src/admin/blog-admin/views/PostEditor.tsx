@@ -42,6 +42,7 @@ export const PostEditor: React.FC<PostEditorProps> = ({
   const [status, setStatus] = useState<PostStatus>('draft');
   const [isFeatured, setIsFeatured] = useState(false);
   const [scheduledAt, setScheduledAt] = useState('');
+  const [publishedAt, setPublishedAt] = useState('');
   const [selectedAuthorId, setSelectedAuthorId] = useState('');
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [tagNames, setTagNames] = useState<string[]>([]);
@@ -105,6 +106,17 @@ export const PostEditor: React.FC<PostEditorProps> = ({
             setStatus(post.status);
             setIsFeatured(post.is_featured);
             setScheduledAt(post.scheduled_at ? post.scheduled_at.slice(0, 16) : '');
+            if (post.published_at) {
+              const d = new Date(post.published_at);
+              if (!isNaN(d.getTime())) {
+                const localIso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                setPublishedAt(localIso);
+              } else {
+                setPublishedAt('');
+              }
+            } else {
+              setPublishedAt('');
+            }
             const postAuthorId = post.author_id || (post as any).author?.id;
             if (postAuthorId) {
               setSelectedAuthorId(postAuthorId);
@@ -375,6 +387,18 @@ export const PostEditor: React.FC<PostEditorProps> = ({
       }
       setTags(latestTags);
 
+      let resolvedPublishedAt: string | null = null;
+      if (targetStatus === 'published') {
+        if (publishedAt) {
+          const parsed = new Date(publishedAt);
+          resolvedPublishedAt = !isNaN(parsed.getTime()) ? parsed.toISOString() : new Date().toISOString();
+        } else if (existingPublishedAt) {
+          resolvedPublishedAt = existingPublishedAt;
+        } else {
+          resolvedPublishedAt = new Date().toISOString();
+        }
+      }
+
       const payload: PostCreateInput & { featured_image?: any } = {
         title: plainTitle || title,
         slug: slug.trim() || undefined,
@@ -382,7 +406,7 @@ export const PostEditor: React.FC<PostEditorProps> = ({
         content: activeContent,
         content_html: activeHtml || undefined,
         status: targetStatus,
-        published_at: targetStatus === 'published' ? (existingPublishedAt || new Date().toISOString()) : null,
+        published_at: resolvedPublishedAt,
         is_featured: isFeatured,
         scheduled_at: targetStatus === 'scheduled' && scheduledAt ? new Date(scheduledAt).toISOString() : null,
         author_id: selectedAuthorId || null,
@@ -524,6 +548,12 @@ export const PostEditor: React.FC<PostEditorProps> = ({
       console.warn('Failed to store preview data in storage', e);
     }
 
+    const isPublished = status === 'published';
+    if (isPublished) {
+      window.open(`/blog/${finalSlug}`, '_blank');
+      return;
+    }
+
     const previewUrl = `/blog/${finalSlug}?preview=true`;
     window.open(previewUrl, '_blank');
   };
@@ -604,14 +634,14 @@ export const PostEditor: React.FC<PostEditorProps> = ({
             type="button"
             className="zw-admin-btn zw-admin-btn-secondary"
             onClick={handlePreview}
-            title="Preview how this article looks on the live website"
+            title={status === 'published' ? 'View live article' : 'Preview how this article looks on the live website'}
             style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M2 12s3-7 10-7 7 7 10 7-3 7-10 7-10-7-10-7Z" />
               <circle cx="12" cy="12" r="3" />
             </svg>
-            <span>Preview</span>
+            <span>{status === 'published' ? 'View Post' : 'Preview'}</span>
           </button>
 
           <button
@@ -1082,7 +1112,15 @@ export const PostEditor: React.FC<PostEditorProps> = ({
                 <label className="zw-admin-label">Status</label>
                 <select
                   value={status}
-                  onChange={(e) => setStatus(e.target.value as PostStatus)}
+                  onChange={(e) => {
+                    const newStatus = e.target.value as PostStatus;
+                    setStatus(newStatus);
+                    if (newStatus === 'published' && !publishedAt) {
+                      const now = new Date();
+                      const localIso = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                      setPublishedAt(localIso);
+                    }
+                  }}
                   className="zw-admin-select"
                 >
                   <option value="draft">Draft</option>
@@ -1092,6 +1130,19 @@ export const PostEditor: React.FC<PostEditorProps> = ({
                   <option value="archived">Archived</option>
                 </select>
               </div>
+
+              {/* Publish Date & Time */}
+              {(status === 'published' || Boolean(publishedAt)) && (
+                <div className="zw-admin-form-group" style={{ marginTop: '14px' }}>
+                  <label className="zw-admin-label">Publish Date & Time</label>
+                  <input
+                    type="datetime-local"
+                    value={publishedAt}
+                    onChange={(e) => setPublishedAt(e.target.value)}
+                    className="zw-admin-input"
+                  />
+                </div>
+              )}
 
               {status === 'scheduled' && (
                 <div className="zw-admin-form-group">

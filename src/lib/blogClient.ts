@@ -421,11 +421,133 @@ class EnhancedSupabaseDatabaseAdapter extends SupabaseDatabaseAdapter {
   }
 
   async getPosts(params?: any) {
-    const result = await super.getPosts(params);
-    if (result?.data) {
-      result.data = result.data.map((p: any) => this.enrichPost(p));
+    const rawClient: any = (this as any).client || supabase;
+    const page = params?.page || 1;
+    const limit = params?.limit || 10;
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    let query = rawClient.from('blog_posts').select(
+      '*, author:blog_authors(*), featured_image:blog_media(*), categories:blog_categories(*), tags:blog_tags(*), seo:blog_post_seo(*)',
+      { count: 'exact' }
+    );
+
+    // 1. Trashed and status handling
+    if (!params?.includeTrashed) {
+      query = query.is('deleted_at', null).neq('status', 'trash');
     }
-    return result;
+    if (params?.status && params.status !== 'all') {
+      if (Array.isArray(params.status)) {
+        query = query.in('status', params.status);
+      } else {
+        query = query.eq('status', params.status);
+      }
+    }
+
+    if (params?.isFeatured !== undefined) {
+      query = query.eq('is_featured', params.isFeatured);
+    }
+
+    // 2. Author Filter (handles both UUID and Author Name)
+    if (params?.authorId && params.authorId !== 'all') {
+      let authorId = params.authorId;
+      if (!this.isUuid(authorId)) {
+        try {
+          const { data: authors } = await rawClient
+            .from('blog_authors')
+            .select('id')
+            .ilike('name', authorId)
+            .limit(1);
+          if (authors && authors[0]?.id) {
+            authorId = authors[0].id;
+          }
+        } catch {}
+      }
+      if (this.isUuid(authorId)) {
+        query = query.eq('author_id', authorId);
+      }
+    }
+
+    // 3. Category Filter (handles Category ID, Name, or Slug via junction table)
+    if (params?.categoryId && params.categoryId !== 'all') {
+      let catId = params.categoryId;
+      if (!this.isUuid(catId)) {
+        try {
+          const { data: cat } = await rawClient
+            .from('blog_categories')
+            .select('id')
+            .ilike('name', catId)
+            .limit(1);
+          if (cat && cat[0]?.id) {
+            catId = cat[0].id;
+          }
+        } catch {}
+      }
+
+      if (this.isUuid(catId)) {
+        try {
+          const { data: rels } = await rawClient
+            .from('blog_post_categories')
+            .select('post_id')
+            .eq('category_id', catId);
+          const postIds = (rels || []).map((r: any) => r.post_id).filter(Boolean);
+          if (postIds.length === 0) {
+            return {
+              data: [],
+              page,
+              limit,
+              total: 0,
+              totalPages: 1,
+              hasNextPage: false,
+              hasPrevPage: false,
+            };
+          }
+          query = query.in('id', postIds);
+        } catch (catRelErr) {
+          console.warn('Could not query category post relations:', catRelErr);
+        }
+      }
+    }
+
+    // 4. Search Filter (searches both title and slug)
+    if (params?.search && typeof params.search === 'string' && params.search.trim()) {
+      const term = params.search.trim().replace(/['"]/g, '');
+      query = query.or(`title.ilike.%${term}%,slug.ilike.%${term}%`);
+    }
+
+    // 5. Date Range Filter
+    if (params?.startDate) {
+      query = query.gte('published_at', params.startDate);
+    }
+    if (params?.endDate) {
+      query = query.lte('published_at', params.endDate);
+    }
+
+    // 6. Ordering & Pagination
+    const sortField = params?.sortBy || 'published_at';
+    const ascending = params?.sortOrder === 'asc';
+    query = query.order(sortField, { ascending, nullsFirst: false });
+    query = query.range(from, to);
+
+    const { data, count, error } = await query;
+    if (error) {
+      console.error('Error in enhanced getPosts:', error);
+      throw error;
+    }
+
+    const total = count || 0;
+    const totalPages = Math.ceil(total / limit) || 1;
+    const enrichedData = (data || []).map((p: any) => this.enrichPost(p));
+
+    return {
+      data: enrichedData,
+      page,
+      limit,
+      total,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    };
   }
 
   async updateSettings(settings: any, key = 'general') {

@@ -564,11 +564,7 @@ export const BlogEditor = forwardRef<BlogEditorHandle, BlogEditorProps>(({
                   <span>{isCopied ? 'Copied!' : 'Copy Code'}</span>
                 </button>
               </div>
-            ) : (
-              <span style={{ fontSize: '11px', color: '#64748b' }}>
-                Visual mode • Switch to <strong>HTML Code</strong> to view &amp; edit raw code directly
-              </span>
-            )}
+            ) : null}
           </div>
 
           {/* Quick Tag Helper Bar in Code Mode */}

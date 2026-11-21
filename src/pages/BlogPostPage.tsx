@@ -2601,12 +2601,12 @@ const BlogPostPage: React.FC = () => {
                       padding: 2px 8px !important;
                       margin: 0 3px !important;
                       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace !important;
-                      font-size: 0.54em !important;
+                      font-size: 0.78em !important;
                       font-weight: 500 !important;
                       line-height: 1.45 !important;
                       border-radius: 5px !important;
                       text-decoration: none !important;
-                      vertical-align: baseline !important;
+                      vertical-align: 0.05em !important;
                       cursor: pointer !important;
                       box-shadow: none !important;
                       transform: none !important;
@@ -2617,7 +2617,7 @@ const BlogPostPage: React.FC = () => {
                     .zw-blog-content .zw-blog-citation::before,
                     .zw-blog-citation::before {
                       content: "[" counter(zw-citation-num) "]";
-                      font-weight: 700 !important;
+                      font-weight: inherit !important;
                       display: inline-block !important;
                       opacity: 0.9 !important;
                       letter-spacing: -0.02em !important;

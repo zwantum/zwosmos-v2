@@ -404,7 +404,7 @@
   padding: 2px 8px !important;
   margin: 0 3px !important;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
-  font-size: 0.55em !important;
+  font-size: 0.78em !important;
   font-weight: 500 !important;
   line-height: 1.45 !important;
   color: #475569 !important;
@@ -412,7 +412,7 @@
   border: 1px solid #cbd5e1 !important;
   border-radius: 5px !important;
   text-decoration: none !important;
-  vertical-align: baseline !important;
+  vertical-align: 0.05em !important;
   cursor: pointer !important;
   box-shadow: none !important;
   transform: none !important;
@@ -422,7 +422,7 @@
 .zw-blog-editor-content .tiptap .zw-blog-citation::before,
 .tiptap .zw-blog-citation::before {
   content: "[" counter(zw-citation-num) "]";
-  font-weight: 700 !important;
+  font-weight: inherit !important;
   display: inline-block !important;
   opacity: 0.9 !important;
   letter-spacing: -0.02em !important;

@@ -31,6 +31,7 @@ interface ParsedArticleRow {
   meta_title: string;
   meta_description: string;
   focus_keyword: string;
+  published_at?: string;
   wordCount: number;
   isValid: boolean;
   errors: string[];
@@ -271,6 +272,16 @@ export const ArticleBulkUploadModal: React.FC<ArticleBulkUploadModalProps> = ({
           const meta_description = String(row.meta_description || row.seo_description || '').trim();
           const focus_keyword = String(row.focus_keyword || row.keyword || '').trim();
 
+          // 12. Optional Custom / Backdated Publish Date
+          const rawDate = String(row.published_at || row.publish_date || row.published_date || row.date || row.Date || '').trim();
+          let parsedPublishedAt: string | undefined = undefined;
+          if (rawDate) {
+            const parsed = new Date(rawDate);
+            if (!isNaN(parsed.getTime())) {
+              parsedPublishedAt = parsed.toISOString();
+            }
+          }
+
           return {
             rowNumber,
             title,
@@ -288,6 +299,7 @@ export const ArticleBulkUploadModal: React.FC<ArticleBulkUploadModalProps> = ({
             meta_title,
             meta_description,
             focus_keyword,
+            published_at: parsedPublishedAt,
             wordCount,
             isValid: errors.length === 0,
             errors,
@@ -438,7 +450,7 @@ export const ArticleBulkUploadModal: React.FC<ArticleBulkUploadModalProps> = ({
           content: { type: 'doc', content: [] }, // Tiptap JSON fallback
           content_html: row.content_html,
           status: row.status,
-          published_at: row.status === 'published' ? new Date().toISOString() : null,
+          published_at: row.status === 'published' ? (row.published_at || new Date().toISOString()) : null,
           category_ids: categoryIds.length > 0 ? categoryIds : undefined,
           tag_ids: tagIds.length > 0 ? tagIds : undefined,
           author_id: authorId,
@@ -531,7 +543,7 @@ export const ArticleBulkUploadModal: React.FC<ArticleBulkUploadModalProps> = ({
             </span>
             <div>
               <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600, color: '#0f172a' }}>
-                Bulk Import Articles
+                Bulk Excel Import Articles
               </h2>
               <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>
                 Upload multiple blog posts from a single Excel spreadsheet (.xlsx, .xls) or CSV.

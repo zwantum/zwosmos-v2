@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Post, PostStatus, Category, Author } from '@zwantum/blog-types';
 import { BlogClient } from '@zwantum/blog-core';
 import { getDefaultFeaturedImage } from '../utils/defaultImage';
 import { ArticleBulkUploadModal } from './ArticleBulkUploadModal';
+import { ArticleJsonBulkUploadModal } from './ArticleJsonBulkUploadModal';
+import { FileSpreadsheet, FileCode } from 'lucide-react';
 
 export interface PostListProps {
   client: BlogClient;
@@ -32,6 +34,79 @@ export const PostList: React.FC<PostListProps> = ({
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
+  const [isJsonImportOpen, setIsJsonImportOpen] = useState(false);
+
+  // Date Range Filter State
+  const [dateRange, setDateRange] = useState<{
+    startDate: string;
+    endDate: string;
+    label: string;
+  }>({ startDate: '', endDate: '', label: '' });
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
+  const datePickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (datePickerRef.current && !datePickerRef.current.contains(e.target as Node)) {
+        setIsDatePickerOpen(false);
+      }
+    };
+    if (isDatePickerOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isDatePickerOpen]);
+
+  const setDatePreset = (preset: 'today' | '7days' | '30days' | 'thisMonth') => {
+    const now = new Date();
+    let start = new Date();
+    let label = '';
+
+    if (preset === 'today') {
+      start.setHours(0, 0, 0, 0);
+      label = 'Today';
+    } else if (preset === '7days') {
+      start.setDate(now.getDate() - 7);
+      label = 'Last 7 Days';
+    } else if (preset === '30days') {
+      start.setDate(now.getDate() - 30);
+      label = 'Last 30 Days';
+    } else if (preset === 'thisMonth') {
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+      label = 'This Month';
+    }
+
+    setDateRange({
+      startDate: start.toISOString(),
+      endDate: now.toISOString(),
+      label,
+    });
+    setIsDatePickerOpen(false);
+    setPage(1);
+  };
+
+  const handleApplyCustomDateRange = () => {
+    if (!customStartDate && !customEndDate) return;
+    const startIso = customStartDate ? new Date(`${customStartDate}T00:00:00.000Z`).toISOString() : '';
+    const endIso = customEndDate ? new Date(`${customEndDate}T23:59:59.999Z`).toISOString() : '';
+    const label = customStartDate && customEndDate
+      ? `${customStartDate} to ${customEndDate}`
+      : customStartDate
+        ? `From ${customStartDate}`
+        : `Until ${customEndDate}`;
+
+    setDateRange({
+      startDate: startIso,
+      endDate: endIso,
+      label,
+    });
+    setIsDatePickerOpen(false);
+    setPage(1);
+  };
 
   // Real Database Tab Counts
   const [tabCounts, setTabCounts] = useState({
@@ -159,8 +234,10 @@ export const PostList: React.FC<PostListProps> = ({
         categoryId: selectedCategory || undefined,
         authorId: selectedAuthor || undefined,
         search: searchQuery.trim() || undefined,
+        startDate: dateRange.startDate || undefined,
+        endDate: dateRange.endDate || undefined,
         includeTrashed: isTrashView,
-      });
+      } as any);
 
       const loadedPosts = result.data || [];
       setPosts(loadedPosts);
@@ -175,11 +252,11 @@ export const PostList: React.FC<PostListProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [client, currentTab, selectedStatus, selectedCategory, selectedAuthor, searchQuery, page, itemsPerPage]);
+  }, [client, currentTab, selectedStatus, selectedCategory, selectedAuthor, searchQuery, dateRange.startDate, dateRange.endDate, page, itemsPerPage]);
 
   useEffect(() => {
-    client.categories.getAll().then(setCategories).catch(() => {});
-    client.authors.getAll().then(setAuthors).catch(() => {});
+    client.categories.getAll().then(setCategories).catch(() => { });
+    client.authors.getAll().then(setAuthors).catch(() => { });
     fetchTabCounts();
   }, [client, fetchTabCounts]);
 
@@ -242,13 +319,17 @@ export const PostList: React.FC<PostListProps> = ({
 
   const handlePreviewPost = (p: Post) => {
     const targetSlug = p.slug || p.id;
+    if (p.status === 'published') {
+      window.open(`/blog/${targetSlug}`, '_blank');
+      return;
+    }
     try {
       localStorage.setItem(`zw_preview_${targetSlug}`, JSON.stringify(p));
       localStorage.setItem(`zw_preview_${p.id}`, JSON.stringify(p));
       localStorage.setItem('zw_preview_latest', JSON.stringify(p));
       sessionStorage.setItem(`zw_post_${targetSlug}`, JSON.stringify(p));
       sessionStorage.setItem(`zw_post_${p.id}`, JSON.stringify(p));
-    } catch {}
+    } catch { }
     window.open(`/blog/${targetSlug}?preview=true`, '_blank');
   };
 
@@ -258,6 +339,9 @@ export const PostList: React.FC<PostListProps> = ({
     setSelectedAuthor('');
     setSelectedStatus('all');
     setCurrentTab('all');
+    setDateRange({ startDate: '', endDate: '', label: '' });
+    setCustomStartDate('');
+    setCustomEndDate('');
     setPage(1);
   };
 
@@ -403,7 +487,7 @@ export const PostList: React.FC<PostListProps> = ({
           <p style={{ margin: 0, fontSize: '13px', color: '#64748b', fontWeight: 400 }}>
             Create, manage and publish your blog content.
           </p>
-</div>
+        </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <button
@@ -418,20 +502,40 @@ export const PostList: React.FC<PostListProps> = ({
               background: '#ffffff',
               color: '#0f172a',
               border: '1px solid #e2e8f0',
-              fontWeight: 600,
+              fontWeight: 500,
               fontSize: '13.5px',
               cursor: 'pointer',
               boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
               transition: 'all 0.15s ease',
             }}
-            title="Import articles from Excel (.xlsx) or CSV"
+            title="Import articles from Excel (.xlsx, .xls) or CSV"
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            <span>Bulk Import</span>
+            <FileSpreadsheet size={15} style={{ color: '#059669' }} />
+            <span>Bulk Excel Import</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsJsonImportOpen(true)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '9px 16px',
+              borderRadius: '8px',
+              background: '#ffffff',
+              color: '#0f172a',
+              border: '1px solid #e2e8f0',
+              fontWeight: 500,
+              fontSize: '13.5px',
+              cursor: 'pointer',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+              transition: 'all 0.15s ease',
+            }}
+            title="Import articles from JSON (.json) format"
+          >
+            <FileCode size={15} style={{ color: '#0284c7' }} />
+            <span>Bulk JSON Import</span>
           </button>
 
           {onNavigateToNewPost && (
@@ -474,7 +578,7 @@ export const PostList: React.FC<PostListProps> = ({
               type="button"
               onClick={() => {
                 setCurrentTab(tab.key);
-                setSelectedStatus('all');
+                setSelectedStatus(tab.key);
                 setPage(1);
               }}
               style={{
@@ -534,7 +638,7 @@ export const PostList: React.FC<PostListProps> = ({
             }}
             style={{
               width: '100%',
-              padding: '9px 14px 9px 38px',
+              padding: searchQuery ? '9px 34px 9px 38px' : '9px 14px 9px 38px',
               borderRadius: '10px',
               border: '1px solid #e2e8f0',
               background: '#ffffff',
@@ -544,7 +648,32 @@ export const PostList: React.FC<PostListProps> = ({
               boxSizing: 'border-box',
             }}
           />
-</div>
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('');
+                setPage(1);
+              }}
+              style={{
+                position: 'absolute',
+                right: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'transparent',
+                border: 'none',
+                color: '#94a3b8',
+                cursor: 'pointer',
+                fontSize: '16px',
+                lineHeight: 1,
+                padding: '2px',
+              }}
+              title="Clear search"
+            >
+              ×
+            </button>
+          )}
+        </div>
 
         {/* Category Dropdown (Clean SVG Chevron Icon) */}
         <div style={{ position: 'relative' }}>
@@ -557,10 +686,11 @@ export const PostList: React.FC<PostListProps> = ({
             style={{
               padding: '9px 34px 9px 14px',
               borderRadius: '10px',
-              border: '1px solid #e2e8f0',
-              background: '#ffffff',
+              border: selectedCategory ? '1px solid #3b82f6' : '1px solid #e2e8f0',
+              background: selectedCategory ? '#eff6ff' : '#ffffff',
               fontSize: '13px',
-              color: '#475569',
+              color: selectedCategory ? '#1d4ed8' : '#475569',
+              fontWeight: selectedCategory ? 500 : 400,
               outline: 'none',
               cursor: 'pointer',
               appearance: 'none',
@@ -568,7 +698,7 @@ export const PostList: React.FC<PostListProps> = ({
           >
             <option value="">All Categories</option>
             {categories.map((c) => (
-              <option key={c.id} value={c.name}>
+              <option key={c.id} value={c.id}>
                 {c.name}
               </option>
             ))}
@@ -586,7 +716,7 @@ export const PostList: React.FC<PostListProps> = ({
           >
             <polyline points="6 9 12 15 18 9" />
           </svg>
-</div>
+        </div>
 
         {/* Author Dropdown (Clean SVG Chevron Icon) */}
         <div style={{ position: 'relative' }}>
@@ -599,10 +729,11 @@ export const PostList: React.FC<PostListProps> = ({
             style={{
               padding: '9px 34px 9px 14px',
               borderRadius: '10px',
-              border: '1px solid #e2e8f0',
-              background: '#ffffff',
+              border: selectedAuthor ? '1px solid #8b5cf6' : '1px solid #e2e8f0',
+              background: selectedAuthor ? '#f5f3ff' : '#ffffff',
               fontSize: '13px',
-              color: '#475569',
+              color: selectedAuthor ? '#6d28d9' : '#475569',
+              fontWeight: selectedAuthor ? 500 : 400,
               outline: 'none',
               cursor: 'pointer',
               appearance: 'none',
@@ -610,7 +741,7 @@ export const PostList: React.FC<PostListProps> = ({
           >
             <option value="">All Authors</option>
             {authors.map((a) => (
-              <option key={a.id} value={a.name}>
+              <option key={a.id} value={a.id}>
                 {a.name}
               </option>
             ))}
@@ -628,14 +759,16 @@ export const PostList: React.FC<PostListProps> = ({
           >
             <polyline points="6 9 12 15 18 9" />
           </svg>
-</div>
+        </div>
 
         {/* Status Dropdown (Clean SVG Chevron Icon) */}
         <div style={{ position: 'relative' }}>
           <select
             value={selectedStatus}
             onChange={(e) => {
-              setSelectedStatus(e.target.value);
+              const val = e.target.value;
+              setSelectedStatus(val);
+              setCurrentTab(val);
               setPage(1);
             }}
             style={{
@@ -670,32 +803,234 @@ export const PostList: React.FC<PostListProps> = ({
           >
             <polyline points="6 9 12 15 18 9" />
           </svg>
-</div>
+        </div>
 
-        {/* Date Range Button */}
-        <button
-          type="button"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '9px 14px',
-            borderRadius: '10px',
-            border: '1px solid #e2e8f0',
-            background: '#ffffff',
-            color: '#64748b',
-            fontSize: '13px',
-            cursor: 'pointer',
-          }}
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
-            <line x1="16" y1="2" x2="16" y2="6" />
-            <line x1="8" y1="2" x2="8" y2="6" />
-            <line x1="3" y1="10" x2="21" y2="10" />
-          </svg>
-          <span>Select Date Range</span>
-        </button>
+        {/* Date Range Dropdown / Popover */}
+        <div style={{ position: 'relative' }} ref={datePickerRef}>
+          <button
+            type="button"
+            onClick={() => setIsDatePickerOpen((prev) => !prev)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '9px 14px',
+              borderRadius: '10px',
+              border: dateRange.label ? '1px solid #f59e0b' : '1px solid #e2e8f0',
+              background: dateRange.label ? '#fffbeb' : '#ffffff',
+              color: dateRange.label ? '#b45309' : '#64748b',
+              fontSize: '13px',
+              fontWeight: dateRange.label ? 600 : 400,
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            <span>{dateRange.label || 'Select Date Range'}</span>
+            {dateRange.label && (
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDateRange({ startDate: '', endDate: '', label: '' });
+                  setCustomStartDate('');
+                  setCustomEndDate('');
+                  setPage(1);
+                }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '16px',
+                  height: '16px',
+                  borderRadius: '50%',
+                  background: 'rgba(180, 83, 9, 0.15)',
+                  fontSize: '12px',
+                  color: '#b45309',
+                  marginLeft: '2px',
+                }}
+                title="Clear date filter"
+              >
+                ×
+              </span>
+            )}
+          </button>
+
+          {isDatePickerOpen && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 8px)',
+                right: 0,
+                width: '280px',
+                background: '#ffffff',
+                borderRadius: '12px',
+                boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+                border: '1px solid #e2e8f0',
+                padding: '16px',
+                zIndex: 100,
+              }}
+            >
+              <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px' }}>
+                Quick Presets
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '14px' }}>
+                <button
+                  type="button"
+                  onClick={() => setDatePreset('today')}
+                  style={{
+                    padding: '6px 10px',
+                    fontSize: '12px',
+                    borderRadius: '6px',
+                    border: '1px solid #e2e8f0',
+                    background: '#f8fafc',
+                    cursor: 'pointer',
+                    textAlign: 'center',
+                    color: '#334155',
+                  }}
+                >
+                  Today
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDatePreset('7days')}
+                  style={{
+                    padding: '6px 10px',
+                    fontSize: '12px',
+                    borderRadius: '6px',
+                    border: '1px solid #e2e8f0',
+                    background: '#f8fafc',
+                    cursor: 'pointer',
+                    textAlign: 'center',
+                    color: '#334155',
+                  }}
+                >
+                  Last 7 Days
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDatePreset('30days')}
+                  style={{
+                    padding: '6px 10px',
+                    fontSize: '12px',
+                    borderRadius: '6px',
+                    border: '1px solid #e2e8f0',
+                    background: '#f8fafc',
+                    cursor: 'pointer',
+                    textAlign: 'center',
+                    color: '#334155',
+                  }}
+                >
+                  Last 30 Days
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDatePreset('thisMonth')}
+                  style={{
+                    padding: '6px 10px',
+                    fontSize: '12px',
+                    borderRadius: '6px',
+                    border: '1px solid #e2e8f0',
+                    background: '#f8fafc',
+                    cursor: 'pointer',
+                    textAlign: 'center',
+                    color: '#334155',
+                  }}
+                >
+                  This Month
+                </button>
+              </div>
+
+              <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '12px', marginBottom: '12px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+                  Custom Range
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div>
+                    <label style={{ fontSize: '11px', color: '#64748b', display: 'block', marginBottom: '2px' }}>From</label>
+                    <input
+                      type="date"
+                      value={customStartDate}
+                      onChange={(e) => setCustomStartDate(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '6px 8px',
+                        borderRadius: '6px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '12px',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '11px', color: '#64748b', display: 'block', marginBottom: '2px' }}>To</label>
+                    <input
+                      type="date"
+                      value={customEndDate}
+                      onChange={(e) => setCustomEndDate(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '6px 8px',
+                        borderRadius: '6px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '12px',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDateRange({ startDate: '', endDate: '', label: '' });
+                    setCustomStartDate('');
+                    setCustomEndDate('');
+                    setIsDatePickerOpen(false);
+                    setPage(1);
+                  }}
+                  style={{
+                    padding: '6px 10px',
+                    fontSize: '12px',
+                    borderRadius: '6px',
+                    border: '1px solid #e2e8f0',
+                    background: '#ffffff',
+                    cursor: 'pointer',
+                    color: '#64748b',
+                  }}
+                >
+                  Clear
+                </button>
+                <button
+                  type="button"
+                  onClick={handleApplyCustomDateRange}
+                  disabled={!customStartDate && !customEndDate}
+                  style={{
+                    padding: '6px 12px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    borderRadius: '6px',
+                    border: 'none',
+                    background: '#ffcc00',
+                    color: '#0f172a',
+                    cursor: !customStartDate && !customEndDate ? 'not-allowed' : 'pointer',
+                    opacity: !customStartDate && !customEndDate ? 0.6 : 1,
+                  }}
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Filter Action Button */}
         <button
@@ -753,6 +1088,53 @@ export const PostList: React.FC<PostListProps> = ({
         </button>
       </div>
 
+      {/* Active Filter Badges / Indicators */}
+      {(selectedCategory || selectedAuthor || (selectedStatus !== 'all' && currentTab !== selectedStatus) || searchQuery || dateRange.label) && (
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Active Filters:</span>
+          {searchQuery && (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '3px 8px', borderRadius: '6px', background: '#f1f5f9', color: '#334155', fontSize: '12px' }}>
+              Search: "{searchQuery}"
+              <button type="button" onClick={() => { setSearchQuery(''); setPage(1); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#64748b', padding: 0, fontSize: '13px', lineHeight: 1 }}>×</button>
+            </span>
+          )}
+          {selectedCategory && (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '3px 8px', borderRadius: '6px', background: '#eff6ff', color: '#1d4ed8', fontSize: '12px' }}>
+              Category: {categories.find((c) => c.id === selectedCategory || c.name === selectedCategory)?.name || selectedCategory}
+              <button type="button" onClick={() => { setSelectedCategory(''); setPage(1); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#1d4ed8', padding: 0, fontSize: '13px', lineHeight: 1 }}>×</button>
+            </span>
+          )}
+          {selectedAuthor && (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '3px 8px', borderRadius: '6px', background: '#f5f3ff', color: '#6d28d9', fontSize: '12px' }}>
+              Author: {authors.find((a) => a.id === selectedAuthor || a.name === selectedAuthor)?.name || selectedAuthor}
+              <button type="button" onClick={() => { setSelectedAuthor(''); setPage(1); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#6d28d9', padding: 0, fontSize: '13px', lineHeight: 1 }}>×</button>
+            </span>
+          )}
+          {dateRange.label && (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '3px 8px', borderRadius: '6px', background: '#fef3c7', color: '#b45309', fontSize: '12px' }}>
+              Date: {dateRange.label}
+              <button type="button" onClick={() => { setDateRange({ startDate: '', endDate: '', label: '' }); setPage(1); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#b45309', padding: 0, fontSize: '13px', lineHeight: 1 }}>×</button>
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={handleResetFilters}
+            style={{
+              border: 'none',
+              background: 'transparent',
+              color: '#ef4444',
+              fontSize: '12px',
+              fontWeight: 500,
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              padding: '2px 6px',
+            }}
+          >
+            Clear All
+          </button>
+        </div>
+      )}
+
       {/* Bulk Actions Toolbar (Appears when posts are selected - Matches Dashboard Light Theme) */}
       {selectedPosts.size > 0 && (
         <div
@@ -793,7 +1175,7 @@ export const PostList: React.FC<PostListProps> = ({
             <span style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>
               {selectedPosts.size === 1 ? 'post selected' : 'posts selected'}
             </span>
-  </div>
+          </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             {currentTab !== 'trash' ? (
@@ -997,8 +1379,8 @@ export const PostList: React.FC<PostListProps> = ({
             >
               <span>Deselect All</span>
             </button>
-  </div>
-</div>
+          </div>
+        </div>
       )}
 
       {/* 4. Posts Data Table Card */}
@@ -1243,11 +1625,11 @@ export const PostList: React.FC<PostListProps> = ({
                             </>
                           ) : (
                             <>
-                              {/* Preview Button */}
+                              {/* Preview / View Post Button */}
                               <button
                                 type="button"
                                 onClick={() => handlePreviewPost(post)}
-                                title="Preview article appearance"
+                                title={post.status === 'published' ? 'View live article' : 'Preview article appearance'}
                                 style={{
                                   display: 'inline-flex',
                                   alignItems: 'center',
@@ -1267,7 +1649,7 @@ export const PostList: React.FC<PostListProps> = ({
                                   <path d="M2 12s3-7 10-7 7 7 10 7-3 7-10 7-10-7-10-7Z" />
                                   <circle cx="12" cy="12" r="3" />
                                 </svg>
-                                <span>Preview</span>
+                                <span>{post.status === 'published' ? 'View Post' : 'Preview'}</span>
                               </button>
 
                               {/* Edit Button */}
@@ -1353,7 +1735,7 @@ export const PostList: React.FC<PostListProps> = ({
                               </button>
                             </>
                           )}
-                </div>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -1361,7 +1743,7 @@ export const PostList: React.FC<PostListProps> = ({
               )}
             </tbody>
           </table>
-</div>
+        </div>
 
         {/* 5. Pagination & Footer (Real dynamic pages right after Show Per Page) */}
         <div
@@ -1379,7 +1761,7 @@ export const PostList: React.FC<PostListProps> = ({
           {/* Left Count */}
           <div style={{ color: '#64748b' }}>
             Showing {totalCount > 0 ? (page - 1) * itemsPerPage + 1 : 0} to {Math.min(page * itemsPerPage, totalCount)} of {totalCount} posts
-  </div>
+          </div>
 
           {/* Right Section: Show Per Page Selector, followed by Pagination Buttons */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
@@ -1423,9 +1805,9 @@ export const PostList: React.FC<PostListProps> = ({
                 >
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
-      </div>
+              </div>
               <span>per page</span>
-    </div>
+            </div>
 
             {/* Dynamic Page Buttons: only real pages */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -1563,7 +1945,7 @@ export const PostList: React.FC<PostListProps> = ({
                 <line x1="10" y1="11" x2="10" y2="17" />
                 <line x1="14" y1="11" x2="14" y2="17" />
               </svg>
-    </div>
+            </div>
 
             <h3 style={{ margin: '0 0 8px 0', fontSize: '1.15rem', fontWeight: 600, color: '#0f172a' }}>
               {confirmModal.isPermanent ? 'Permanently Delete Post?' : 'Move to Trash?'}
@@ -1620,7 +2002,7 @@ export const PostList: React.FC<PostListProps> = ({
           </div>
         </div>
       )}
-      {/* Bulk Import Modal */}
+      {/* Bulk Excel Import Modal */}
       <ArticleBulkUploadModal
         isOpen={isBulkImportOpen}
         onClose={() => setIsBulkImportOpen(false)}
@@ -1631,7 +2013,22 @@ export const PostList: React.FC<PostListProps> = ({
         onSuccess={(count) => {
           fetchPosts();
           fetchTabCounts();
-          alert(`Successfully imported ${count} article${count === 1 ? '' : 's'}!`);
+          alert(`Successfully imported ${count} article${count === 1 ? '' : 's'} from Excel!`);
+        }}
+      />
+
+      {/* Bulk JSON Import Modal */}
+      <ArticleJsonBulkUploadModal
+        isOpen={isJsonImportOpen}
+        onClose={() => setIsJsonImportOpen(false)}
+        client={client}
+        existingPosts={posts}
+        categories={categories}
+        authors={authors}
+        onSuccess={(count) => {
+          fetchPosts();
+          fetchTabCounts();
+          alert(`Successfully imported ${count} article${count === 1 ? '' : 's'} from JSON!`);
         }}
       />
     </div>
