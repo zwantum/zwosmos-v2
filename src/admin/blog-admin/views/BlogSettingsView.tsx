@@ -1,4 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
+import {
+  SlidersHorizontal,
+  Search,
+  ToggleLeft,
+  Image as ImageIcon,
+  Upload,
+  Type,
+  Lightbulb,
+  Map,
+  Rss,
+  Code2,
+  FileText,
+  Compass,
+  HelpCircle,
+  Building2,
+  MessageSquare,
+  Timer,
+  History,
+  ArrowRightLeft,
+} from 'lucide-react';
 import { BlogSettings } from '@zwantum/blog-types';
 import { BlogClient } from '@zwantum/blog-core';
 
@@ -75,7 +95,7 @@ export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
         if (bDrop !== null) dropCapVal = bDrop === 'true';
         const bImg = localStorage.getItem('zw_default_featured_image');
         if (bImg) defaultImgVal = bImg;
-      } catch {}
+      } catch { }
       setSettings((prev) => ({
         ...prev,
         ...data,
@@ -95,7 +115,7 @@ export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
           setSitemapXml(sitemap);
           setRssXml(rss);
         })
-        .catch(() => {})
+        .catch(() => { })
         .finally(() => setLoadingSeo(false));
     }
   }, [activeTab, client, sitemapXml]);
@@ -130,7 +150,7 @@ export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
             defaultFeaturedImageUrl: settings.defaultFeaturedImageUrl || ''
           }
         }));
-      } catch {}
+      } catch { }
       setSettings({
         ...updated,
         enableDropCap: settings.enableDropCap,
@@ -167,22 +187,28 @@ export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
           type="button"
           className={`zw-admin-tab-btn ${activeTab === 'general' ? 'is-active' : ''}`}
           onClick={() => setActiveTab('general')}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '7px' }}
         >
-          ⚙️ General Settings
+          <SlidersHorizontal size={14} style={{ color: activeTab === 'general' ? '#0f172a' : '#854d0e' }} />
+          <span>General Settings</span>
         </button>
         <button
           type="button"
           className={`zw-admin-tab-btn ${activeTab === 'seo' ? 'is-active' : ''}`}
           onClick={() => setActiveTab('seo')}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '7px' }}
         >
-          🔍 Global SEO & Feeds
+          <Search size={14} style={{ color: activeTab === 'seo' ? '#0f172a' : '#854d0e' }} />
+          <span>Global SEO &amp; Feeds</span>
         </button>
         <button
           type="button"
           className={`zw-admin-tab-btn ${activeTab === 'modules' ? 'is-active' : ''}`}
           onClick={() => setActiveTab('modules')}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '7px' }}
         >
-          🧩 Modules & Toggles
+          <ToggleLeft size={15} style={{ color: activeTab === 'modules' ? '#0f172a' : '#854d0e' }} />
+          <span>Modules &amp; Toggles</span>
         </button>
       </div>
 
@@ -291,14 +317,17 @@ export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
               <div style={{ marginBottom: '12px' }}>
                 <label
                   style={{
-                    display: 'block',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '7px',
                     fontWeight: 600,
                     fontSize: '13.5px',
                     color: '#0f172a',
                     marginBottom: '4px',
                   }}
                 >
-                  🖼️ Default Featured Image
+                  <ImageIcon size={16} style={{ color: '#059669' }} />
+                  <span>Default Featured Image</span>
                 </label>
                 <div style={{ fontSize: '12px', color: '#64748b', lineHeight: 1.4 }}>
                   Fallback image automatically shown on any article, card, and social share when no specific featured image is uploaded.
@@ -382,6 +411,7 @@ export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
                       <button
                         type="button"
                         className="zw-admin-btn zw-admin-btn-primary zw-admin-btn-sm"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                         onClick={() => {
                           onOpenMediaLibrary((media: any) => {
                             if (media?.url) {
@@ -390,15 +420,18 @@ export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
                           });
                         }}
                       >
-                        🖼️ Select from Media Library
+                        <ImageIcon size={14} />
+                        <span>Select from Media Library</span>
                       </button>
                     )}
                     <button
                       type="button"
                       className="zw-admin-btn zw-admin-btn-secondary zw-admin-btn-sm"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                       onClick={() => defaultImageInputRef.current?.click()}
                     >
-                      📁 Upload from Device
+                      <Upload size={14} style={{ color: '#059669' }} />
+                      <span>Upload from Device</span>
                     </button>
                   </div>
                 </div>
@@ -445,7 +478,9 @@ export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
               <div style={{ paddingRight: '16px' }}>
                 <label
                   style={{
-                    display: 'block',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '7px',
                     fontWeight: 600,
                     fontSize: '13.5px',
                     color: '#0f172a',
@@ -454,7 +489,8 @@ export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
                   }}
                   htmlFor="toggle-dropcap-general"
                 >
-                  🔤 Enable First-Letter Drop Cap
+                  <Type size={16} style={{ color: '#7c3aed' }} />
+                  <span>Enable First-Letter Drop Cap</span>
                 </label>
                 <div style={{ fontSize: '12px', color: '#64748b', lineHeight: 1.4 }}>
                   Renders a prominent, magazine-style initial drop cap on the opening paragraph of each blog post. Turn this <strong>OFF</strong> if you want standard uniform paragraph text.
@@ -493,9 +529,15 @@ export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
                 fontSize: '12.5px',
                 color: '#475569',
                 lineHeight: 1.5,
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '10px',
               }}
             >
-              💡 <strong>Global Blog SEO:</strong> Meta titles and search keywords for individual articles are edited directly inside each post's editor. This section manages your <strong>site-wide XML sitemap</strong>, <strong>RSS 2.0 feed</strong>, and <strong>Schema.org JSON-LD</strong> crawler endpoints.
+              <Lightbulb size={16} style={{ color: '#d97706', flexShrink: 0, marginTop: '2px' }} />
+              <div>
+                <strong>Global Blog SEO:</strong> Meta titles and search keywords for individual articles are edited directly inside each post's editor. This section manages your <strong>site-wide XML sitemap</strong>, <strong>RSS 2.0 feed</strong>, and <strong>Schema.org JSON-LD</strong> crawler endpoints.
+              </div>
             </div>
 
             {/* Sub-tabs for SEO */}
@@ -504,22 +546,28 @@ export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
                 type="button"
                 className={`zw-admin-btn zw-admin-btn-sm ${seoSubTab === 'sitemap' ? 'zw-admin-btn-primary' : 'zw-admin-btn-secondary'}`}
                 onClick={() => setSeoSubTab('sitemap')}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
               >
-                🗺️ XML Sitemap
+                <Map size={14} />
+                <span>XML Sitemap</span>
               </button>
               <button
                 type="button"
                 className={`zw-admin-btn zw-admin-btn-sm ${seoSubTab === 'rss' ? 'zw-admin-btn-primary' : 'zw-admin-btn-secondary'}`}
                 onClick={() => setSeoSubTab('rss')}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
               >
-                📡 RSS 2.0 Feed
+                <Rss size={14} />
+                <span>RSS 2.0 Feed</span>
               </button>
               <button
                 type="button"
                 className={`zw-admin-btn zw-admin-btn-sm ${seoSubTab === 'schema' ? 'zw-admin-btn-primary' : 'zw-admin-btn-secondary'}`}
                 onClick={() => setSeoSubTab('schema')}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
               >
-                📐 Structured Data (JSON-LD)
+                <Code2 size={14} />
+                <span>Structured Data (JSON-LD)</span>
               </button>
             </div>
 
@@ -608,25 +656,37 @@ export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div style={{ background: '#f8fafc', padding: '12px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                    <strong style={{ color: '#0f172a', fontSize: '13px' }}>📰 Article & BlogPosting</strong>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <FileText size={15} style={{ color: '#2563eb' }} />
+                      <strong style={{ color: '#0f172a', fontSize: '13px' }}>Article &amp; BlogPosting</strong>
+                    </div>
                     <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
                       Emits headlines, author credits, publisher logos, dates, and cover images.
                     </div>
                   </div>
                   <div style={{ background: '#f8fafc', padding: '12px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                    <strong style={{ color: '#0f172a', fontSize: '13px' }}>🧭 BreadcrumbList</strong>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Compass size={15} style={{ color: '#0d9488' }} />
+                      <strong style={{ color: '#0f172a', fontSize: '13px' }}>BreadcrumbList</strong>
+                    </div>
                     <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
                       Visual breadcrumb navigation hierarchy shown in Google SERPs.
                     </div>
                   </div>
                   <div style={{ background: '#f8fafc', padding: '12px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                    <strong style={{ color: '#0f172a', fontSize: '13px' }}>❓ FAQPage Schema</strong>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <HelpCircle size={15} style={{ color: '#7c3aed' }} />
+                      <strong style={{ color: '#0f172a', fontSize: '13px' }}>FAQPage Schema</strong>
+                    </div>
                     <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
                       Accordion rich snippets when FAQ question/answer blocks exist.
                     </div>
                   </div>
                   <div style={{ background: '#f8fafc', padding: '12px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                    <strong style={{ color: '#0f172a', fontSize: '13px' }}>🏢 Person & Organization</strong>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Building2 size={15} style={{ color: '#475569' }} />
+                      <strong style={{ color: '#0f172a', fontSize: '13px' }}>Person &amp; Organization</strong>
+                    </div>
                     <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
                       High-trust E-E-A-T entity signals for verified writers and websites.
                     </div>
@@ -667,7 +727,9 @@ export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
                 <div style={{ paddingRight: '16px' }}>
                   <label
                     style={{
-                      display: 'block',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '7px',
                       fontWeight: 600,
                       fontSize: '13.5px',
                       color: '#0f172a',
@@ -676,7 +738,8 @@ export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
                     }}
                     htmlFor="toggle-media"
                   >
-                    🖼️ Standalone Media Library Tab
+                    <ImageIcon size={16} style={{ color: '#059669' }} />
+                    <span>Standalone Media Library Tab</span>
                   </label>
                   <div style={{ fontSize: '12px', color: '#64748b', lineHeight: 1.4 }}>
                     Shows the standalone Media manager in the sidebar. <strong>Turn this OFF</strong> if your website already has its own media library/asset management system.
@@ -706,7 +769,9 @@ export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
                 <div style={{ paddingRight: '16px' }}>
                   <label
                     style={{
-                      display: 'block',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '7px',
                       fontWeight: 600,
                       fontSize: '13.5px',
                       color: '#0f172a',
@@ -715,7 +780,8 @@ export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
                     }}
                     htmlFor="toggle-comments"
                   >
-                    💬 Enable Comments on Blog Posts
+                    <MessageSquare size={16} style={{ color: '#2563eb' }} />
+                    <span>Enable Comments on Blog Posts</span>
                   </label>
                   <div style={{ fontSize: '12px', color: '#64748b', lineHeight: 1.4 }}>
                     Allows readers to submit comments and view discussion threads on blog posts. Turn this <strong>OFF</strong> if you want to disable comment sections on all blog posts and hide the Comments module.
@@ -745,7 +811,9 @@ export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
                 <div style={{ paddingRight: '16px' }}>
                   <label
                     style={{
-                      display: 'block',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '7px',
                       fontWeight: 600,
                       fontSize: '13.5px',
                       color: '#0f172a',
@@ -754,7 +822,8 @@ export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
                     }}
                     htmlFor="toggle-scheduling"
                   >
-                    ⏱️ Scheduled Publishing Timers
+                    <Timer size={16} style={{ color: '#0284c7' }} />
+                    <span>Scheduled Publishing Timers</span>
                   </label>
                   <div style={{ fontSize: '12px', color: '#64748b', lineHeight: 1.4 }}>
                     Allows setting future release dates and automated publishing triggers.
@@ -784,7 +853,9 @@ export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
                 <div style={{ paddingRight: '16px' }}>
                   <label
                     style={{
-                      display: 'block',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '7px',
                       fontWeight: 600,
                       fontSize: '13.5px',
                       color: '#0f172a',
@@ -793,7 +864,8 @@ export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
                     }}
                     htmlFor="toggle-revisions"
                   >
-                    📝 Revision History & Rollbacks
+                    <History size={16} style={{ color: '#7c3aed' }} />
+                    <span>Revision History &amp; Rollbacks</span>
                   </label>
                   <div style={{ fontSize: '12px', color: '#64748b', lineHeight: 1.4 }}>
                     Saves snapshots of post edits so authors can inspect diffs and restore previous versions.
@@ -823,7 +895,9 @@ export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
                 <div style={{ paddingRight: '16px' }}>
                   <label
                     style={{
-                      display: 'block',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '7px',
                       fontWeight: 600,
                       fontSize: '13.5px',
                       color: '#0f172a',
@@ -832,7 +906,8 @@ export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
                     }}
                     htmlFor="toggle-redirects"
                   >
-                    🔀 Automatic 301 Redirects
+                    <ArrowRightLeft size={16} style={{ color: '#d97706' }} />
+                    <span>Automatic 301 Redirects</span>
                   </label>
                   <div style={{ fontSize: '12px', color: '#64748b', lineHeight: 1.4 }}>
                     Automatically creates 301 permanent redirects whenever a post slug is modified.
@@ -862,7 +937,9 @@ export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
                 <div style={{ paddingRight: '16px' }}>
                   <label
                     style={{
-                      display: 'block',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '7px',
                       fontWeight: 600,
                       fontSize: '13.5px',
                       color: '#0f172a',
@@ -871,7 +948,8 @@ export const BlogSettingsView: React.FC<BlogSettingsViewProps> = ({
                     }}
                     htmlFor="toggle-dropcap-modules"
                   >
-                    🔤 Enable First-Letter Drop Cap
+                    <Type size={16} style={{ color: '#7c3aed' }} />
+                    <span>Enable First-Letter Drop Cap</span>
                   </label>
                   <div style={{ fontSize: '12px', color: '#64748b', lineHeight: 1.4 }}>
                     Renders an editorial, magazine-style initial drop cap on the opening paragraph of blog posts. Toggle off to display standard paragraph text.
